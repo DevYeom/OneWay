@@ -85,7 +85,7 @@ final class OneWayTests: XCTestCase {
             }
         }
 
-        wait(seconds: 1, expectation: expectation, queue: queue)
+        wait(seconds: 3, expectation: expectation, queue: queue)
         XCTAssertEqual(way.currentState.number, 30_000)
     }
 }

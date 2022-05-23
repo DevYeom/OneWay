@@ -1,10 +1,17 @@
 # OneWay
 
+<p align="left">
+  <img alt="Swift" src="https://img.shields.io/badge/Swift-5.5-orange.svg">
+  <a href="https://github.com/DevYeom/OneWay/actions" target="_blank">
+    <img alt="CI" src="https://github.com/DevYeom/OneWay/workflows/CI/badge.svg">
+  </a>
+</p>
+
 A super simple library for state management with unidirectional data flow.
 
 > 🚧 OneWay is still experimental. As such, expect things to break and change in the coming months.
 
-## Structure And Data Flow
+## Structure and Data Flow
 
 <img src="https://github.com/DevYeom/OneWay/blob/assets/flow_description.png" alt="flow_description"/>
 

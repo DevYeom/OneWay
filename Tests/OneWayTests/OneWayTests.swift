@@ -88,6 +88,94 @@ final class OneWayTests: XCTestCase {
         wait(seconds: 3, expectation: expectation, queue: queue)
         XCTAssertEqual(way.currentState.number, 30_000)
     }
+
+    func test_AsynchronousSideWaySuccessInMainThread() throws {
+        final class TestWay: Way<TestWay.Action, TestWay.State> {
+            enum Action {
+                case saveNumber(Int)
+                case fetchRemoteNumber
+            }
+
+            struct State: Hashable {
+                var number: Int
+            }
+
+            override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
+                switch action {
+                case .saveNumber(let number):
+                    state.number = number
+                    return .none
+                case .fetchRemoteNumber:
+                    return SideWay<Int, Never>
+                        .future { result in
+                            DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(100)) {
+                                result(.success(10))
+                                result(.success(20))
+                            }
+                        }
+                        .receive(on: DispatchQueue.main)
+                        .map({ Action.saveNumber($0) })
+                        .eraseToSideWay()
+                }
+            }
+        }
+
+        let expectation = expectation(description: "\(#function)")
+        let initialState = TestWay.State(number: 0)
+        let way = TestWay(initialState: initialState)
+
+        way.publisher.number
+            .sink { _ in
+                XCTAssertTrue(Thread.isMainThread)
+            }
+            .store(in: &cancellables)
+
+        way.send(.fetchRemoteNumber)
+        XCTAssertEqual(way.currentState.number, 0)
+        wait(milliseconds: 200, expectation: expectation)
+        XCTAssertEqual(way.currentState.number, 10)
+    }
+
+    func test_AsynchronousSideWayFailure() throws {
+        final class TestWay: Way<TestWay.Action, TestWay.State> {
+            struct Error: Swift.Error, Equatable {}
+
+            enum Action {
+                case saveNumber(Int)
+                case fetchRemoteNumber
+            }
+
+            struct State: Hashable {
+                var number: Int
+            }
+
+            override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
+                switch action {
+                case .saveNumber(let number):
+                    state.number = number
+                    return .none
+                case .fetchRemoteNumber:
+                    return SideWay<Int, Error>
+                        .future { result in
+                            DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(100)) {
+                                result(.failure(Error()))
+                            }
+                        }
+                        .eraseToSideWay({ Action.saveNumber($0) })
+                        .catchToReturn(Action.saveNumber(-1))
+                }
+            }
+        }
+
+        let expectation = expectation(description: "\(#function)")
+        let initialState = TestWay.State(number: 0)
+        let way = TestWay(initialState: initialState)
+
+        way.send(.fetchRemoteNumber)
+        XCTAssertEqual(way.currentState.number, 0)
+        wait(milliseconds: 200, expectation: expectation)
+        XCTAssertEqual(way.currentState.number, -1)
+    }
 }
 
 private let globalTextSubject = PassthroughSubject<String, Never>()

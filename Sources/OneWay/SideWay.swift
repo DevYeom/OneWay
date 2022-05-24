@@ -9,17 +9,21 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         self.upstream = publisher.eraseToAnyPublisher()
     }
 
-    public func receive<S>(subscriber: S)
-    where S: Combine.Subscriber, Failure == S.Failure, Output == S.Input {
-        self.upstream.subscribe(subscriber)
-    }
-
     public init(error: Failure) {
         self.init(
             Deferred {
                 Future { $0(.failure(error)) }
             }
         )
+    }
+
+    public func receive<S>(subscriber: S)
+    where S: Combine.Subscriber, Failure == S.Failure, Output == S.Input {
+        self.upstream.subscribe(subscriber)
+    }
+
+    public func map<T>(_ transform: @escaping (Output) -> T) -> SideWay<T, Failure> {
+        .init(self.map(transform) as Publishers.Map<Self, T>)
     }
 
     public static func just(_ value: Output) -> SideWay {
@@ -51,8 +55,8 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         Publishers.MergeMany(sideWays).eraseToSideWay()
     }
 
-    public func map<T>(_ transform: @escaping (Output) -> T) -> SideWay<T, Failure> {
-        .init(self.map(transform) as Publishers.Map<Self, T>)
+    public static func future(_ result: @escaping (@escaping (Result<Output, Failure>) -> Void) -> Void) -> SideWay {
+      Deferred { Future(result) }.eraseToSideWay()
     }
 }
 
@@ -75,6 +79,16 @@ extension Publisher {
     public func catchToSideWay<T>(_ transform: @escaping (Result<Output, Failure>) -> T) -> SideWay<T, Never> {
         self.map { transform(.success($0)) }
             .catch { Just(transform(.failure($0))) }
+            .eraseToSideWay()
+    }
+
+    public func catchToNever() -> SideWay<Output, Never> {
+        self.catch { _ in Empty(completeImmediately: true) }
+            .eraseToSideWay()
+    }
+
+    public func catchToReturn(_ value: Output) -> SideWay<Output, Never> {
+        self.catch { _ in Just(value) }
             .eraseToSideWay()
     }
 }

@@ -32,13 +32,3 @@ jobs:
         xcodebuild clean build test \
         -scheme "$SCHEME" \
         -destination "$DESTINATION";
-
-    - name: Create github action link comment
-      uses: peter-evans/create-or-update-comment@v2
-      with:
-        issue-number: ${{ github.event.pull_request.number }}
-        body: |
-          **Build and Test** is done!\
-          \
-          You can check out [Github Action Link](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
-        reactions: '+1'

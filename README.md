@@ -13,9 +13,9 @@
   </a>
 </p>
 
-A super simple library for state management with unidirectional data flow.
-
 > 🚧 OneWay is still experimental. As such, expect things to break and change in the coming months.
+
+**OneWay** is a super simple library for state management with unidirectional data flow. The original inspiration came from [Flux](https://github.com/facebook/flux), [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture), [ReactorKit](https://github.com/ReactorKit/ReactorKit) and many state management [libraries](https://github.com/tnfe/awesome-state). There are no dependencies on third parties like [RxSwift](https://github.com/ReactiveX/RxSwift), so you can use **OneWay** purely. It can not only be used in the presentation layer (e.g. with View or ViewController), but can also be used to simplify complex business logic (e.g. while app launching).
 
 ## Data Flow
 
@@ -74,7 +74,7 @@ print(way.currentState.number) // 2
 
 ### Subscribing a Way
 
-When a value changes, it can receive a new value. It guarantees that the same value does not come down consecutively.
+When a value changes, it can receive a new value. It guarantees that the same value does not come down consecutively. In general, you don't need to add `removeDuplicates()`.
 
 ```swift
 way.publisher.number
@@ -108,6 +108,23 @@ final class CustomWay: Way<CustomWay.Action, CustomWay.State> {
 }
 ```
 
+### Thread Safe or Not
+
+`Way` has a `ThreadOption` to consider the multithreaded environment. This option can be passed as an argument to the initializer. Once set, it cannot be changed. In a general environment, it is better to use the default option(`current`) for better performance. But, if it is initialized with the `current` option, all interactions (i.e. sending actions) with an instance of Way must be done on the same thread.
+
+```swift
+let way = TestWay(initialState: initialState, threadOption: .current)
+let threadSafeWay = TestWay(initialState: initialState, threadOption: .threadSafe)
+```
+
+## Requirements
+
+|       |Minimum Version|
+|------:|--------------:|
+|Swift  |5.5            |
+|Xcode  |13.0           |
+|iOS    |13.0           |
+
 ## Installation
 
 **OneWay** is only supported by Swift Package Manager.
@@ -119,3 +136,7 @@ dependencies: [
   .package(url: "https://github.com/DevYeom/OneWay", from: "0.1.0"),
 ]
 ```
+
+## License
+
+This library is released under the MIT license. See [LICENSE](LICENSE) for details.

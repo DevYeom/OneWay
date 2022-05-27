@@ -1,6 +1,9 @@
 import Foundation
 import Combine
 
+/// A way represents the path through which data passes. It is the object that can not only be used
+/// in the presentation layer, but can also be used to simplify complex business logic. The basic
+/// concept is to think of each way separately.
 open class Way<Action, State> {
 
     /// Determines which thread environment Way will be working on.

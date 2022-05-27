@@ -15,7 +15,7 @@
 
 > 🚧 OneWay is still experimental. As such, expect things to break and change in the coming months.
 
-**OneWay** is a super simple library for state management with unidirectional data flow. The original inspiration came from [Flux](https://github.com/facebook/flux), [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture), [ReactorKit](https://github.com/ReactorKit/ReactorKit) and many state management [libraries](https://github.com/tnfe/awesome-state). There are no dependencies on third parties like [RxSwift](https://github.com/ReactiveX/RxSwift), so you can use **OneWay** purely. It can not only be used in the presentation layer (e.g. with View or ViewController), but can also be used to simplify complex business logic (e.g. while app launching).
+**OneWay** is a super simple library for state management with unidirectional data flow. The original inspiration came from [Flux](https://github.com/facebook/flux), [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture), [ReactorKit](https://github.com/ReactorKit/ReactorKit) and many state management [libraries](https://github.com/tnfe/awesome-state). There are no dependencies on third parties, so you can use **OneWay** purely. It can not only be used in the presentation layer (e.g. with View or ViewController), but can also be used to simplify complex business logic (e.g. while the app launches). The basic concept is to think of each way separately.
 
 ## Data Flow
 

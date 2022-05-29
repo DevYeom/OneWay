@@ -29,16 +29,12 @@ open class Way<Action, State> {
     internal var stateSubject: CurrentValueSubject<State, Never>
 
     /// Use only when thread-safe mode.
-    private var actionSubject: PassthroughSubject<Action, Never>!
-
-    /// Use only when thread-safe mode.
     private let actionQueue: DispatchQueue!
 
     private let threadOption: ThreadOption
     private var isSending: Bool = false
     private var bufferedActions: [Action] = []
     private var sideWayCancellables: [UUID: AnyCancellable] = [:]
-    private var cancellables = Set<AnyCancellable>()
     private var bindCancellable: AnyCancellable?
 
     /// Initializes a way from an initial state, threadOption.
@@ -53,23 +49,9 @@ open class Way<Action, State> {
 
         switch threadOption {
         case .current:
-            actionSubject = nil
             actionQueue = nil
         case .threadSafe:
-            actionSubject = PassthroughSubject()
             actionQueue = DispatchQueue(label: "OneWay.Actions.SerialQueue")
-            actionSubject
-                .receive(on: actionQueue)
-                .sink(receiveValue: { [weak self] action in
-                    self?.bufferedActions.append(action)
-                })
-                .store(in: &cancellables)
-            actionSubject
-                .debounce(for: .milliseconds(1), scheduler: actionQueue)
-                .sink(receiveValue: { [weak self] _ in
-                    self?.consume()
-                })
-                .store(in: &cancellables)
         }
 
         bindCancellable = bind()
@@ -103,16 +85,18 @@ open class Way<Action, State> {
     public func send(_ action: Action) {
         switch threadOption {
         case .current:
-            bufferedActions.append(action)
-            guard !isSending else { return }
-            consume()
+            consume(action)
         case .threadSafe:
-            assert(actionSubject != nil, "ActionSubject must be not nil")
-            actionSubject.send(action)
+            actionQueue.async { [action, weak self] in
+                self?.consume(action)
+            }
         }
     }
 
-    private func consume() {
+    private func consume(_ action: Action) {
+        bufferedActions.append(action)
+        guard !isSending else { return }
+
         isSending = true
         var currentState = self.stateSubject.value
         defer {

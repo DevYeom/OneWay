@@ -74,14 +74,23 @@ print(way.currentState.number) // 2
 
 ### Subscribing a Way
 
-When a value changes, it can receive a new value. It guarantees that the same value does not come down consecutively. In general, you don't need to add `removeDuplicates()`.
+When a value changes, it can receive a new value. It guarantees that the same value does not come down consecutively. In general, you don't need to add `removeDuplicates()`. But if you want to receive all values when the way's state changes, use `map` operator to way's publisher.
 
 ```swift
+// number <- 10, 10, 20 ,20
+
 way.publisher.number
     .sink { number in
-        print(number)
+        print(number) // 10, 20
     }
     .store(in: &cancellables)
+
+way.publisher.map(\.number)
+    .sink { number in
+        print(number) // 10, 10, 20, 20
+    }
+    .store(in: &cancellables)
+}
 ```
 
 ### Global States

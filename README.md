@@ -9,7 +9,7 @@
     <img alt="CI" src="https://github.com/DevYeom/OneWay/workflows/CI/badge.svg">
   </a>
   <a href="LICENSE">
-    <img alt="license" src="https://img.shields.io/badge/license-MIT-black.svg">
+    <img alt="license" src="https://img.shields.io/badge/license-MIT-lightgray.svg">
   </a>
 </p>
 
@@ -124,6 +124,7 @@ let threadSafeWay = TestWay(initialState: initialState, threadOption: .threadSaf
 |Swift  |5.5            |
 |Xcode  |13.0           |
 |iOS    |13.0           |
+|macOS  |10.15          |
 
 ## Installation
 

@@ -6,7 +6,7 @@ final class OneWayTests: XCTestCase {
 
     var cancellables = Set<AnyCancellable>()
 
-    func test_consumeSevralActions() throws {
+    func test_consumeSevralActions() {
         let initialValue = TestWay.InitialValue(number: 0, text: "")
         let way = TestWay(initialValue: initialValue)
 
@@ -19,8 +19,8 @@ final class OneWayTests: XCTestCase {
         XCTAssertEqual(way.currentState.number, 2)
     }
 
-    func test_bindGlobalSubjects() throws {
-        let initialValue = TestWay.InitialValue(number: 0, text: "InitialValue")
+    func test_bindGlobalSubjects() {
+        let initialValue = TestWay.InitialValue(number: 0, text: "")
         let way = TestWay(initialValue: initialValue)
 
         globalNumberSubject.send(10)
@@ -36,7 +36,53 @@ final class OneWayTests: XCTestCase {
         XCTAssertEqual(way.currentState.text, "World")
     }
 
-    func testLotsOfSynchronousActions() throws {
+    func test_receiveWithRemovingDuplicates() {
+        let initialValue = TestWay.InitialValue(number: 0, text: "")
+        let way = TestWay(initialValue: initialValue)
+        var numberArray: [Int] = []
+
+        way.publisher.number
+            .sink { number in
+                numberArray.append(number)
+            }
+            .store(in: &cancellables)
+
+        way.send(.saveNumber(10))
+        way.send(.saveNumber(10))
+        way.send(.saveNumber(20))
+        way.send(.saveNumber(20))
+        way.send(.saveNumber(10))
+        way.send(.saveNumber(30))
+        way.send(.saveNumber(30))
+        way.send(.saveNumber(30))
+
+        XCTAssertEqual(numberArray, [0, 10, 20, 10, 30])
+    }
+
+    func test_receiveWithoutRemovingDuplicates() {
+        let initialValue = TestWay.InitialValue(number: 0, text: "")
+        let way = TestWay(initialValue: initialValue)
+        var numberArray: [Int] = []
+
+        way.publisher.map(\.number)
+            .sink { number in
+                numberArray.append(number)
+            }
+            .store(in: &cancellables)
+
+        way.send(.saveNumber(10))
+        way.send(.saveNumber(10))
+        way.send(.saveNumber(20))
+        way.send(.saveNumber(20))
+        way.send(.saveNumber(10))
+        way.send(.saveNumber(30))
+        way.send(.saveNumber(30))
+        way.send(.saveNumber(30))
+
+        XCTAssertEqual(numberArray, [0, 10, 10, 20, 20, 10, 30, 30, 30])
+    }
+
+    func testLotsOfSynchronousActions() {
         final class TestWay: Way<TestWay.Action, TestWay.State> {
             enum Action {
                 case increment
@@ -60,7 +106,7 @@ final class OneWayTests: XCTestCase {
         XCTAssertEqual(way.currentState.number, 100_000)
     }
 
-    func test_threadSafeSendingActions() throws {
+    func test_threadSafeSendingActions() {
         let expectation = expectation(description: "\(#function)")
         let queue = DispatchQueue(label: "OneWay.Actions.ConcurrentQueue", attributes: .concurrent)
         let group = DispatchGroup()
@@ -89,7 +135,7 @@ final class OneWayTests: XCTestCase {
         XCTAssertEqual(way.currentState.number, 30_000)
     }
 
-    func test_AsynchronousSideWaySuccessInMainThread() throws {
+    func test_AsynchronousSideWaySuccessInMainThread() {
         final class TestWay: Way<TestWay.Action, TestWay.State> {
             enum Action {
                 case saveNumber(Int)
@@ -136,7 +182,7 @@ final class OneWayTests: XCTestCase {
         XCTAssertEqual(way.currentState.number, 10)
     }
 
-    func test_AsynchronousSideWayFailure() throws {
+    func test_AsynchronousSideWayFailure() {
         final class TestWay: Way<TestWay.Action, TestWay.State> {
             struct Error: Swift.Error, Equatable {}
 
@@ -196,7 +242,7 @@ private final class TestWay: Way<TestWay.Action, TestWay.State> {
         case saveNumber(Int)
     }
 
-    struct State: Hashable {
+    struct State: Equatable {
         var number: Int
         var text: String
     }

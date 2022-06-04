@@ -40,7 +40,7 @@ open class Way<Action, State> {
     /// Initializes a way from an initial state, threadOption.
     ///
     /// - Parameters:
-    ///   - initialState: The state to start the application in.
+    ///   - initialState: The state to initialize a way.
     ///   - threadOption: The option to determine thread environment. Default value is `current`
     public init(initialState: State, threadOption: ThreadOption = .current) {
         self.initialState = initialState
@@ -62,23 +62,23 @@ open class Way<Action, State> {
             })
     }
 
-    /// Evolves the current state of an application to the next state.
+    /// Evolves the current state of the way to the next state.
     ///
     /// - Parameters:
-    ///   - state: The current state of the application.
-    ///   - action: The action that causes the current state of the application to change.
+    ///   - state: The current state of the way.
+    ///   - action: The action that causes the current state of the way to change.
     open func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
         return .none
     }
 
-    /// Binds the global states to causes the current state of the application to change.
+    /// Binds the global states to causes the current state of the way to change.
     ///
     /// - Returns: A sideWay to deliver an action.
     open func bind() -> SideWay<Action, Never> {
         return .none
     }
 
-    /// Sends an action to a Way.
+    /// Sends an action to the way.
     ///
     /// - Parameters:
     ///   - action: An action to perform `reduce(state:action:)`
@@ -98,10 +98,10 @@ open class Way<Action, State> {
         guard !isSending else { return }
 
         isSending = true
-        var currentState = self.stateSubject.value
+        var currentState = stateSubject.value
         defer {
             isSending = false
-            self.stateSubject.value = currentState
+            stateSubject.value = currentState
         }
 
         while !bufferedActions.isEmpty {
@@ -129,16 +129,17 @@ open class Way<Action, State> {
 
 }
 
-/// A publisher of Way's state.
+/// A publisher of a way's state.
 ///
-/// This pulisher supports dynamic member lookup so that you can pluck out a specific field in the state.
+/// This pulisher supports dynamic member lookup so that you can pluck out a specific field in the
+/// state.
 @dynamicMemberLookup
 public struct WayPublisher<State>: Publisher {
     public typealias Output = State
     public typealias Failure = Never
 
-    public let upstream: AnyPublisher<State, Never>
-    public let way: Any
+    private let upstream: AnyPublisher<State, Never>
+    private let way: Any
 
     internal init<Action>(way: Way<Action, State>) {
         self.way = way
@@ -165,7 +166,9 @@ public struct WayPublisher<State>: Publisher {
         )
     }
 
-    public subscript<LocalState>(dynamicMember keyPath: KeyPath<State, LocalState>) -> WayPublisher<LocalState> where LocalState: Equatable {
+    public subscript<LocalState>(
+        dynamicMember keyPath: KeyPath<State, LocalState>
+    ) -> WayPublisher<LocalState> where LocalState: Equatable {
         WayPublisher<LocalState>(upstream: upstream.map(keyPath).removeDuplicates(), way: way)
     }
 }

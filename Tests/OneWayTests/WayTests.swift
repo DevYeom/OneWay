@@ -2,7 +2,7 @@ import XCTest
 import Combine
 import OneWay
 
-final class OneWayTests: XCTestCase {
+final class WayTests: XCTestCase {
 
     private var cancellables = Set<AnyCancellable>()
 

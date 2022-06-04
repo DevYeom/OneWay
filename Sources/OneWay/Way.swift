@@ -1,9 +1,9 @@
 import Foundation
 import Combine
 
-/// A way represents the path through which data passes. It is the object that can not only be used
-/// in the presentation layer, but can also be used to simplify complex business logic. The basic
-/// concept is to think of each way separately.
+/// The ``Way`` represents the path through which data passes. It is the object that can not only be
+/// used in the presentation layer, but can also be used to simplify complex business logic. The
+/// basic concept is to think of each way separately.
 open class Way<Action, State>: OneWay {
 
     /// The initial state.
@@ -12,13 +12,13 @@ open class Way<Action, State>: OneWay {
     /// The current state.
     public var currentState: State { stateSubject.value }
 
-    /// A publisher that emits when state changes.
+    /// A publisher that emits when the state changes.
     public var publisher: WayPublisher<State> {
         WayPublisher(way: self)
     }
 
     internal var stateSubject: CurrentValueSubject<State, Never>
-    internal var reduceHandler: ((_ state: inout State, _ action:  Action) -> SideWay<Action, Never>)?
+    internal var reduceHandler: ((inout State, Action) -> SideWay<Action, Never>)?
     internal var bindHandler: (() -> SideWay<Action, Never>)? {
         didSet {
             applyBindSubscription()
@@ -130,7 +130,7 @@ open class Way<Action, State>: OneWay {
 
 }
 
-/// A publisher of a way's state.
+/// A publisher of a ``Way``'s state.
 ///
 /// This pulisher supports dynamic member lookup so that you can pluck out a specific field in the
 /// state.

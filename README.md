@@ -36,7 +36,7 @@ final class CounterWay: Way<CounterWay.Action, CounterWay.State> {
         case twice
     }
 
-    struct State: Hashable {
+    struct State: Equatable {
         var number: Int
     }
 
@@ -114,6 +114,16 @@ final class CustomWay: Way<CustomWay.Action, CustomWay.State> {
         )
     }
 // ...
+}
+```
+
+### Supporting NSObject
+
+**Way** is a class, not a protocol. Therefore, multiple inheritance is not possible. There are often situations where you have to inherit NSObject. NSWay was added for this occasion. In this case, inherit and implement NSWay, and in other cases, inherit Way.
+
+```swift
+final class TestWay: NSWay<TestWay.Action, TestWay.State> {
+    // ...
 }
 ```
 

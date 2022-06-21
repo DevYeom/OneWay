@@ -21,7 +21,7 @@ open class Way<Action, State>: AnyWay {
     internal var reduceHandler: ((inout State, Action) -> SideWay<Action, Never>)?
     internal var bindHandler: (() -> SideWay<Action, Never>)? {
         didSet {
-            applyBindSubscription()
+            applyBinding()
         }
     }
 
@@ -40,6 +40,8 @@ open class Way<Action, State>: AnyWay {
     ///   - initialState: The state to initialize a way.
     ///   - threadOption: The option to determine thread environment. Default value is `current`
     public init(initialState: State, threadOption: ThreadOption = .current) {
+        defer { applyBinding() }
+
         self.initialState = initialState
         self.threadOption = threadOption
         self.stateSubject = CurrentValueSubject(initialState)
@@ -50,8 +52,6 @@ open class Way<Action, State>: AnyWay {
         case .threadSafe:
             actionQueue = DispatchQueue(label: "OneWay.Actions.SerialQueue")
         }
-
-        applyBindSubscription()
     }
 
     /// Evolves the current state of the way to the next state.
@@ -74,7 +74,7 @@ open class Way<Action, State>: AnyWay {
     ///
     /// - Parameters:
     ///   - action: An action to perform `reduce(state:action:)`
-    public func send(_ action: Action) {
+    final public func send(_ action: Action) {
         switch threadOption {
         case .current:
             consume(action)
@@ -83,6 +83,14 @@ open class Way<Action, State>: AnyWay {
                 self?.consume(action)
             }
         }
+    }
+
+    /// Reset some properties and subscriptions. This is useful when you need to call `bind()` again.
+    final public func reset() {
+        bufferedActions.removeAll()
+        sideWayCancellables.removeAll()
+        isSending = false
+        applyBinding()
     }
 
     private func consume(_ action: Action) {
@@ -119,7 +127,8 @@ open class Way<Action, State>: AnyWay {
         }
     }
 
-    private func applyBindSubscription() {
+    private func applyBinding() {
+        bindCancellable?.cancel()
         bindCancellable = bind()
             .sink(receiveCompletion: { [weak self] _ in
                 self?.bindCancellable = nil

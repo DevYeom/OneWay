@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-public protocol AnyWay: AnyObject {
+internal protocol AnyWay: AnyObject {
     associatedtype Action
     associatedtype State
 
@@ -12,5 +12,6 @@ public protocol AnyWay: AnyObject {
     func reduce(state: inout State, action: Action) -> SideWay<Action, Never>
     func bind() -> SideWay<Action, Never>
     func send(_ action: Action)
+    func reset()
 }
 

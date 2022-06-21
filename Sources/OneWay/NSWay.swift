@@ -57,4 +57,9 @@ open class NSWay<Action, State>: NSObject, AnyWay {
     public func send(_ action: Action) {
         wrappedValue.send(action)
     }
+
+    /// Reset some properties and subscriptions. This is useful when you need to call `bind()` again.
+    public func reset() {
+        wrappedValue.reset()
+    }
 }

@@ -16,7 +16,14 @@
   </a>
 </p>
 
-**OneWay** is a super simple library for state management with unidirectional data flow. The original inspiration came from [Flux](https://github.com/facebook/flux), [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture), [ReactorKit](https://github.com/ReactorKit/ReactorKit) and many state management [libraries](https://github.com/tnfe/awesome-state). There are no dependencies on third parties, so you can use **OneWay** purely. It can not only be used in the presentation layer (e.g. with View or ViewController), but can also be used to simplify complex business logic (e.g. while the app launches). The basic concept is to think of each way separately.
+**OneWay** is a super simple and lightweight library for state management with unidirectional data flow. The original inspiration came from [Flux](https://github.com/facebook/flux), [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture), [ReactorKit](https://github.com/ReactorKit/ReactorKit) and many state management [libraries](https://github.com/tnfe/awesome-state). It's easy to learn and use. There are no dependencies on third parties, so you can use **OneWay** purely. It can not only be used in the presentation layer (e.g. with View or ViewController), but can also be used to simplify complex business logic (e.g. while the app launches). The basic concept is to think of each way separately.
+
+- [Data Flow](#data-flow)
+- [Usage](#usage)
+- [Benchmark](#benchmark)
+- [Examples](#examples)
+- [Requirements](#requirements)
+- [Installation](#installation)
 
 ## Data Flow
 
@@ -136,6 +143,22 @@ final class TestWay: NSWay<TestWay.Action, TestWay.State> {
 let way = TestWay(initialState: initialState, threadOption: .current)
 let threadSafeWay = TestWay(initialState: initialState, threadOption: .threadSafe)
 ```
+
+## Benchmark
+
+Compared to other libraries, **OneWay** shows very good performance. In particular, the usage is very similar to [ReactorKit](https://github.com/ReactorKit/ReactorKit), so it is easy to use, but it is about 10 times faster.
+
+For more details, 👉 [OneWayBenchmark](https://github.com/DevYeom/OneWayBenchmark)
+
+> Lower is better
+
+<img src="https://github.com/DevYeom/OneWayBenchmark/blob/main/Resources/benchmark_220622_1.png" alt="Benchmark1"/>
+
+<img src="https://github.com/DevYeom/OneWayBenchmark/blob/main/Resources/benchmark_220622_2.png" alt="Benchmark2"/>
+
+## Examples
+
+- [OneWayExample](https://github.com/DevYeom/OneWayExample)
 
 ## Requirements
 

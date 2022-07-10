@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Kind</key>
+	<string>Xcode.IDEFoundation.TextSubstitutionFileTemplateKind</string>
+	<key>Description</key>
+	<string>An empty OneWay Files.</string>
+	<key>Summary</key>
+	<string>An empty OneWay Files.</string>
+	<key>SortOrder</key>
+	<string>30</string>
+	<key>AllowedTypes</key>
+	<array>
+		<string>public.swift-source</string>
+	</array>
+	<key>DefaultCompletionName</key>
+	<string>OneWay</string>
+	<key>OneWayViewTemplate</key>
+	<string>___FILEBASENAME___ViewController.swift</string>
+	<key>Options</key>
+	<array>
+		<dict>
+			<key>Identifier</key>
+			<string>productName</string>
+			<key>Required</key>
+			<string>true</string>
+			<key>Name</key>
+			<string>OneWay name:</string>
+			<key>Description</key>
+			<string>The name of theOneWay to create</string>
+			<key>Type</key>
+			<string>text</string>
+			<key>NotPersisted</key>
+			<string>true</string>
+		</dict>
+		<dict>
+			<key>Identifier</key>
+			<string>subclass</string>
+			<key>Name</key>
+			<string>Subclass of</string>
+			<key>Default</key>
+			<string>UIViewController</string>
+			<key>Type</key>
+			<string>popup</string>
+			<key>Values</key>
+			<array>
+				<string>UIViewController</string>
+				<string>NSViewController</string>
+				<string>SwiftUI View</string>
+			</array>
+		</dict>
+		<dict>
+			<key>Identifier</key>
+			<string>storyboard</string>
+			<key>Required</key>
+			<string>true</string>
+			<key>Name</key>
+			<string>Add Storyboard File</string>
+			<key>Description</key>
+			<string>Whether this OneWay contains a corresponding view with Storyboard</string>
+			<key>Type</key>
+			<string>checkbox</string>
+			<key>Default</key>
+			<string>false</string>
+			<key>NotPersisted</key>
+			<string>1</string>
+			<key>RequiredOptions</key>
+			<dict>
+				<key>subclass</key>
+				<array>
+					<string>UIViewController</string>
+					<string>NSViewController</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+</dict>
+</plist>

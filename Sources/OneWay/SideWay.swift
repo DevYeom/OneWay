@@ -40,6 +40,12 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         )
     }
 
+    /// A sideWay that does nothing and completes immediately. Useful for situations where you must
+    /// return a sideWay, but you don't need to do anything.
+    public static var none: SideWay {
+        Empty(completeImmediately: true).eraseToSideWay()
+    }
+
     /// Transforms all elements from the upstream sideWay with a provided closure.
     ///
     /// - Parameter transform: A closure that transforms the upstream sideWay's output to a new
@@ -55,14 +61,8 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     /// A sideWay that immediately emits the value passed in.
     public static func just(
         _ value: Output
-    ) -> SideWay {
+    ) -> Self {
         self.init(Just(value).setFailureType(to: Failure.self))
-    }
-
-    /// A sideWay that does nothing and completes immediately. Useful for situations where you must
-    /// return a sideWay, but you don't need to do anything.
-    public static var none: SideWay {
-        Empty(completeImmediately: true).eraseToSideWay()
     }
 
     /// Concatenates a variadic list of sideWays together into a single sideWay, which runs the
@@ -72,7 +72,7 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     /// - Returns: A new sideWay
     public static func concat(
         _ sideWays: SideWay...
-    ) -> SideWay {
+    ) -> Self {
         .concat(sideWays)
     }
 
@@ -83,7 +83,7 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     /// - Returns: A new sideWay
     public static func concat<C: Collection>(
         _ sideWays: C
-    ) -> SideWay where C.Element == SideWay {
+    ) -> Self where C.Element == SideWay {
         guard let first = sideWays.first else { return .none }
         return sideWays
             .dropFirst()
@@ -99,7 +99,7 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     /// - Returns: A new sideWay
     public static func merge(
         _ sideWays: SideWay...
-    ) -> SideWay {
+    ) -> Self {
         .merge(sideWays)
     }
 
@@ -110,7 +110,7 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     /// - Returns: A new sideWay
     public static func merge<S: Sequence>(
         _ sideWays: S
-    ) -> SideWay where S.Element == SideWay {
+    ) -> Self where S.Element == SideWay {
         Publishers.MergeMany(sideWays).eraseToSideWay()
     }
 
@@ -120,7 +120,7 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     ///   used to feed it `Result<Output, Failure>` values.
     public static func future(
         _ result: @escaping (@escaping (Result<Output, Failure>) -> Void) -> Void
-    ) -> SideWay {
+    ) -> Self {
       Deferred { Future(result) }.eraseToSideWay()
     }
 }

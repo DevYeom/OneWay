@@ -21,7 +21,10 @@ open class NSWay<Action, State>: NSObject, AnyWay {
     /// - Parameters:
     ///   - initialState: The state to initialize a way.
     ///   - threadOption: The option to determine thread environment. Default value is `current`
-    public init(initialState: State, threadOption: ThreadOption = .current) {
+    public init(
+        initialState: State,
+        threadOption: ThreadOption = .current
+    ) {
         self.wrappedValue = Way(initialState: initialState, threadOption: threadOption)
         super.init()
         self.wrappedValue.reduceHandler = { [weak self] state, action in
@@ -39,7 +42,10 @@ open class NSWay<Action, State>: NSObject, AnyWay {
     /// - Parameters:
     ///   - state: The current state of the way.
     ///   - action: The action that causes the current state of the way to change.
-    open func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
+    open func reduce(
+        state: inout State,
+        action: Action
+    ) -> SideWay<Action, Never> {
         return .none
     }
 
@@ -54,7 +60,9 @@ open class NSWay<Action, State>: NSObject, AnyWay {
     ///
     /// - Parameters:
     ///   - action: An action to perform `reduce(state:action:)`
-    public func send(_ action: Action) {
+    public func send(
+        _ action: Action
+    ) {
         wrappedValue.send(action)
     }
 

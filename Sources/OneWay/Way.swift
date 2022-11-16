@@ -39,7 +39,10 @@ open class Way<Action, State>: AnyWay {
     /// - Parameters:
     ///   - initialState: The state to initialize a way.
     ///   - threadOption: The option to determine thread environment. Default value is `current`
-    public init(initialState: State, threadOption: ThreadOption = .current) {
+    public init(
+        initialState: State,
+        threadOption: ThreadOption = .current
+    ) {
         defer { applyBinding() }
 
         self.initialState = initialState
@@ -59,7 +62,10 @@ open class Way<Action, State>: AnyWay {
     /// - Parameters:
     ///   - state: The current state of the way.
     ///   - action: The action that causes the current state of the way to change.
-    open func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
+    open func reduce(
+        state: inout State,
+        action: Action
+    ) -> SideWay<Action, Never> {
         return reduceHandler?(&state, action) ?? .none
     }
 
@@ -74,7 +80,9 @@ open class Way<Action, State>: AnyWay {
     ///
     /// - Parameters:
     ///   - action: An action to perform `reduce(state:action:)`
-    final public func send(_ action: Action) {
+    final public func send(
+        _ action: Action
+    ) {
         switch threadOption {
         case .current:
             consume(action)
@@ -93,7 +101,9 @@ open class Way<Action, State>: AnyWay {
         applyBinding()
     }
 
-    private func consume(_ action: Action) {
+    private func consume(
+        _ action: Action
+    ) {
         bufferedActions.append(action)
         guard !isSending else { return }
 
@@ -112,7 +122,7 @@ open class Way<Action, State>: AnyWay {
             let uuid = UUID()
             let sideWayCancellable = sideWay
                 .sink(
-                    receiveCompletion: { [uuid, weak self] _ in
+                    receiveCompletion: { [weak self, uuid] _ in
                         didComplete = true
                         self?.sideWayCancellables[uuid] = nil
                     },
@@ -151,19 +161,24 @@ public struct WayPublisher<State>: Publisher {
     private let upstream: AnyPublisher<State, Never>
     private let way: Any
 
-    internal init<Action>(way: Way<Action, State>) {
+    internal init<Action>(
+        way: Way<Action, State>
+    ) {
         self.way = way
         self.upstream = way.stateSubject.eraseToAnyPublisher()
     }
 
-    private init<P>(upstream: P, way: Any)
-    where P: Publisher, Failure == P.Failure, Output == P.Output {
+    private init<P>(
+        upstream: P,
+        way: Any
+    ) where P: Publisher, Failure == P.Failure, Output == P.Output {
         self.upstream = upstream.eraseToAnyPublisher()
         self.way = way
     }
 
-    public func receive<S>(subscriber: S)
-    where S: Subscriber, Failure == S.Failure, Output == S.Input {
+    public func receive<S>(
+        subscriber: S
+    ) where S: Subscriber, Failure == S.Failure, Output == S.Input {
         self.upstream.subscribe(
             AnySubscriber(
                 receiveSubscription: subscriber.receive(subscription:),

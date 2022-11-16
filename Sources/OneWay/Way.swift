@@ -4,7 +4,7 @@ import Combine
 /// The ``Way`` represents the path through which data passes. It is the object that can not only be
 /// used in the presentation layer, but can also be used to simplify complex business logic. The
 /// basic concept is to think of each way separately.
-open class Way<Action, State>: AnyWay {
+open class Way<Action, State>: AnyWay where State: Equatable {
 
     /// The initial state.
     public let initialState: State

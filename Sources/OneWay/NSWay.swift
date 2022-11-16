@@ -2,7 +2,7 @@ import Foundation
 
 /// The ``NSWay`` is useful when NSObject must be inherited. Since ``Way`` is a class, multiple
 /// inheritance is not possible. To solve this problem, it is made by wrapping the ``Way``.
-open class NSWay<Action, State>: NSObject, AnyWay {
+open class NSWay<Action, State>: NSObject, AnyWay where State: Equatable {
 
     /// A wrapped way that has an actual implementation.
     private let wrappedValue: Way<Action, State>

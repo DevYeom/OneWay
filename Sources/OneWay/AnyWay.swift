@@ -3,7 +3,7 @@ import Combine
 
 internal protocol AnyWay: AnyObject {
     associatedtype Action
-    associatedtype State
+    associatedtype State: Equatable
 
     var initialState: State { get }
     var currentState: State { get }

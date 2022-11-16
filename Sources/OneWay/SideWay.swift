@@ -43,7 +43,8 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     /// A sideWay that does nothing and completes immediately. Useful for situations where you must
     /// return a sideWay, but you don't need to do anything.
     public static var none: SideWay {
-        Empty(completeImmediately: true).eraseToSideWay()
+        Empty(completeImmediately: true)
+            .eraseToSideWay()
     }
 
     /// Transforms all elements from the upstream sideWay with a provided closure.
@@ -88,7 +89,9 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         return sideWays
             .dropFirst()
             .reduce(into: first) { sideWays, sideWay in
-                sideWays = sideWays.append(sideWay).eraseToSideWay()
+                sideWays = sideWays
+                    .append(sideWay)
+                    .eraseToSideWay()
             }
     }
 
@@ -111,7 +114,8 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     public static func merge<S: Sequence>(
         _ sideWays: S
     ) -> Self where S.Element == SideWay {
-        Publishers.MergeMany(sideWays).eraseToSideWay()
+        Publishers.MergeMany(sideWays)
+            .eraseToSideWay()
     }
 
     /// Creates a sideWay that can supply a single value asynchronously in the future.
@@ -121,8 +125,69 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     public static func future(
         _ result: @escaping (@escaping (Result<Output, Failure>) -> Void) -> Void
     ) -> Self {
-      Deferred { Future(result) }.eraseToSideWay()
+        Deferred { Future(result) }
+            .eraseToSideWay()
     }
+
+#if canImport(_Concurrency)
+    public static func async(
+        priority: TaskPriority? = nil,
+        operation: @escaping @Sendable () async -> Output
+    ) -> Self where Failure == Never {
+        var task: Task<Void, Never>?
+        return .future { promise in
+            task = Task(
+                priority: priority,
+                operation: { @MainActor in
+                    guard !Task.isCancelled else { return }
+                    let output = await operation()
+                    guard !Task.isCancelled else { return }
+                    promise(.success(output))
+                }
+            )
+        }
+        .handleEvents(receiveCancel: { task?.cancel() })
+        .eraseToSideWay()
+    }
+
+    public static func async(
+        priority: TaskPriority? = nil,
+        operation: @escaping @Sendable () async throws -> Output
+    ) -> Self where Failure == Error {
+        Deferred<Publishers.HandleEvents<PassthroughSubject<Output, Failure>>> {
+            let subject = PassthroughSubject<Output, Failure>()
+            let task = Task(
+                priority: priority,
+                operation: { @MainActor in
+                    do {
+                        try Task.checkCancellation()
+                        let output = try await operation()
+                        try Task.checkCancellation()
+                        subject.send(output)
+                        subject.send(completion: .finished)
+                    } catch is CancellationError {
+                        subject.send(completion: .finished)
+                    } catch {
+                        subject.send(completion: .failure(error))
+                    }
+                }
+            )
+            return subject.handleEvents(receiveCancel: task.cancel)
+        }
+        .eraseToSideWay()
+    }
+
+    public static func asyncEmpty(
+        priority: TaskPriority? = nil,
+        _ operation: @escaping @Sendable () async throws -> Void
+    ) -> Self {
+        SideWay<Void, Never>.async(
+            priority: priority,
+            operation: { try? await operation() }
+        )
+        .empty()
+    }
+#endif
 }
 
 extension Publisher {
@@ -171,6 +236,12 @@ extension Publisher {
         _ value: Output
     ) -> SideWay<Output, Never> {
         self.catch { _ in Just(value) }
+            .eraseToSideWay()
+    }
+
+    public func empty<EmptyOutput, EmptyFailure>() -> SideWay<EmptyOutput, EmptyFailure> {
+        self.flatMap { _ in Empty<EmptyOutput, Failure>() }
+            .catch { _ in Empty() }
             .eraseToSideWay()
     }
 }

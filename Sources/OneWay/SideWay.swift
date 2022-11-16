@@ -15,20 +15,24 @@ public struct SideWay<Output, Failure: Error>: Publisher {
 
     /// Initializes a sideWay that wraps a publisher. Each emission of the wrapped publisher will be
     /// emitted by the sideWay.
-    public init<P: Publisher>(_ publisher: P)
-    where P.Output == Output, P.Failure == Failure {
+    public init<P: Publisher>(
+        _ publisher: P
+    ) where P.Output == Output, P.Failure == Failure {
         self.upstream = publisher.eraseToAnyPublisher()
     }
 
-    public func receive<S>(subscriber: S)
-    where S: Combine.Subscriber, Failure == S.Failure, Output == S.Input {
+    public func receive<S>(
+        subscriber: S
+    ) where S: Combine.Subscriber, Failure == S.Failure, Output == S.Input {
         self.upstream.subscribe(subscriber)
     }
 
     /// Initializes a sideWay that immediately fails with the error passed in.
     ///
     /// - Parameter error: The error that is immediately emitted by the sideWay.
-    public init(error: Failure) {
+    public init(
+        error: Failure
+    ) {
         self.init(
             Deferred {
                 Future { $0(.failure(error)) }
@@ -42,12 +46,16 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     ///   output.
     /// - Returns: A publisher that uses the provided closure to map elements from the upstream
     ///   sideWay to new elements that it then publishes.
-    public func map<T>(_ transform: @escaping (Output) -> T) -> SideWay<T, Failure> {
+    public func map<T>(
+        _ transform: @escaping (Output) -> T
+    ) -> SideWay<T, Failure> {
         .init(self.map(transform) as Publishers.Map<Self, T>)
     }
 
     /// A sideWay that immediately emits the value passed in.
-    public static func just(_ value: Output) -> SideWay {
+    public static func just(
+        _ value: Output
+    ) -> SideWay {
         self.init(Just(value).setFailureType(to: Failure.self))
     }
 
@@ -62,7 +70,9 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     ///
     /// - Parameter sideWays: A variadic list of sideWays.
     /// - Returns: A new sideWay
-    public static func concat(_ sideWays: SideWay...) -> SideWay {
+    public static func concat(
+        _ sideWays: SideWay...
+    ) -> SideWay {
         .concat(sideWays)
     }
 
@@ -71,7 +81,9 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     ///
     /// - Parameter sideWays: A collection of sideWays.
     /// - Returns: A new sideWay
-    public static func concat<C: Collection>(_ sideWays: C) -> SideWay where C.Element == SideWay {
+    public static func concat<C: Collection>(
+        _ sideWays: C
+    ) -> SideWay where C.Element == SideWay {
         guard let first = sideWays.first else { return .none }
         return sideWays
             .dropFirst()
@@ -85,7 +97,9 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     ///
     /// - Parameter sideWays: A list of sideWays.
     /// - Returns: A new sideWay
-    public static func merge(_ sideWays: SideWay...) -> SideWay {
+    public static func merge(
+        _ sideWays: SideWay...
+    ) -> SideWay {
         .merge(sideWays)
     }
 
@@ -94,7 +108,9 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     ///
     /// - Parameter sideWays: A sequence of sideWays.
     /// - Returns: A new sideWay
-    public static func merge<S: Sequence>(_ sideWays: S) -> SideWay where S.Element == SideWay {
+    public static func merge<S: Sequence>(
+        _ sideWays: S
+    ) -> SideWay where S.Element == SideWay {
         Publishers.MergeMany(sideWays).eraseToSideWay()
     }
 
@@ -116,7 +132,9 @@ extension Publisher {
     }
 
     /// Turns any publisher into a ``SideWay`` with trasfroming.
-    public func eraseToSideWay<T>(_ transform: @escaping (Output) -> T) -> SideWay<T, Failure> {
+    public func eraseToSideWay<T>(
+        _ transform: @escaping (Output) -> T
+    ) -> SideWay<T, Failure> {
         self.map(transform)
             .eraseToSideWay()
     }
@@ -149,7 +167,9 @@ extension Publisher {
     }
 
     /// Turns any publisher into a ``SideWay`` that return value instead of an error.
-    public func catchToReturn(_ value: Output) -> SideWay<Output, Never> {
+    public func catchToReturn(
+        _ value: Output
+    ) -> SideWay<Output, Never> {
         self.catch { _ in Just(value) }
             .eraseToSideWay()
     }

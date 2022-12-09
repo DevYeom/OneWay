@@ -4,12 +4,7 @@ import OneWay
 
 final class WayTests: XCTestCase {
 
-    private var way: TestWay!
     private var cancellables = Set<AnyCancellable>()
-
-    override func setUp() {
-        way = TestWay(initialState: .init(number: 0, text: ""))
-    }
 
     func test_initialState() {
         let way = TestWay(initialState: .init(number: 10, text: "Hello"))
@@ -22,6 +17,8 @@ final class WayTests: XCTestCase {
     }
 
     func test_consumeSeveralActions() {
+        let way = TestWay(initialState: .init(number: 0, text: ""))
+
         way.send(.increment)
         way.send(.increment)
         way.send(.decrement)
@@ -32,6 +29,8 @@ final class WayTests: XCTestCase {
     }
 
     func test_bindGlobalSubjects() {
+        let way = TestWay(initialState: .init(number: 0, text: ""))
+
         globalNumberSubject.send(10)
         XCTAssertEqual(way.currentState.number, 10)
         globalNumberSubject.send(20)
@@ -46,6 +45,7 @@ final class WayTests: XCTestCase {
     }
 
     func test_receiveWithRemovingDuplicates() {
+        let way = TestWay(initialState: .init(number: 0, text: ""))
         var numberArray: [Int] = []
 
         way.publisher.number
@@ -67,6 +67,7 @@ final class WayTests: XCTestCase {
     }
 
     func test_receiveWithoutRemovingDuplicates() {
+        let way = TestWay(initialState: .init(number: 0, text: ""))
         var numberArray: [Int] = []
 
         way.publisher.map(\.number)
@@ -88,6 +89,7 @@ final class WayTests: XCTestCase {
     }
 
     func test_lotsOfSynchronousActions() {
+        let way = TestWay(initialState: .init(number: 0, text: ""))
         way.send(.incrementMany)
         XCTAssertEqual(way.currentState.number, 100_000)
     }
@@ -124,6 +126,8 @@ final class WayTests: XCTestCase {
     }
 
     func test_asynchronousSideWaySuccessInMainThread() {
+        let way = TestWay(initialState: .init(number: 0, text: ""))
+
         way.publisher.number
             .sink { _ in
                 XCTAssertTrue(Thread.isMainThread)
@@ -139,6 +143,7 @@ final class WayTests: XCTestCase {
     }
 
     func test_asynchronousSideWayFailure() {
+        let way = TestWay(initialState: .init(number: 0, text: ""))
         way.send(.fetchDelayedNumberWithError)
         XCTAssertEqual(way.currentState.number, 0)
 
@@ -148,91 +153,3 @@ final class WayTests: XCTestCase {
     }
 
 }
-
-private let globalTextSubject = PassthroughSubject<String, Never>()
-private let globalNumberSubject = PassthroughSubject<Int, Never>()
-
-private final class TestWay: Way<TestWay.Action, TestWay.State> {
-
-    enum Action {
-        case increment
-        case incrementMany
-        case decrement
-        case twice
-        case saveText(String)
-        case saveNumber(Int)
-        case fetchDelayedNumber
-        case fetchDelayedNumberWithError
-    }
-
-    struct State: Equatable {
-        var number: Int
-        var text: String
-    }
-
-    override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
-        switch action {
-        case .increment:
-            state.number += 1
-            return .none
-        case .incrementMany:
-            state.number += 1
-            return state.number >= 100_000 ? .none : .just(.incrementMany)
-        case .decrement:
-            state.number -= 1
-            return .none
-        case .twice:
-            return .concat(
-                .just(.increment),
-                .just(.increment)
-            )
-        case .saveText(let text):
-            state.text = text
-            return .none
-        case .saveNumber(let number):
-            state.number = number
-            return .none
-        case .fetchDelayedNumber:
-            return SideWay<Int, Never>
-                .future { result in
-                    DispatchQueue.global().asyncAfter(
-                        deadline: .now() + .milliseconds(100),
-                        execute: {
-                            result(.success(10))
-                            result(.success(20))
-                        }
-                    )
-                }
-                .receive(on: DispatchQueue.main)
-                .map({ Action.saveNumber($0) })
-                .eraseToSideWay()
-        case .fetchDelayedNumberWithError:
-            return SideWay<Int, Error>
-                .future { result in
-                    DispatchQueue.global().asyncAfter(
-                        deadline: .now() + .milliseconds(100),
-                        execute: {
-                            result(.failure(WayError()))
-                        }
-                    )
-                }
-                .map({ Action.saveNumber($0) })
-                .catchToReturn(Action.saveNumber(-1))
-                .eraseToSideWay()
-        }
-    }
-
-    override func bind() -> SideWay<Action, Never> {
-        return .merge(
-            globalTextSubject
-                .map({ Action.saveText($0) })
-                .eraseToSideWay(),
-            globalNumberSubject
-                .map({ Action.saveNumber($0) })
-                .eraseToSideWay()
-        )
-    }
-
-}
-
-private struct WayError: Error { }

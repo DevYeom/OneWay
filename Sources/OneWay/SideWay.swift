@@ -239,7 +239,10 @@ extension Publisher {
             .eraseToSideWay()
     }
 
-    public func empty<EmptyOutput, EmptyFailure>() -> SideWay<EmptyOutput, EmptyFailure> {
+    public func empty<EmptyOutput, EmptyFailure>(
+        outputType: EmptyOutput.Type = EmptyOutput.self,
+        failureType: EmptyFailure.Type = EmptyFailure.self
+    ) -> SideWay<EmptyOutput, EmptyFailure> {
         self.flatMap { _ in Empty<EmptyOutput, Failure>() }
             .catch { _ in Empty() }
             .eraseToSideWay()

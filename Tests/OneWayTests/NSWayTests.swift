@@ -23,7 +23,7 @@ final class NSWayTests: XCTestCase {
         XCTAssertEqual(way.initialState.text, "Hello")
     }
 
-    func test_consumeSevralActions() {
+    func test_consumeSeveralActions() {
         let way = TestNSWay(initialState: .init(number: 0, text: ""))
 
         way.send(.increment)
@@ -95,8 +95,13 @@ final class NSWayTests: XCTestCase {
         XCTAssertEqual(numberArray, [0, 10, 10, 20, 20, 10, 30, 30, 30])
     }
 
+    func test_lotsOfSynchronousActions() {
+        let way = TestNSWay(initialState: .init(number: 0, text: ""))
+        way.send(.incrementMany)
+        XCTAssertEqual(way.currentState.number, 100_000)
+    }
+
     func test_threadSafeSendingActions() {
-        let expectation = expectation(description: "\(#function)")
         let queue = DispatchQueue(label: "OneWay.Actions.ConcurrentQueue", attributes: .concurrent)
         let group = DispatchGroup()
         let way = TestNSWay(
@@ -122,60 +127,36 @@ final class NSWayTests: XCTestCase {
             }
         }
 
-        wait(seconds: 1, expectation: expectation, queue: queue)
+        let expectation = expectation(description: "\(#function)")
+        wait(seconds: 5, expectation: expectation, queue: queue)
         XCTAssertEqual(way.currentState.number, 30_000)
     }
 
-}
+    func test_asynchronousSideWaySuccessInMainThread() {
+        let way = TestNSWay(initialState: .init(number: 0, text: ""))
 
-private let globalTextSubject = PassthroughSubject<String, Never>()
-private let globalNumberSubject = PassthroughSubject<Int, Never>()
+        way.publisher.number
+            .sink { _ in
+                XCTAssertTrue(Thread.isMainThread)
+            }
+            .store(in: &cancellables)
 
-private final class TestNSWay: NSWay<TestNSWay.Action, TestNSWay.State> {
+        way.send(.fetchDelayedNumber)
+        XCTAssertEqual(way.currentState.number, 0)
 
-    enum Action {
-        case increment
-        case decrement
-        case twice
-        case saveText(String)
-        case saveNumber(Int)
+        let expectation = expectation(description: "\(#function)")
+        wait(milliseconds: 200, expectation: expectation)
+        XCTAssertEqual(way.currentState.number, 10)
     }
 
-    struct State: Equatable {
-        var number: Int
-        var text: String
+    func test_asynchronousSideWayFailure() {
+        let way = TestNSWay(initialState: .init(number: 0, text: ""))
+        way.send(.fetchDelayedNumberWithError)
+        XCTAssertEqual(way.currentState.number, 0)
+
+        let expectation = expectation(description: "\(#function)")
+        wait(milliseconds: 200, expectation: expectation)
+        XCTAssertEqual(way.currentState.number, -1)
     }
 
-    override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
-        switch action {
-        case .increment:
-            state.number += 1
-            return .none
-        case .decrement:
-            state.number -= 1
-            return .none
-        case .twice:
-            return .concat(
-                .just(.increment),
-                .just(.increment)
-            )
-        case .saveText(let text):
-            state.text = text
-            return .none
-        case .saveNumber(let number):
-            state.number = number
-            return .none
-        }
-    }
-
-    override func bind() -> SideWay<Action, Never> {
-        return .merge(
-            globalTextSubject
-                .map({ Action.saveText($0) })
-                .eraseToSideWay(),
-            globalNumberSubject
-                .map({ Action.saveNumber($0) })
-                .eraseToSideWay()
-        )
-    }
 }

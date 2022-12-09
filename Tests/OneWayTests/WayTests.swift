@@ -4,7 +4,12 @@ import OneWay
 
 final class WayTests: XCTestCase {
 
+    private var way: TestWay!
     private var cancellables = Set<AnyCancellable>()
+
+    override func setUp() {
+        way = TestWay(initialState: .init(number: 0, text: ""))
+    }
 
     func test_initialState() {
         let way = TestWay(initialState: .init(number: 10, text: "Hello"))
@@ -16,9 +21,7 @@ final class WayTests: XCTestCase {
         XCTAssertEqual(way.initialState.text, "Hello")
     }
 
-    func test_consumeSevralActions() {
-        let way = TestWay(initialState: .init(number: 0, text: ""))
-
+    func test_consumeSeveralActions() {
         way.send(.increment)
         way.send(.increment)
         way.send(.decrement)
@@ -29,8 +32,6 @@ final class WayTests: XCTestCase {
     }
 
     func test_bindGlobalSubjects() {
-        let way = TestWay(initialState: .init(number: 0, text: ""))
-
         globalNumberSubject.send(10)
         XCTAssertEqual(way.currentState.number, 10)
         globalNumberSubject.send(20)
@@ -45,7 +46,6 @@ final class WayTests: XCTestCase {
     }
 
     func test_receiveWithRemovingDuplicates() {
-        let way = TestWay(initialState: .init(number: 0, text: ""))
         var numberArray: [Int] = []
 
         way.publisher.number
@@ -67,7 +67,6 @@ final class WayTests: XCTestCase {
     }
 
     func test_receiveWithoutRemovingDuplicates() {
-        let way = TestWay(initialState: .init(number: 0, text: ""))
         var numberArray: [Int] = []
 
         way.publisher.map(\.number)
@@ -88,32 +87,12 @@ final class WayTests: XCTestCase {
         XCTAssertEqual(numberArray, [0, 10, 10, 20, 20, 10, 30, 30, 30])
     }
 
-    func testLotsOfSynchronousActions() {
-        final class TestWay: Way<TestWay.Action, TestWay.State> {
-            enum Action {
-                case increment
-            }
-
-            struct State: Equatable {
-                var number: Int
-            }
-
-            override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
-                switch action {
-                case .increment:
-                    state.number += 1
-                    return state.number >= 100_000 ? .none : .just(.increment)
-                }
-            }
-        }
-
-        let way = TestWay(initialState: .init(number: 0))
-        way.send(.increment)
+    func test_lotsOfSynchronousActions() {
+        way.send(.incrementMany)
         XCTAssertEqual(way.currentState.number, 100_000)
     }
 
     func test_threadSafeSendingActions() {
-        let expectation = expectation(description: "\(#function)")
         let queue = DispatchQueue(label: "OneWay.Actions.ConcurrentQueue", attributes: .concurrent)
         let group = DispatchGroup()
         let way = TestWay(
@@ -139,95 +118,35 @@ final class WayTests: XCTestCase {
             }
         }
 
-        wait(seconds: 1, expectation: expectation, queue: queue)
-        XCTAssertEqual(way.currentState.number, 30_000)
+        let expectation = expectation(description: "\(#function)")
+        wait(seconds: 5, expectation: expectation, queue: queue)
+        XCTAssertEqual(way.state.number, 30_000)
     }
 
-    func test_AsynchronousSideWaySuccessInMainThread() {
-        final class TestWay: Way<TestWay.Action, TestWay.State> {
-            enum Action {
-                case saveNumber(Int)
-                case fetchRemoteNumber
-            }
-
-            struct State: Equatable {
-                var number: Int
-            }
-
-            override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
-                switch action {
-                case .saveNumber(let number):
-                    state.number = number
-                    return .none
-                case .fetchRemoteNumber:
-                    return SideWay<Int, Never>
-                        .future { result in
-                            DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(100)) {
-                                result(.success(10))
-                                result(.success(20))
-                            }
-                        }
-                        .receive(on: DispatchQueue.main)
-                        .map({ Action.saveNumber($0) })
-                        .eraseToSideWay()
-                }
-            }
-        }
-
-        let expectation = expectation(description: "\(#function)")
-        let way = TestWay(initialState: .init(number: 0))
-
+    func test_asynchronousSideWaySuccessInMainThread() {
         way.publisher.number
             .sink { _ in
                 XCTAssertTrue(Thread.isMainThread)
             }
             .store(in: &cancellables)
 
-        way.send(.fetchRemoteNumber)
+        way.send(.fetchDelayedNumber)
         XCTAssertEqual(way.currentState.number, 0)
+
+        let expectation = expectation(description: "\(#function)")
         wait(milliseconds: 200, expectation: expectation)
         XCTAssertEqual(way.currentState.number, 10)
     }
 
-    func test_AsynchronousSideWayFailure() {
-        final class TestWay: Way<TestWay.Action, TestWay.State> {
-            struct Error: Swift.Error, Equatable {}
-
-            enum Action {
-                case saveNumber(Int)
-                case fetchRemoteNumber
-            }
-
-            struct State: Equatable {
-                var number: Int
-            }
-
-            override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
-                switch action {
-                case .saveNumber(let number):
-                    state.number = number
-                    return .none
-                case .fetchRemoteNumber:
-                    return SideWay<Int, Error>
-                        .future { result in
-                            DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(100)) {
-                                result(.failure(Error()))
-                            }
-                        }
-                        .eraseToSideWay({ Action.saveNumber($0) })
-                        .catchToReturn(Action.saveNumber(-1))
-                }
-            }
-        }
+    func test_asynchronousSideWayFailure() {
+        way.send(.fetchDelayedNumberWithError)
+        XCTAssertEqual(way.currentState.number, 0)
 
         let expectation = expectation(description: "\(#function)")
-        let way = TestWay(initialState: .init(number: 0))
-
-        way.send(.fetchRemoteNumber)
-        XCTAssertEqual(way.currentState.number, 0)
         wait(milliseconds: 200, expectation: expectation)
         XCTAssertEqual(way.currentState.number, -1)
     }
+
 }
 
 private let globalTextSubject = PassthroughSubject<String, Never>()
@@ -237,10 +156,13 @@ private final class TestWay: Way<TestWay.Action, TestWay.State> {
 
     enum Action {
         case increment
+        case incrementMany
         case decrement
         case twice
         case saveText(String)
         case saveNumber(Int)
+        case fetchDelayedNumber
+        case fetchDelayedNumberWithError
     }
 
     struct State: Equatable {
@@ -253,6 +175,9 @@ private final class TestWay: Way<TestWay.Action, TestWay.State> {
         case .increment:
             state.number += 1
             return .none
+        case .incrementMany:
+            state.number += 1
+            return state.number >= 100_000 ? .none : .just(.incrementMany)
         case .decrement:
             state.number -= 1
             return .none
@@ -267,6 +192,33 @@ private final class TestWay: Way<TestWay.Action, TestWay.State> {
         case .saveNumber(let number):
             state.number = number
             return .none
+        case .fetchDelayedNumber:
+            return SideWay<Int, Never>
+                .future { result in
+                    DispatchQueue.global().asyncAfter(
+                        deadline: .now() + .milliseconds(100),
+                        execute: {
+                            result(.success(10))
+                            result(.success(20))
+                        }
+                    )
+                }
+                .receive(on: DispatchQueue.main)
+                .map({ Action.saveNumber($0) })
+                .eraseToSideWay()
+        case .fetchDelayedNumberWithError:
+            return SideWay<Int, Error>
+                .future { result in
+                    DispatchQueue.global().asyncAfter(
+                        deadline: .now() + .milliseconds(100),
+                        execute: {
+                            result(.failure(WayError()))
+                        }
+                    )
+                }
+                .map({ Action.saveNumber($0) })
+                .catchToReturn(Action.saveNumber(-1))
+                .eraseToSideWay()
         }
     }
 
@@ -280,4 +232,7 @@ private final class TestWay: Way<TestWay.Action, TestWay.State> {
                 .eraseToSideWay()
         )
     }
+
 }
+
+private struct WayError: Error { }

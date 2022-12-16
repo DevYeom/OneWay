@@ -4,7 +4,7 @@ import Combine
 /// The ``Way`` represents the path through which data passes. It is the object that can not only be
 /// used in the presentation layer, but can also be used to simplify complex business logic. The
 /// basic concept is to think of each way separately.
-open class Way<Action, State>: AnyWay where State: Equatable {
+open class Way<Action, State>: AnyWay, ObservableObject where State: Equatable {
 
     /// The initial state.
     public let initialState: State
@@ -21,7 +21,7 @@ open class Way<Action, State>: AnyWay where State: Equatable {
     internal var reduceHandler: ((inout State, Action) -> SideWay<Action, Never>)?
     internal var bindHandler: (() -> SideWay<Action, Never>)? {
         didSet {
-            applyBinding()
+            applyBindSubscription()
         }
     }
 
@@ -32,6 +32,7 @@ open class Way<Action, State>: AnyWay where State: Equatable {
     private var isConsuming: Bool = false
     private var actionQueue: [Action] = []
     private var sideWayCancellables: [UUID: AnyCancellable] = [:]
+    private var stateCancellable: AnyCancellable?
     private var bindCancellable: AnyCancellable?
 
     /// Initializes a way from an initial state, threadOption.
@@ -43,7 +44,10 @@ open class Way<Action, State>: AnyWay where State: Equatable {
         initialState: State,
         threadOption: ThreadOption = .current
     ) {
-        defer { applyBinding() }
+        defer {
+            applyStateSubscription()
+            applyBindSubscription()
+        }
 
         self.initialState = initialState
         self.threadOption = threadOption
@@ -98,7 +102,8 @@ open class Way<Action, State>: AnyWay where State: Equatable {
         actionQueue.removeAll()
         sideWayCancellables.removeAll()
         isConsuming = false
-        applyBinding()
+        applyStateSubscription()
+        applyBindSubscription()
     }
 
     private func consume(
@@ -137,7 +142,18 @@ open class Way<Action, State>: AnyWay where State: Equatable {
         }
     }
 
-    private func applyBinding() {
+    private func applyStateSubscription() {
+        stateCancellable?.cancel()
+        stateCancellable = stateSubject
+            .removeDuplicates()
+            .sink(receiveCompletion: { [weak self] _ in
+                self?.stateCancellable = nil
+            }, receiveValue: { [weak self] _ in
+                self?.objectWillChange.send()
+            })
+    }
+
+    private func applyBindSubscription() {
         bindCancellable?.cancel()
         bindCancellable = bind()
             .sink(receiveCompletion: { [weak self] _ in

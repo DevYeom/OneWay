@@ -70,4 +70,5 @@ open class NSWay<Action, State>: NSObject, AnyWay where State: Equatable {
     public func reset() {
         wrappedValue.reset()
     }
+
 }

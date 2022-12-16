@@ -26,11 +26,11 @@ open class Way<Action, State>: AnyWay where State: Equatable {
     }
 
     /// Use only when thread-safe mode.
-    private let actionQueue: DispatchQueue!
+    private let wayQueue: DispatchQueue!
 
     private let threadOption: ThreadOption
-    private var isSending: Bool = false
-    private var bufferedActions: [Action] = []
+    private var isConsuming: Bool = false
+    private var actionQueue: [Action] = []
     private var sideWayCancellables: [UUID: AnyCancellable] = [:]
     private var bindCancellable: AnyCancellable?
 
@@ -51,9 +51,9 @@ open class Way<Action, State>: AnyWay where State: Equatable {
 
         switch threadOption {
         case .current:
-            actionQueue = nil
+            wayQueue = nil
         case .threadSafe:
-            actionQueue = DispatchQueue(label: "OneWay.Actions.SerialQueue")
+            wayQueue = DispatchQueue(label: "OneWay.Actions.SerialQueue")
         }
     }
 
@@ -87,7 +87,7 @@ open class Way<Action, State>: AnyWay where State: Equatable {
         case .current:
             consume(action)
         case .threadSafe:
-            actionQueue.async { [action, weak self] in
+            wayQueue.async { [weak self, action] in
                 self?.consume(action)
             }
         }
@@ -95,27 +95,27 @@ open class Way<Action, State>: AnyWay where State: Equatable {
 
     /// Reset some properties and subscriptions. This is useful when you need to call `bind()` again.
     final public func reset() {
-        bufferedActions.removeAll()
+        actionQueue.removeAll()
         sideWayCancellables.removeAll()
-        isSending = false
+        isConsuming = false
         applyBinding()
     }
 
     private func consume(
         _ action: Action
     ) {
-        bufferedActions.append(action)
-        guard !isSending else { return }
+        actionQueue.append(action)
+        guard !isConsuming else { return }
 
-        isSending = true
+        isConsuming = true
         var currentState = stateSubject.value
         defer {
-            isSending = false
+            isConsuming = false
             stateSubject.value = currentState
         }
 
-        while !bufferedActions.isEmpty {
-            let action = bufferedActions.removeFirst()
+        while !actionQueue.isEmpty {
+            let action = actionQueue.removeFirst()
             let sideWay = reduce(state: &currentState, action: action)
 
             var didComplete = false
@@ -155,6 +155,7 @@ open class Way<Action, State>: AnyWay where State: Equatable {
 /// state.
 @dynamicMemberLookup
 public struct WayPublisher<State>: Publisher {
+
     public typealias Output = State
     public typealias Failure = Never
 
@@ -196,4 +197,5 @@ public struct WayPublisher<State>: Publisher {
     ) -> WayPublisher<LocalState> where LocalState: Equatable {
         WayPublisher<LocalState>(upstream: upstream.map(keyPath).removeDuplicates(), way: way)
     }
+
 }

@@ -11,6 +11,7 @@ import Combine
 /// the same thread, and if the way is being used to drive UI then it must receive values on the
 /// main thread.
 public struct SideWay<Output, Failure: Error>: Publisher {
+
     public let upstream: AnyPublisher<Output, Failure>
 
     /// Initializes a sideWay that wraps a publisher. Each emission of the wrapped publisher will be
@@ -177,7 +178,7 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         .eraseToSideWay()
     }
 
-    public static func asyncEmpty(
+    public static func asyncVoid(
         priority: TaskPriority? = nil,
         _ operation: @escaping @Sendable () async throws -> Void
     ) -> Self {
@@ -188,9 +189,11 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         .empty()
     }
 #endif
+
 }
 
 extension Publisher {
+
     /// Turns any publisher into a ``SideWay``.
     public func eraseToSideWay() -> SideWay<Output, Failure> {
         SideWay(self)
@@ -247,4 +250,5 @@ extension Publisher {
             .catch { _ in Empty() }
             .eraseToSideWay()
     }
+
 }

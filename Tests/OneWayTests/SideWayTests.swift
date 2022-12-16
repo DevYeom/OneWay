@@ -244,7 +244,7 @@ final class SideWayTests: XCTestCase {
 
 #if canImport(_Concurrency)
     func test_asyncEmpty() {
-        SideWay<Int, Never>.asyncEmpty { [weak self] in
+        SideWay<Int, Never>.asyncVoid { [weak self] in
             self?.number = await twelve()
         }
         .sink(receiveValue: { _ in XCTFail() })
@@ -310,6 +310,7 @@ final class SideWayTests: XCTestCase {
 
 }
 
+#if canImport(_Concurrency)
 @Sendable
 private func twelve() async -> Int {
     try? await Task.sleep(nanoseconds: NSEC_PER_MSEC) // 1ms
@@ -321,3 +322,4 @@ private func twelveWithError() async throws -> Int {
     try? await Task.sleep(nanoseconds: NSEC_PER_MSEC) // 1ms
     throw WayError()
 }
+#endif

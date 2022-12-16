@@ -2,6 +2,7 @@ import Foundation
 import Combine
 
 internal protocol AnyWay: AnyObject {
+
     associatedtype Action
     associatedtype State: Equatable
 
@@ -13,5 +14,6 @@ internal protocol AnyWay: AnyObject {
     func bind() -> SideWay<Action, Never>
     func send(_ action: Action)
     func reset()
+
 }
 

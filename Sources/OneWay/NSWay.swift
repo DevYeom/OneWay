@@ -1,11 +1,9 @@
 import Foundation
+import Combine
 
 /// The ``NSWay`` is useful when NSObject must be inherited. Since ``Way`` is a class, multiple
 /// inheritance is not possible. To solve this problem, it is made by wrapping the ``Way``.
-open class NSWay<Action, State>: NSObject, AnyWay where State: Equatable {
-
-    /// A wrapped way that has an actual implementation.
-    private let wrappedValue: Way<Action, State>
+open class NSWay<Action, State>: NSObject, AnyWay, ObservableObject where State: Equatable {
 
     /// The initial state.
     public var initialState: State { wrappedValue.initialState }
@@ -16,6 +14,10 @@ open class NSWay<Action, State>: NSObject, AnyWay where State: Equatable {
     /// A publisher that emits when the state changes.
     public var publisher: WayPublisher<State> { wrappedValue.publisher }
 
+    /// A wrapped way that has an actual implementation.
+    private let wrappedValue: Way<Action, State>
+    private var stateCancellable: AnyCancellable?
+
     /// Initializes a way from an initial state, threadOption.
     ///
     /// - Parameters:
@@ -25,6 +27,10 @@ open class NSWay<Action, State>: NSObject, AnyWay where State: Equatable {
         initialState: State,
         threadOption: ThreadOption = .current
     ) {
+        defer {
+            applyStateSubscription()
+        }
+
         self.wrappedValue = Way(initialState: initialState, threadOption: threadOption)
         super.init()
         self.wrappedValue.reduceHandler = { [weak self] state, action in
@@ -69,6 +75,17 @@ open class NSWay<Action, State>: NSObject, AnyWay where State: Equatable {
     /// Reset some properties and subscriptions. This is useful when you need to call `bind()` again.
     public func reset() {
         wrappedValue.reset()
+        applyStateSubscription()
+    }
+
+    private func applyStateSubscription() {
+        stateCancellable?.cancel()
+        stateCancellable = wrappedValue.objectWillChange
+            .sink(receiveCompletion: { [weak self] _ in
+                self?.stateCancellable = nil
+            }, receiveValue: { [weak self] _ in
+                self?.objectWillChange.send()
+            })
     }
 
 }

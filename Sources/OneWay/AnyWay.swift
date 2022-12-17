@@ -7,6 +7,7 @@ internal protocol AnyWay: AnyObject {
     associatedtype State: Equatable
 
     var initialState: State { get }
+    var state: State { get }
     var currentState: State { get }
     var publisher: WayPublisher<State> { get }
 

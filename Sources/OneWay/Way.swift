@@ -10,7 +10,11 @@ open class Way<Action, State>: AnyWay, ObservableObject where State: Equatable {
     public let initialState: State
 
     /// The current state.
-    public var currentState: State { stateSubject.value }
+    public var state: State { stateSubject.value }
+
+    /// The current state.
+    @available(*, deprecated, renamed: "state")
+    public var currentState: State { state }
 
     /// A publisher that emits when the state changes.
     public var publisher: WayPublisher<State> {

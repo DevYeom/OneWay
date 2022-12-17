@@ -9,7 +9,11 @@ open class NSWay<Action, State>: NSObject, AnyWay, ObservableObject where State:
     public var initialState: State { wrappedValue.initialState }
 
     /// The current state.
-    public var currentState: State { wrappedValue.currentState }
+    public var state: State { wrappedValue.state }
+
+    /// The current state.
+    @available(*, deprecated, renamed: "state")
+    public var currentState: State { state }
 
     /// A publisher that emits when the state changes.
     public var publisher: WayPublisher<State> { wrappedValue.publisher }

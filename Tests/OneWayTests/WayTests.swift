@@ -25,23 +25,23 @@ final class WayTests: XCTestCase {
         way.send(.twice)
         way.send(.decrement)
 
-        XCTAssertEqual(way.currentState.number, 2)
+        XCTAssertEqual(way.state.number, 2)
     }
 
     func test_bindGlobalSubjects() {
         let way = TestWay(initialState: .init(number: 0, text: ""))
 
         globalNumberSubject.send(10)
-        XCTAssertEqual(way.currentState.number, 10)
+        XCTAssertEqual(way.state.number, 10)
         globalNumberSubject.send(20)
-        XCTAssertEqual(way.currentState.number, 20)
+        XCTAssertEqual(way.state.number, 20)
         globalNumberSubject.send(30)
-        XCTAssertEqual(way.currentState.number, 30)
+        XCTAssertEqual(way.state.number, 30)
 
         globalTextSubject.send("Hello")
-        XCTAssertEqual(way.currentState.text, "Hello")
+        XCTAssertEqual(way.state.text, "Hello")
         globalTextSubject.send("World")
-        XCTAssertEqual(way.currentState.text, "World")
+        XCTAssertEqual(way.state.text, "World")
     }
 
     func test_receiveWithRemovingDuplicates() {
@@ -91,7 +91,7 @@ final class WayTests: XCTestCase {
     func test_lotsOfSynchronousActions() {
         let way = TestWay(initialState: .init(number: 0, text: ""))
         way.send(.incrementMany)
-        XCTAssertEqual(way.currentState.number, 100_000)
+        XCTAssertEqual(way.state.number, 100_000)
     }
 
     func test_threadSafeSendingActions() {
@@ -135,21 +135,21 @@ final class WayTests: XCTestCase {
             .store(in: &cancellables)
 
         way.send(.fetchDelayedNumber)
-        XCTAssertEqual(way.currentState.number, 0)
+        XCTAssertEqual(way.state.number, 0)
 
         let expectation = expectation(description: "\(#function)")
         wait(milliseconds: 200, expectation: expectation)
-        XCTAssertEqual(way.currentState.number, 10)
+        XCTAssertEqual(way.state.number, 10)
     }
 
     func test_asynchronousSideWayFailure() {
         let way = TestWay(initialState: .init(number: 0, text: ""))
         way.send(.fetchDelayedNumberWithError)
-        XCTAssertEqual(way.currentState.number, 0)
+        XCTAssertEqual(way.state.number, 0)
 
         let expectation = expectation(description: "\(#function)")
         wait(milliseconds: 200, expectation: expectation)
-        XCTAssertEqual(way.currentState.number, -1)
+        XCTAssertEqual(way.state.number, -1)
     }
 
 }

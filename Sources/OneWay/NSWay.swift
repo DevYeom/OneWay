@@ -85,11 +85,14 @@ open class NSWay<Action, State>: NSObject, AnyWay, ObservableObject where State:
     private func applyStateSubscription() {
         stateCancellable?.cancel()
         stateCancellable = wrappedValue.objectWillChange
-            .sink(receiveCompletion: { [weak self] _ in
-                self?.stateCancellable = nil
-            }, receiveValue: { [weak self] _ in
-                self?.objectWillChange.send()
-            })
+            .sink(
+                receiveCompletion: { [weak self] _ in
+                    self?.stateCancellable = nil
+                },
+                receiveValue: { [weak self] _ in
+                    self?.objectWillChange.send()
+                }
+            )
     }
 
 }

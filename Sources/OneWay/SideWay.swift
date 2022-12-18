@@ -22,12 +22,6 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         self.upstream = publisher.eraseToAnyPublisher()
     }
 
-    public func receive<S>(
-        subscriber: S
-    ) where S: Combine.Subscriber, Failure == S.Failure, Output == S.Input {
-        self.upstream.subscribe(subscriber)
-    }
-
     /// Initializes a sideWay that immediately fails with the error passed in.
     ///
     /// - Parameter error: The error that is immediately emitted by the sideWay.
@@ -41,11 +35,10 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         )
     }
 
-    /// A sideWay that does nothing and completes immediately. Useful for situations where you must
-    /// return a sideWay, but you don't need to do anything.
-    public static var none: SideWay {
-        Empty(completeImmediately: true)
-            .eraseToSideWay()
+    public func receive<S>(
+        subscriber: S
+    ) where S: Combine.Subscriber, Failure == S.Failure, Output == S.Input {
+        self.upstream.subscribe(subscriber)
     }
 
     /// Transforms all elements from the upstream sideWay with a provided closure.
@@ -58,6 +51,17 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         _ transform: @escaping (Output) -> T
     ) -> SideWay<T, Failure> {
         .init(self.map(transform) as Publishers.Map<Self, T>)
+    }
+
+}
+
+extension SideWay {
+
+    /// A sideWay that does nothing and completes immediately. Useful for situations where you must
+    /// return a sideWay, but you don't need to do anything.
+    public static var none: SideWay {
+        Empty(completeImmediately: true)
+            .eraseToSideWay()
     }
 
     /// A sideWay that immediately emits the value passed in.
@@ -131,6 +135,13 @@ public struct SideWay<Output, Failure: Error>: Publisher {
     }
 
 #if canImport(_Concurrency)
+    /// Wraps a unit of work that runs the given nonthrowing operation asynchronously.
+    ///
+    /// - Parameters:
+    ///   - priority: The priority of the task.
+    ///     Pass `nil` to use the priority from `Task.currentPriority`.
+    ///   - operation: The operation to perform.
+    /// - Returns: A sideWay wrapping the given asynchronous work.
     public static func async(
         priority: TaskPriority? = nil,
         operation: @escaping @Sendable () async -> Output
@@ -151,6 +162,13 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         .eraseToSideWay()
     }
 
+    /// Wraps a unit of work that runs the given throwing operation asynchronously.
+    ///
+    /// - Parameters:
+    ///   - priority: The priority of the task.
+    ///     Pass `nil` to use the priority from `Task.currentPriority`.
+    ///   - operation: The operation to perform.
+    /// - Returns: A sideWay wrapping the given asynchronous work.
     public static func async(
         priority: TaskPriority? = nil,
         operation: @escaping @Sendable () async throws -> Output
@@ -178,9 +196,17 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         .eraseToSideWay()
     }
 
+    /// Creates a sideWay that executes some work that doesn't have any return value.
+    /// If an error is thrown, the sideWay will complete and the error will be ignored.
+    ///
+    /// - Parameters:
+    ///   - priority: Priority of the underlying task. If `nil`, the priority will come from
+    ///     `Task.currentPriority`.
+    ///   - operation: The operation to perform.
+    /// - Returns: A new sideWay
     public static func asyncVoid(
         priority: TaskPriority? = nil,
-        _ operation: @escaping @Sendable () async throws -> Void
+        operation: @escaping @Sendable () async throws -> Void
     ) -> Self {
         SideWay<Void, Never>.async(
             priority: priority,
@@ -242,6 +268,13 @@ extension Publisher {
             .eraseToSideWay()
     }
 
+    /// Creates a sideWay that doesn't affect the current state and completes.
+    /// If an error is thrown, the sideWay will complete and the error will be ignored.
+    ///
+    /// - Parameters:
+    ///   - outputType: Output type required for type inference
+    ///   - failureType: Failure type required for type inference
+    /// - Returns: A new sideWay
     public func empty<EmptyOutput, EmptyFailure>(
         outputType: EmptyOutput.Type = EmptyOutput.self,
         failureType: EmptyFailure.Type = EmptyFailure.self

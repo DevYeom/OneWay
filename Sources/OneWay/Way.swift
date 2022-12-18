@@ -1,9 +1,9 @@
 import Foundation
 import Combine
 
-/// The ``Way`` represents the path through which data passes. It is the object that can not only be
-/// used in the presentation layer, but can also be used to simplify complex business logic. The
-/// basic concept is to think of each way separately.
+/// The ``Way`` represents a path through which data passes. By creating a data flow through a Way
+/// , you can make it flow in unidirection. It is an object that can not only be used in the
+/// presentation layer, but can also be used to simplify complex business logic.
 open class Way<Action, State>: AnyWay, ObservableObject where State: Equatable {
 
     /// The initial state.
@@ -77,7 +77,7 @@ open class Way<Action, State>: AnyWay, ObservableObject where State: Equatable {
         return reduceHandler?(&state, action) ?? .none
     }
 
-    /// Binds the global states to causes the current state of the way to change.
+    /// Binds global states that causes the current state of the way to change.
     ///
     /// - Returns: A sideWay to deliver an action.
     open func bind() -> SideWay<Action, Never> {
@@ -101,7 +101,10 @@ open class Way<Action, State>: AnyWay, ObservableObject where State: Equatable {
         }
     }
 
-    /// Reset some properties and subscriptions. This is useful when you need to call `bind()` again.
+    /// Removes all actions and sideWays in the queue and re-binds for global states.
+    ///
+    /// - Note: This is useful when you need to call `bind()` again. Because you can't call `bind()`
+    ///   directly
     final public func reset() {
         actionQueue.removeAll()
         sideWayCancellables.removeAll()
@@ -150,21 +153,27 @@ open class Way<Action, State>: AnyWay, ObservableObject where State: Equatable {
         stateCancellable?.cancel()
         stateCancellable = stateSubject
             .removeDuplicates()
-            .sink(receiveCompletion: { [weak self] _ in
-                self?.stateCancellable = nil
-            }, receiveValue: { [weak self] _ in
-                self?.objectWillChange.send()
-            })
+            .sink(
+                receiveCompletion: { [weak self] _ in
+                    self?.stateCancellable = nil
+                },
+                receiveValue: { [weak self] _ in
+                    self?.objectWillChange.send()
+                }
+            )
     }
 
     private func applyBindSubscription() {
         bindCancellable?.cancel()
         bindCancellable = bind()
-            .sink(receiveCompletion: { [weak self] _ in
-                self?.bindCancellable = nil
-            }, receiveValue: { [weak self] action in
-                self?.send(action)
-            })
+            .sink(
+                receiveCompletion: { [weak self] _ in
+                    self?.bindCancellable = nil
+                },
+                receiveValue: { [weak self] action in
+                    self?.send(action)
+                }
+            )
     }
 
 }

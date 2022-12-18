@@ -195,25 +195,6 @@ extension SideWay {
         }
         .eraseToSideWay()
     }
-
-    /// Creates a sideWay that executes some work that doesn't have any return value.
-    /// If an error is thrown, the sideWay will complete and the error will be ignored.
-    ///
-    /// - Parameters:
-    ///   - priority: Priority of the underlying task. If `nil`, the priority will come from
-    ///     `Task.currentPriority`.
-    ///   - operation: The operation to perform.
-    /// - Returns: A new sideWay
-    public static func asyncVoid(
-        priority: TaskPriority? = nil,
-        operation: @escaping @Sendable () async throws -> Void
-    ) -> Self {
-        SideWay<Void, Never>.async(
-            priority: priority,
-            operation: { try? await operation() }
-        )
-        .empty()
-    }
 #endif
 
 }

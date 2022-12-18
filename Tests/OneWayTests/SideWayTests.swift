@@ -243,18 +243,6 @@ final class SideWayTests: XCTestCase {
     }
 
 #if canImport(_Concurrency)
-    func test_asyncEmpty() {
-        SideWay<Int, Never>.asyncVoid { [weak self] in
-            self?.number = await twelve()
-        }
-        .sink(receiveValue: { _ in XCTFail() })
-        .store(in: &cancellables)
-
-        let expectation = expectation(description: "\(#function)")
-        wait(milliseconds: 10, expectation: expectation)
-        XCTAssertEqual(number, 12)
-    }
-
     func test_asyncNeverFailureWithReturnValue() {
         var result: Int?
         SideWay<Int, Never>.async {

@@ -128,6 +128,29 @@ final class CounterWay: Way<CounterWay.Action, CounterWay.State> {
 }
 ```
 
+### Catching Errors
+
+There are several functions handling of errors. It is a little easier to understand if you refer to [unit tests](https://github.com/DevYeom/OneWay/blob/main/Tests/OneWayTests/SideWayTests.swift#L108-L187).
+
+```swift
+override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
+    switch action {
+    // ...
+    case .fetchDataWithIgnoringErrors:
+        return fetchData()
+            .map(Action.dataDidLoad($0))
+            .catchToNever()
+            .eraseToSideWay()
+    case .fetchDataWithError:
+        return fetchData()
+            .map(Action.dataDidLoad($0))
+            .catchToReturn(Action.failToLoad)
+            .eraseToSideWay()
+    // ...
+    }
+}
+```
+
 ### Swift Concurrency
 
 `async/await` can also be used with **Way**.

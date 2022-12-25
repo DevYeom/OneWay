@@ -35,6 +35,9 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         )
     }
 
+    /// Attaches the specified subscriber to this publisher.
+    ///
+    /// - Parameter subscriber: The subscriber to attach to this ``Publisher``, after which it can receive values.
     public func receive<S>(
         subscriber: S
     ) where S: Combine.Subscriber, Failure == S.Failure, Output == S.Input {

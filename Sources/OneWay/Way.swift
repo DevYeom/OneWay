@@ -206,6 +206,9 @@ public struct WayPublisher<State>: Publisher {
         self.way = way
     }
 
+    /// Attaches the specified subscriber to this publisher.
+    ///
+    /// - Parameter subscriber: The subscriber to attach to this ``Publisher``, after which it can receive values.
     public func receive<S>(
         subscriber: S
     ) where S: Subscriber, Failure == S.Failure, Output == S.Input {
@@ -221,6 +224,10 @@ public struct WayPublisher<State>: Publisher {
         )
     }
 
+    /// Returns the resulting publisher with partial state corresponding to a given key path.
+    ///
+    /// - Parameter dynamicMember: a key path for the original state.
+    /// - Returns: A new publisher that has a part of the original state.
     public subscript<LocalState>(
         dynamicMember keyPath: KeyPath<State, LocalState>
     ) -> WayPublisher<LocalState> where LocalState: Equatable {

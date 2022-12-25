@@ -105,13 +105,31 @@ final class SideWayTests: XCTestCase {
         XCTAssertNotNil(result)
     }
 
-    func test_catchToSideWay() {
+    func test_catch() {
+        var errorResult: Error?
+        var numbers: [Int] = []
+
+        SideWay<Int, Error>.future { promise in
+            promise(.failure(WayError()))
+        }
+        .catch { error in
+            errorResult = error
+            return -1
+        }
+        .sink(receiveValue: { numbers.append($0) })
+        .store(in: &cancellables)
+
+        XCTAssertNotNil(errorResult)
+        XCTAssertEqual(numbers, [-1])
+    }
+
+    func test_catchToResult() {
         var errorResult: Error?
 
         SideWay<Int, Error>.future { promise in
             promise(.failure(WayError()))
         }
-        .catchToSideWay()
+        .catchToResult()
         .sink(
             receiveValue: { result in
                 switch result {
@@ -127,14 +145,14 @@ final class SideWayTests: XCTestCase {
         XCTAssertNotNil(errorResult)
     }
 
-    func test_catchToSideWayWithTransform() {
+    func test_catchToResultWithTransform() {
         var errorResult: Error?
         var numbers: [Int] = []
 
         SideWay<Int, Error>.future { promise in
             promise(.failure(WayError()))
         }
-        .catchToSideWay { result in
+        .catchToResult { result in
             switch result {
             case .success:
                 return 10

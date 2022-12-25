@@ -120,9 +120,11 @@ final class WayTests: XCTestCase {
             }
         }
 
-        let expectation = expectation(description: "\(#function)")
-        wait(seconds: 5, expectation: expectation, queue: queue)
-        XCTAssertEqual(way.state.number, 30_000)
+        group.notify(queue: queue) { [self] in
+            let expectation = expectation(description: "\(#function)")
+            wait(seconds: 1, expectation: expectation, queue: queue)
+            XCTAssertEqual(way.state.number, 30_000)
+        }
     }
 
     func test_asynchronousSideWaySuccessInMainThread() {

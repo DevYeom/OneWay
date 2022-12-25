@@ -214,25 +214,45 @@ extension Publisher {
             .eraseToSideWay()
     }
 
+    /// Turns any publisher into a ``SideWay`` that return a output by transforming its error.
+    public func `catch`(
+        _ transform: @escaping (Error) -> Output
+    ) -> SideWay<Output, Never> {
+        self.catch { Just(transform($0)) }
+            .eraseToSideWay()
+    }
+
     /// Turns any publisher into a ``SideWay`` that cannot fail by wrapping its output and failure
     /// in a result.
     ///
     /// This can be useful when you are working with a failing API but want to deliver its data to
     /// an action that handles both success and failure.
-    public func catchToSideWay() -> SideWay<Result<Output, Failure>, Never> {
+    public func catchToResult() -> SideWay<Result<Output, Failure>, Never> {
         self.map(Result.success)
             .catch { Just(.failure($0)) }
             .eraseToSideWay()
     }
 
+    @available(*, deprecated, renamed: "catchToResult")
+    public func catchToSideWay() -> SideWay<Result<Output, Failure>, Never> {
+        catchToResult()
+    }
+
     /// Turns any publisher into a ``SideWay`` that cannot fail by trasforming its result into a
     /// output.
-    public func catchToSideWay<T>(
+    public func catchToResult<T>(
         _ transform: @escaping (Result<Output, Failure>) -> T
     ) -> SideWay<T, Never> {
         self.map { transform(.success($0)) }
             .catch { Just(transform(.failure($0))) }
             .eraseToSideWay()
+    }
+
+    @available(*, deprecated, renamed: "catchToResult")
+    public func catchToSideWay<T>(
+        _ transform: @escaping (Result<Output, Failure>) -> T
+    ) -> SideWay<T, Never> {
+        catchToResult(transform)
     }
 
     /// Turns any publisher into a ``SideWay`` that ignore its error.

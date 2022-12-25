@@ -216,7 +216,7 @@ extension Publisher {
 
     /// Turns any publisher into a ``SideWay`` that return a output by transforming its error.
     public func `catch`(
-        _ transform: @escaping (Error) -> Output
+        _ transform: @escaping (Failure) -> Output
     ) -> SideWay<Output, Never> {
         self.catch { Just(transform($0)) }
             .eraseToSideWay()

@@ -26,15 +26,19 @@ final class SideWayTests: XCTestCase {
 
         SideWay<Int, Never>.concat(
             .just(1)
-            .delay(for: .milliseconds(20), scheduler: DispatchQueue.main)
+            .delay(for: .milliseconds(30), scheduler: DispatchQueue.main)
             .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, []) })
             .eraseToSideWay(),
             .just(2)
-            .delay(for: .milliseconds(10), scheduler: DispatchQueue.main)
+            .delay(for: .milliseconds(20), scheduler: DispatchQueue.main)
             .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [1]) })
             .eraseToSideWay(),
             .just(3)
+            .delay(for: .milliseconds(10), scheduler: DispatchQueue.main)
             .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [1, 2]) })
+            .eraseToSideWay(),
+            .just(4)
+            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [1, 2, 3]) })
             .eraseToSideWay()
         )
         .sink(receiveValue: { numbers.append($0) })
@@ -42,7 +46,7 @@ final class SideWayTests: XCTestCase {
 
         let expectation = expectation(description: "\(#function)")
         wait(milliseconds: 100, expectation: expectation)
-        XCTAssertEqual(numbers, [1, 2, 3])
+        XCTAssertEqual(numbers, [1, 2, 3, 4])
     }
 
     func test_merge() {
@@ -50,14 +54,18 @@ final class SideWayTests: XCTestCase {
 
         SideWay<Int, Never>.merge(
             .just(1)
-            .delay(for: .milliseconds(20), scheduler: DispatchQueue.main)
-            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [3, 2]) })
+            .delay(for: .milliseconds(30), scheduler: DispatchQueue.main)
+            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [4, 3, 2]) })
             .eraseToSideWay(),
             .just(2)
-            .delay(for: .milliseconds(10), scheduler: DispatchQueue.main)
-            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [3]) })
+            .delay(for: .milliseconds(20), scheduler: DispatchQueue.main)
+            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [4, 3]) })
             .eraseToSideWay(),
             .just(3)
+            .delay(for: .milliseconds(10), scheduler: DispatchQueue.main)
+            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [4]) })
+            .eraseToSideWay(),
+            .just(4)
             .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, []) })
             .eraseToSideWay()
         )
@@ -66,7 +74,7 @@ final class SideWayTests: XCTestCase {
 
         let expectation = expectation(description: "\(#function)")
         wait(milliseconds: 100, expectation: expectation)
-        XCTAssertEqual(numbers, [3, 2, 1])
+        XCTAssertEqual(numbers, [4, 3, 2, 1])
     }
 
     func test_future() {

@@ -90,13 +90,13 @@ extension SideWay {
     public static func concat<C: Collection>(
         _ sideWays: C
     ) -> Self where C.Element == SideWay {
-        guard let first = sideWays.first else { return .none }
         return sideWays
-            .dropFirst()
-            .reduce(into: first) { sideWays, sideWay in
-                sideWays = sideWays
-                    .append(sideWay)
-                    .eraseToSideWay()
+            .reduce(into: .none) { result, sideWay in
+                result = Publishers.Concatenate(
+                    prefix: result,
+                    suffix: sideWay
+                )
+                .eraseToSideWay()
             }
     }
 

@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import CombineSchedulers
 import OneWay
 
 final class TestWay: Way<TestWay.Action, TestWay.State> {
@@ -19,6 +20,8 @@ final class TestWay: Way<TestWay.Action, TestWay.State> {
         var number: Int
         var text: String
     }
+
+    let scheduler = DispatchQueue.test
 
     override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
         switch action {
@@ -44,27 +47,24 @@ final class TestWay: Way<TestWay.Action, TestWay.State> {
             return .none
         case .fetchDelayedNumber:
             return SideWay<Int, Never>
-                .future { result in
-                    DispatchQueue.global().asyncAfter(
-                        deadline: .now() + .milliseconds(100),
-                        execute: {
-                            result(.success(10))
-                            result(.success(20))
-                        }
-                    )
+                .future { [weak scheduler] promise in
+                    guard let scheduler = scheduler else { return }
+                    scheduler.schedule(after: scheduler.now.advanced(by: 100)) {
+                        promise(.success(10))
+                    }
+                    scheduler.schedule(after: scheduler.now.advanced(by: 200)) {
+                        promise(.success(20))
+                    }
                 }
-                .receive(on: DispatchQueue.main)
                 .map({ Action.saveNumber($0) })
                 .eraseToSideWay()
         case .fetchDelayedNumberWithError:
             return SideWay<Int, Error>
-                .future { result in
-                    DispatchQueue.global().asyncAfter(
-                        deadline: .now() + .milliseconds(100),
-                        execute: {
-                            result(.failure(WayError()))
-                        }
-                    )
+                .future { [weak scheduler] promise in
+                    guard let scheduler = scheduler else { return }
+                    scheduler.schedule(after: scheduler.now.advanced(by: 100)) {
+                        promise(.failure(WayError()))
+                    }
                 }
                 .map({ Action.saveNumber($0) })
                 .catchToReturn(Action.saveNumber(-1))

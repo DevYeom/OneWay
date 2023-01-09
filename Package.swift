@@ -16,7 +16,12 @@ let package = Package(
             targets: ["OneWay"]
         ),
     ],
-    dependencies: [],
+    dependencies: [
+        .package(
+            url: "https://github.com/pointfreeco/combine-schedulers",
+            from: "0.1.0"
+        ),
+    ],
     targets: [
         .target(
             name: "OneWay",
@@ -24,7 +29,13 @@ let package = Package(
         ),
         .testTarget(
             name: "OneWayTests",
-            dependencies: ["OneWay"]
+            dependencies: [
+                "OneWay",
+                .product(
+                    name: "CombineSchedulers",
+                    package: "combine-schedulers"
+                ),
+            ]
         ),
     ]
 )

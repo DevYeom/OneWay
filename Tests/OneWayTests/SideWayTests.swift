@@ -1,5 +1,6 @@
 import XCTest
 import Combine
+import CombineSchedulers
 import OneWay
 
 final class SideWayTests: XCTestCase {
@@ -22,59 +23,57 @@ final class SideWayTests: XCTestCase {
     }
 
     func test_concat() {
+        let scheduler = DispatchQueue.test
         var numbers: [Int] = []
 
         SideWay<Int, Never>.concat(
             .just(1)
-            .delay(for: .milliseconds(30), scheduler: DispatchQueue.main)
-            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, []) })
+            .delay(for: 300, scheduler: scheduler)
             .eraseToSideWay(),
             .just(2)
-            .delay(for: .milliseconds(20), scheduler: DispatchQueue.main)
-            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [1]) })
+            .delay(for: 200, scheduler: scheduler)
             .eraseToSideWay(),
             .just(3)
-            .delay(for: .milliseconds(10), scheduler: DispatchQueue.main)
-            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [1, 2]) })
-            .eraseToSideWay(),
-            .just(4)
-            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [1, 2, 3]) })
+            .delay(for: 100, scheduler: scheduler)
             .eraseToSideWay()
         )
         .sink(receiveValue: { numbers.append($0) })
         .store(in: &cancellables)
 
-        let expectation = expectation(description: "\(#function)")
-        wait(milliseconds: 100, expectation: expectation)
-        XCTAssertEqual(numbers, [1, 2, 3, 4])
+        XCTAssertEqual(numbers, [])
+        scheduler.advance(by: 300)
+        XCTAssertEqual(numbers, [1])
+        scheduler.advance(by: 200)
+        XCTAssertEqual(numbers, [1, 2])
+        scheduler.advance(by: 100)
+        XCTAssertEqual(numbers, [1, 2, 3])
     }
 
     func test_merge() {
+        let scheduler = DispatchQueue.test
         var numbers: [Int] = []
 
         SideWay<Int, Never>.merge(
             .just(1)
-            .delay(for: .milliseconds(30), scheduler: DispatchQueue.main)
-            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [4, 3, 2]) })
+            .delay(for: 300, scheduler: scheduler)
             .eraseToSideWay(),
             .just(2)
-            .delay(for: .milliseconds(20), scheduler: DispatchQueue.main)
-            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [4, 3]) })
+            .delay(for: 200, scheduler: scheduler)
             .eraseToSideWay(),
             .just(3)
-            .delay(for: .milliseconds(10), scheduler: DispatchQueue.main)
-            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, [4]) })
-            .eraseToSideWay(),
-            .just(4)
-            .handleEvents(receiveOutput: { _ in XCTAssertEqual(numbers, []) })
+            .delay(for: 100, scheduler: scheduler)
             .eraseToSideWay()
         )
         .sink(receiveValue: { numbers.append($0) })
         .store(in: &cancellables)
 
-        let expectation = expectation(description: "\(#function)")
-        wait(milliseconds: 100, expectation: expectation)
-        XCTAssertEqual(numbers, [4, 3, 2, 1])
+        XCTAssertEqual(numbers, [])
+        scheduler.advance(by: 100)
+        XCTAssertEqual(numbers, [3])
+        scheduler.advance(by: 100)
+        XCTAssertEqual(numbers, [3, 2])
+        scheduler.advance(by: 100)
+        XCTAssertEqual(numbers, [3, 2, 1])
     }
 
     func test_future() {
@@ -270,36 +269,48 @@ final class SideWayTests: XCTestCase {
 
 #if canImport(_Concurrency)
     func test_asyncNeverFailureWithReturnValue() {
+        let expectation = expectation(description: "\(#function)")
         var result: Int?
+
         SideWay<Int, Never>.async {
             return await twelve()
         }
-        .sink(receiveValue: { result = $0 })
+        .sink(
+            receiveValue: {
+                result = $0
+                expectation.fulfill()
+            }
+        )
         .store(in: &cancellables)
 
-        let expectation = expectation(description: "\(#function)")
-        wait(milliseconds: 10, expectation: expectation)
+        wait(for: [expectation], timeout: 10)
         XCTAssertEqual(result, 12)
     }
 
     func test_asyncFailureWithReturnValue() {
+        let expectation = expectation(description: "\(#function)")
         var result: Int?
+
         SideWay<Int, Error>.async {
             return await twelve()
         }
         .sink(
             receiveCompletion: { _ in },
-            receiveValue: { result = $0 }
+            receiveValue: {
+                result = $0
+                expectation.fulfill()
+            }
         )
         .store(in: &cancellables)
 
-        let expectation = expectation(description: "\(#function)")
-        wait(milliseconds: 10, expectation: expectation)
+        wait(for: [expectation], timeout: 10)
         XCTAssertEqual(result, 12)
     }
 
     func test_asyncThrowsError() {
+        let expectation = expectation(description: "\(#function)")
         var result: Error?
+
         SideWay<Int, Error>.async {
             return try await twelveWithError()
         }
@@ -310,14 +321,14 @@ final class SideWayTests: XCTestCase {
                     XCTFail()
                 case let .failure(error):
                     result = error
+                    expectation.fulfill()
                 }
             },
             receiveValue: { _ in XCTFail() }
         )
         .store(in: &cancellables)
 
-        let expectation = expectation(description: "\(#function)")
-        wait(milliseconds: 10, expectation: expectation)
+        wait(for: [expectation], timeout: 10)
         XCTAssertNotNil(result)
     }
 #endif

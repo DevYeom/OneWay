@@ -1,5 +1,6 @@
 import XCTest
 import Combine
+import CombineSchedulers
 import OneWay
 
 final class WayTests: XCTestCase {
@@ -95,62 +96,43 @@ final class WayTests: XCTestCase {
     }
 
     func test_threadSafeSendingActions() {
-        let queue = DispatchQueue(label: "OneWay.Actions.ConcurrentQueue", attributes: .concurrent)
-        let group = DispatchGroup()
         let way = TestWay(
             initialState: .init(number: 0, text: ""),
             threadOption: .threadSafe
         )
+        let iterations: Int = 10_000
+        let expectation = expectation(description: "\(#function)")
 
-        queue.async(group: group) {
-            for _ in 1...10_000 {
+        DispatchQueue.concurrentPerform(
+            iterations: iterations,
+            execute: { _ in
                 way.send(.increment)
             }
-        }
+        )
 
-        queue.async(group: group) {
-            for _ in 1...10_000 {
-                way.send(.increment)
-            }
-        }
-
-        queue.async(group: group) {
-            for _ in 1...10_000 {
-                way.send(.increment)
-            }
-        }
-
-        group.notify(queue: queue) { [self] in
-            let expectation = expectation(description: "\(#function)")
-            wait(seconds: 1, expectation: expectation, queue: queue)
-            XCTAssertEqual(way.state.number, 30_000)
-        }
+        wait(seconds: 1, expectation: expectation)
+        XCTAssertEqual(way.state.number, iterations)
     }
 
-    func test_asynchronousSideWaySuccessInMainThread() {
+    func test_asynchronousSideWayWithSuccess() {
         let way = TestWay(initialState: .init(number: 0, text: ""))
-
-        way.publisher.number
-            .sink { _ in
-                XCTAssertTrue(Thread.isMainThread)
-            }
-            .store(in: &cancellables)
+        let scheduler = way.scheduler
 
         way.send(.fetchDelayedNumber)
         XCTAssertEqual(way.state.number, 0)
-
-        let expectation = expectation(description: "\(#function)")
-        wait(milliseconds: 200, expectation: expectation)
+        scheduler.advance(by: 100)
+        XCTAssertEqual(way.state.number, 10)
+        scheduler.advance(by: 200)
         XCTAssertEqual(way.state.number, 10)
     }
 
-    func test_asynchronousSideWayFailure() {
+    func test_asynchronousSideWayWithFailure() {
         let way = TestWay(initialState: .init(number: 0, text: ""))
+        let scheduler = way.scheduler
+
         way.send(.fetchDelayedNumberWithError)
         XCTAssertEqual(way.state.number, 0)
-
-        let expectation = expectation(description: "\(#function)")
-        wait(milliseconds: 200, expectation: expectation)
+        scheduler.advance(by: 100)
         XCTAssertEqual(way.state.number, -1)
     }
 

@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-/// The ``Way`` represents a path through which data passes. By creating a data flow through a Way
+/// The ``Way`` represents a path through which data passes. By creating a data flow through the Way
 /// , you can make it flow in unidirection. It is an object that can not only be used in the
 /// presentation layer, but can also be used to simplify complex business logic.
 open class Way<Action, State>: AnyWay, ObservableObject where State: Equatable {
@@ -178,7 +178,7 @@ open class Way<Action, State>: AnyWay, ObservableObject where State: Equatable {
 
 }
 
-/// A publisher of a ``Way``'s state.
+/// A publisher of the ``Way``'s state.
 ///
 /// This pulisher supports dynamic member lookup so that you can pluck out a specific field in the
 /// state.
@@ -224,7 +224,7 @@ public struct WayPublisher<State>: Publisher {
         )
     }
 
-    /// Returns the resulting publisher with partial state corresponding to a given key path.
+    /// Returns the resulting publisher with partial state corresponding to the given key path.
     ///
     /// - Parameter dynamicMember: a key path for the original state.
     /// - Returns: A new publisher that has a part of the original state.

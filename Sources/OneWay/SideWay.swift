@@ -14,7 +14,7 @@ public struct SideWay<Output, Failure: Error>: Publisher {
 
     public let upstream: AnyPublisher<Output, Failure>
 
-    /// Initializes a sideWay that wraps a publisher. Each emission of the wrapped publisher will be
+    /// Initializes a sideWay that wraps the publisher. Each emission of the wrapped publisher will be
     /// emitted by the sideWay.
     public init<P: Publisher>(
         _ publisher: P
@@ -44,7 +44,7 @@ public struct SideWay<Output, Failure: Error>: Publisher {
         self.upstream.subscribe(subscriber)
     }
 
-    /// Transforms all elements from the upstream sideWay with a provided closure.
+    /// Transforms all elements from the upstream sideWay with the provided closure.
     ///
     /// - Parameter transform: A closure that transforms the upstream sideWay's output to a new
     ///   output.
@@ -226,7 +226,7 @@ extension Publisher {
     }
 
     /// Turns any publisher into a ``SideWay`` that cannot fail by wrapping its output and failure
-    /// in a result.
+    /// in the result.
     ///
     /// This can be useful when you are working with a failing API but want to deliver its data to
     /// an action that handles both success and failure.

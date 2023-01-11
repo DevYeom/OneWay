@@ -1,3 +1,7 @@
+// The MIT License (MIT)
+//
+// Copyright (c) 2022 SeungYeop Yeom ( https://github.com/DevYeom ).
+
 import Foundation
 import Combine
 import CombineSchedulers

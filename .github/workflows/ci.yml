@@ -15,20 +15,14 @@ concurrency:
 jobs:
   test:
     runs-on: macos-latest
-    timeout-minutes: 10
+    timeout-minutes: 60
     env:
       SCHEME: OneWay
-      DESTINATION: platform=iOS Simulator,name=iPhone 13,OS=latest
 
     steps:
     - uses: actions/checkout@v3
-
     - uses: maxim-lobanov/setup-xcode@v1.4.1
       with:
         xcode-version: latest
-
     - name: Build and Test
-      run: |
-        xcodebuild clean build test \
-        -scheme "$SCHEME" \
-        -destination "$DESTINATION";
+      run: make test-all

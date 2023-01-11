@@ -254,7 +254,7 @@ dependencies: [
 
 ## Next Step
 
-- [ ] Testing queue for asynchronous test case.
+- [x] Testing queue for asynchronous test case.
 - [ ] Debugging tool that can log all actions and states.
 
 ## References

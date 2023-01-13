@@ -130,7 +130,7 @@ final class CounterWay: Way<CounterWay.Action, CounterWay.State> {
 
 ### Catching Errors
 
-There are several functions that handle errors. It is a little easier to understand if you refer to [unit tests](https://github.com/DevYeom/OneWay/blob/main/Tests/OneWayTests/SideWayTests.swift#L116-L213).
+There are several functions that handle errors. It is a little easier to understand if you refer to [unit tests](https://github.com/DevYeom/OneWay/blob/main/Tests/OneWayTests/SideWayTests.swift#L119-L216).
 
 ```swift
 override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {

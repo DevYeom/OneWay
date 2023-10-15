@@ -9,7 +9,7 @@ import OneWay
 import XCTest
 
 final class StoreTests: XCTestCase {
-    private var sut: Store<TestReducer.Action, TestReducer.State>!
+    private var sut: Store<TestReducer>!
 
     override func setUp() {
         super.setUp()

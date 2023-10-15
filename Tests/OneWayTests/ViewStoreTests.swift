@@ -10,7 +10,7 @@ import XCTest
 
 @MainActor
 final class ViewStoreTests: XCTestCase {
-    private var sut: ViewStore<TestReducer.Action, TestReducer.State>!
+    private var sut: ViewStore<TestReducer>!
 
     override func setUp() {
         super.setUp()

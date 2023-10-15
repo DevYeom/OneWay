@@ -8,6 +8,7 @@ import Combine
 /// The ``Way`` represents a path through which data passes. By creating a data flow through the Way
 /// , you can make it flow in unidirection. It is an object that can not only be used in the
 /// presentation layer, but can also be used to simplify complex business logic.
+@available(swift, deprecated: 5.9, obsoleted: 6.0, message: "Please refer to the documentation on Github.")
 open class Way<Action, State>: AnyWay, ObservableObject where State: Equatable {
 
     /// The initial state.

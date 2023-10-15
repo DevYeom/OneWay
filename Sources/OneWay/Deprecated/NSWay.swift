@@ -7,6 +7,7 @@ import Combine
 
 /// The ``NSWay`` is useful when NSObject must be inherited. Since ``Way`` is a class, multiple
 /// inheritance is not possible. To solve this problem, it is made by wrapping the ``Way``.
+@available(swift, deprecated: 5.9, obsoleted: 6.0, message: "Please refer to the documentation on Github.")
 open class NSWay<Action, State>: NSObject, AnyWay, ObservableObject where State: Equatable {
 
     /// The initial state.

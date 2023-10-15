@@ -9,22 +9,19 @@ import Foundation
 
 public struct AnyEffect<Element>: Effect where Element: Sendable {
     public var completion: (() -> Void)? {
-        get {
-            base.completion
-        }
-        set {
-            base.completion = newValue
-        }
+        get { base.completion }
+        set { base.completion = newValue }
     }
+
+    public var values: AsyncStream<Element> {
+        base.values
+    }
+
     private var base: any Effect<Element>
 
     public init<Base>(_ base: Base)
     where Base: Effect, Base.Element == Element {
         self.base = base
-    }
-
-    public var values: AsyncStream<Element> {
-        base.values
     }
 }
 

@@ -7,8 +7,18 @@
 
 import Foundation
 
-public actor Store<Action, State> where Action: Sendable, State: Equatable {
-    public var state: State { didSet { continuation.yield(state) } }
+public actor Store<R: Reducer>
+where R.Action: Sendable, R.State: Equatable {
+    public typealias Action = R.Action
+    public typealias State = R.State
+
+    public var state: State {
+        didSet {
+            if oldValue != state {
+                continuation.yield(state)
+            }
+        }
+    }
     public var states: AsyncStream<State>
 
     private let reducer: any Reducer<Action, State>
@@ -17,13 +27,14 @@ public actor Store<Action, State> where Action: Sendable, State: Equatable {
     private var actionQueue: [Action] = []
     private var tasks: [UUID: Task<Void, Never>] = [:]
 
-    public init<R: Reducer>(
+    public init(
         reducer: @autoclosure () -> R,
         state: State
-    ) where R.Action == Action, R.State == State {
+    ) {
         self.state = state
         self.reducer = reducer()
         (states, continuation) = AsyncStream<State>.makeStream()
+        defer { continuation.yield(state) }
     }
 
     public func send(_ action: Action) async {

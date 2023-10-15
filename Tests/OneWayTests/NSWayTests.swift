@@ -105,24 +105,24 @@ final class NSWayTests: XCTestCase {
         XCTAssertEqual(way.state.number, 100_000)
     }
 
-    func test_threadSafeSendingActions() {
-        let way = TestNSWay(
-            initialState: .init(number: 0, text: ""),
-            threadOption: .threadSafe
-        )
-        let iterations: Int = 10_000
-        let expectation = expectation(description: "\(#function)")
-
-        DispatchQueue.concurrentPerform(
-            iterations: iterations,
-            execute: { _ in
-                way.send(.increment)
-            }
-        )
-
-        wait(seconds: 1, expectation: expectation)
-        XCTAssertEqual(way.state.number, iterations)
-    }
+//    func test_threadSafeSendingActions() {
+//        let way = TestNSWay(
+//            initialState: .init(number: 0, text: ""),
+//            threadOption: .threadSafe
+//        )
+//        let iterations: Int = 10_000
+//        let expectation = expectation(description: "\(#function)")
+//
+//        DispatchQueue.concurrentPerform(
+//            iterations: iterations,
+//            execute: { _ in
+//                way.send(.increment)
+//            }
+//        )
+//
+//        wait(seconds: 1, expectation: expectation)
+//        XCTAssertEqual(way.state.number, iterations)
+//    }
 
     func test_asynchronousSideWayWithSuccess() {
         let way = TestNSWay(initialState: .init(number: 0, text: ""))

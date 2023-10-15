@@ -8,7 +8,13 @@
 import Foundation
 
 public actor Store<Action, State> where Action: Sendable, State: Equatable {
-    public var state: State { didSet { continuation.yield(state) } }
+    public var state: State {
+        didSet {
+            if oldValue != state {
+                continuation.yield(state)
+            }
+        }
+    }
     public var states: AsyncStream<State>
 
     private let reducer: any Reducer<Action, State>
@@ -24,6 +30,7 @@ public actor Store<Action, State> where Action: Sendable, State: Equatable {
         self.state = state
         self.reducer = reducer()
         (states, continuation) = AsyncStream<State>.makeStream()
+        defer { continuation.yield(state) }
     }
 
     public func send(_ action: Action) async {

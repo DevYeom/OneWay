@@ -21,8 +21,15 @@ final class StoreTests: XCTestCase {
 
     func test_initialState() async {
         let state = await sut.state
+        let states = await sut.states
         XCTAssertEqual(state.count, 0)
         XCTAssertEqual(state.text, "")
+
+        for await state in states {
+            XCTAssertEqual(state.count, 0)
+            XCTAssertEqual(state.text, "")
+            break
+        }
     }
 
     func test_sendSeveralActions() async {
@@ -78,7 +85,7 @@ final class StoreTests: XCTestCase {
         XCTAssertEqual(state.text, "")
     }
 
-    func test_delayedAction() async {
+    func test_asyncAction() async {
         await sut.send(.request)
 
         while await sut.state.text.isEmpty {
@@ -88,6 +95,26 @@ final class StoreTests: XCTestCase {
         let state = await sut.state
         XCTAssertEqual(state.count, 0)
         XCTAssertEqual(state.text, "Success")
+    }
+
+    func test_removeDuplicates() async {
+        await sut.send(.response("First"))
+        await sut.send(.response("First"))
+        await sut.send(.response("First"))
+        await sut.send(.response("Second"))
+        await sut.send(.response("Second"))
+        await sut.send(.response("Third"))
+
+        var result: [String] = []
+        let states = await sut.states
+        for await state in states {
+            result.append(state.text)
+            if result.count > 3 {
+                break
+            }
+        }
+
+        XCTAssertEqual(result, ["", "First", "Second", "Third"])
     }
 }
 

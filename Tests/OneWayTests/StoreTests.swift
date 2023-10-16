@@ -35,15 +35,14 @@ final class StoreTests: XCTestCase {
     func test_sendSeveralActions() async {
         await sut.send(.increment)
         await sut.send(.increment)
-        await sut.send(.decrement)
         await sut.send(.twice)
 
-        while await sut.state.count < 3 {
+        while await sut.state.count < 4 {
             await Task.yield()
         }
 
         let state = await sut.state
-        XCTAssertEqual(state.count, 3)
+        XCTAssertEqual(state.count, 4)
         XCTAssertEqual(state.text, "")
     }
 
@@ -122,7 +121,6 @@ fileprivate final class TestReducer: Reducer {
     enum Action: Sendable {
         case increment
         case incrementMany
-        case decrement
         case twice
         case request
         case response(String)
@@ -142,10 +140,6 @@ fileprivate final class TestReducer: Reducer {
         case .incrementMany:
             state.count += 1
             return state.count >= 100_000 ? .none : .just(.incrementMany)
-
-        case .decrement:
-            state.count -= 1
-            return .none
 
         case .twice:
             return .merge(

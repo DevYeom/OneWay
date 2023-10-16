@@ -33,21 +33,17 @@ final class ViewStoreTests: XCTestCase {
     func test_sendSeveralActions() async {
         sut.send(.increment)
         sut.send(.increment)
-        sut.send(.decrement)
         sut.send(.twice)
 
-        while sut.state.count < 3 {
+        while sut.state.count < 4 {
             await Task.yield()
         }
 
-        XCTAssertEqual(sut.state.count, 3)
+        XCTAssertEqual(sut.state.count, 4)
     }
 
     func test_dynamicMemberStream() async {
-        sut.send(.increment)
-        sut.send(.increment)
-        sut.send(.decrement)
-        sut.send(.decrement)
+        sut.send(.concat)
 
         var result: [Int] = []
         for await count in sut.states.count {
@@ -55,15 +51,15 @@ final class ViewStoreTests: XCTestCase {
             if result.count > 4 { break }
         }
 
-        XCTAssertEqual(result, [0, 1, 2, 1, 0])
+        XCTAssertEqual(result, [0, 1, 2, 3, 4])
     }
 }
 
 fileprivate final class TestReducer: Reducer {
     enum Action: Sendable {
         case increment
-        case decrement
         case twice
+        case concat
     }
 
     struct State: Equatable {
@@ -76,12 +72,16 @@ fileprivate final class TestReducer: Reducer {
             state.count += 1
             return .none
 
-        case .decrement:
-            state.count -= 1
-            return .none
-
         case .twice:
             return .merge(
+                .just(.increment),
+                .just(.increment)
+            )
+
+        case .concat:
+            return .concat(
+                .just(.increment),
+                .just(.increment),
                 .just(.increment),
                 .just(.increment)
             )

@@ -42,6 +42,21 @@ final class ViewStoreTests: XCTestCase {
 
         XCTAssertEqual(sut.state.count, 3)
     }
+
+    func test_dynamicMemberStream() async {
+        sut.send(.increment)
+        sut.send(.increment)
+        sut.send(.decrement)
+        sut.send(.decrement)
+
+        var result: [Int] = []
+        for await count in sut.states.count {
+            result.append(count)
+            if result.count > 4 { break }
+        }
+
+        XCTAssertEqual(result, [0, 1, 2, 1, 0])
+    }
 }
 
 fileprivate final class TestReducer: Reducer {

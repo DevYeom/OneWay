@@ -14,9 +14,10 @@ where R.Action: Sendable, R.State: Equatable {
     public typealias State = R.State
 
     public var state: State { didSet { continuation.yield(state) } }
-    public var states: AsyncStream<State>
+    public var states: DynamicStream<State> { DynamicStream(stream) }
 
     private let store: Store<R>
+    private let stream: AsyncStream<State>
     private let continuation: AsyncStream<State>.Continuation
     private var task: Task<Void, Never>?
 
@@ -29,9 +30,8 @@ where R.Action: Sendable, R.State: Equatable {
             reducer: reducer(),
             state: state
         )
-        (states, continuation) = AsyncStream<State>.makeStream()
+        (stream, continuation) = AsyncStream<State>.makeStream()
         self.task = Task { await observe() }
-        defer { continuation.yield(state) }
     }
 
     deinit {
@@ -51,5 +51,40 @@ where R.Action: Sendable, R.State: Equatable {
         for await state in states {
             self.state = state
         }
+    }
+}
+
+@dynamicMemberLookup
+public struct DynamicStream<State>: AsyncSequence {
+    public typealias Element = State
+
+    public struct Iterator: AsyncIteratorProtocol {
+        public typealias Element = State
+
+        private var iterator: AsyncStream<State>.Iterator
+
+        init(_ iterator: AsyncStream<State>.Iterator) {
+            self.iterator = iterator
+        }
+
+        public mutating func next() async -> Element? {
+            await iterator.next()
+        }
+    }
+
+    private let stream: AsyncStream<State>
+
+    public init(_ stream: AsyncStream<State>) {
+        self.stream = stream
+    }
+
+    public func makeAsyncIterator() -> Iterator {
+        Iterator(stream.makeAsyncIterator())
+    }
+
+    public subscript<Property>(
+        dynamicMember keyPath: KeyPath<State, Property>
+    ) -> AsyncMapSequence<AsyncStream<State>, Property> {
+        stream.map { $0[keyPath: keyPath] }
     }
 }

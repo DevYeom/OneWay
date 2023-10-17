@@ -47,6 +47,48 @@ final class EffectTests: XCTestCase {
         XCTAssertEqual(result, [.first])
     }
 
+    func test_sequence() async {
+        let stream = AsyncStream { continuation in
+            for number in 1 ... 5 {
+                continuation.yield(number)
+            }
+            continuation.finish()
+        }
+
+        let values = Effects.Sequence { send in
+            for await number in stream {
+                let action: Action
+                switch number {
+                case 1: action = .first
+                case 2: action = .second
+                case 3: action = .third
+                case 4: action = .fourth
+                case 5: action = .fifth
+                default:
+                    action = .first
+                    XCTFail()
+                }
+                send(action)
+            }
+        }.values
+
+        var result: [Action] = []
+        for await value in values {
+            result.append(value)
+        }
+
+        XCTAssertEqual(
+            result,
+            [
+                .first,
+                .second,
+                .third,
+                .fourth,
+                .fifth,
+            ]
+        )
+    }
+
     func test_concat() async {
         let clock = TestClock()
 

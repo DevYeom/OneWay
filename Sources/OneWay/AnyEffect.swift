@@ -50,6 +50,17 @@ extension AnyEffect {
     }
 
     @inlinable
+    public static func sequence(
+        priority: TaskPriority? = nil,
+        operation: @escaping ((Element) -> Void) async -> Void
+    ) -> AnyEffect<Element> {
+        Effects.Sequence(
+            priority: priority,
+            operation: operation
+        ).any
+    }
+
+    @inlinable
     public static func concat(
         priority: TaskPriority? = nil,
         _ effects: AnyEffect<Element>...

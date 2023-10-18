@@ -25,6 +25,7 @@ where R.Action: Sendable, R.State: Equatable {
     private let continuation: AsyncStream<State>.Continuation
     private var isProcessing: Bool = false
     private var actionQueue: [Action] = []
+    private var bindingTask: Task<Void, Never>?
     private var tasks: [UUID: Task<Void, Never>] = [:]
 
     public init(
@@ -34,6 +35,7 @@ where R.Action: Sendable, R.State: Equatable {
         self.state = state
         self.reducer = reducer()
         (states, continuation) = AsyncStream<State>.makeStream()
+        Task { await bindExternalEffect() }
         defer { continuation.yield(state) }
     }
 
@@ -45,14 +47,8 @@ where R.Action: Sendable, R.State: Equatable {
         while !actionQueue.isEmpty {
             let action = actionQueue.removeFirst()
             let uuid = UUID()
-            var effect = reducer.reduce(state: &state, action: action)
-            effect.completion = {
-                Task { [weak self, uuid] in
-                    await self?.removeTask(uuid)
-                }
-            }
-
-            let task = Task { [weak self, uuid, effect] in
+            let effect = reducer.reduce(state: &state, action: action)
+            let task = Task { [weak self, uuid] in
                 for await value in effect.values {
                     await self?.send(value)
                 }
@@ -61,6 +57,23 @@ where R.Action: Sendable, R.State: Equatable {
             tasks[uuid] = task
         }
         isProcessing = false
+    }
+
+    public func reset() {
+        bindExternalEffect()
+        tasks.forEach { $0.value.cancel() }
+        tasks.removeAll()
+        actionQueue.removeAll()
+    }
+
+    private func bindExternalEffect() {
+        bindingTask?.cancel()
+        bindingTask = Task { [weak self] in
+            guard let values = self?.reducer.bind().values else { return }
+            for await value in values {
+                await self?.send(value)
+            }
+        }
     }
 
     private func removeTask(_ key: UUID) {

@@ -41,9 +41,11 @@ where R.Action: Sendable, R.State: Equatable {
     }
 
     public func send(_ action: Action) {
-        Task {
-            await store.send(action)
-        }
+        Task { await store.send(action) }
+    }
+
+    public func reset() {
+        Task { await store.reset() }
     }
 
     private func observe() async {

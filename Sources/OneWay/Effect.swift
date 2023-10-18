@@ -87,6 +87,36 @@ public enum Effects {
         }
     }
 
+    public struct Sequence<Element: Sendable>: Effect {
+        public var completion: (() -> Void)?
+
+        private let priority: TaskPriority?
+        private let operation: ((Element) -> Void) async -> Void
+
+        public init(
+            priority: TaskPriority? = nil,
+            operation: @escaping ((Element) -> Void) async -> Void
+        ) {
+            self.priority = priority
+            self.operation = operation
+        }
+
+        public var values: AsyncStream<Element> {
+            AsyncStream { continuation in
+                continuation.onTermination = { _ in
+                    completion?()
+                }
+
+                Task(priority: priority) {
+                    await operation({ element in
+                        continuation.yield(element)
+                    })
+                    continuation.finish()
+                }
+            }
+        }
+    }
+
     public struct Concat<Element>: Effect where Element: Sendable {
         public var completion: (() -> Void)?
 

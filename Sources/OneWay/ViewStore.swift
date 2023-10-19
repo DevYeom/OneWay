@@ -14,7 +14,12 @@ where R.Action: Sendable, R.State: Equatable {
     public typealias State = R.State
 
     public let initialState: State
-    public var state: State { didSet { continuation.yield(state) } }
+    public var state: State {
+        didSet {
+            continuation.yield(state)
+            objectWillChange.send()
+        }
+    }
     public var states: DynamicStream<State> { DynamicStream(stream) }
 
     private let store: Store<R>

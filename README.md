@@ -1,12 +1,8 @@
 <img src="https://github.com/DevYeom/OneWay/blob/assets/oneway_logo.png" alt="oneway_logo"/>
 
 <p align="center">
-  <img alt="Swift" src="https://img.shields.io/badge/Swift-5.5-orange.svg">
   <a href="https://github.com/DevYeom/OneWay/releases/latest">
     <img alt="release" src="https://img.shields.io/github/v/release/DevYeom/OneWay.svg">
-  </a>
-  <a href="https://github.com/DevYeom/OneWay">
-    <img alt="Platforms" src="https://img.shields.io/badge/platforms-iOS%20%7C%20macOS%20%7C%20tvOS%20%7C%20watchOS-lightgray.svg">
   </a>
   <a href="https://github.com/DevYeom/OneWay/actions">
     <img alt="CI" src="https://github.com/DevYeom/OneWay/workflows/CI/badge.svg">
@@ -16,12 +12,20 @@
   </a>
 </p>
 
-**OneWay** is a simple and lightweight library for state management with unidirectional data flow. It is fully supported for using anywhere that uses Swift. You can use it on any platform and with any framework. There are no dependencies on third parties, so you can use **OneWay** purely. It can not only be used in the presentation layer, but can also be used to simplify complex business logic. It will be useful whenever you want to design logic in unidirection.
+<p align="center">
+  <a href="https://github.com/DevYeom/OneWay">
+    <img alt="Swift" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FDevYeom%2FOneWay%2Fbadge%3Ftype%3Dswift-versions">
+  </a>
+  <a href="https://github.com/DevYeom/OneWay">
+    <img alt="Platforms" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FDevYeom%2FOneWay%2Fbadge%3Ftype%3Dplatforms">
+  </a>
+</p>
+
+**OneWay** is a remarkably simple and lightweight library designed for state management through unidirectional data flow. **OneWay** is implemented based on [Swift Concurrency](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/). The `Store` is implemented with an `Actor`, making it always **thread-safe**. Whether you're working on any platform or within any framework, **OneWay** can seamlessly integrate. With zero third-party dependencies, **OneWay** can be used in its purest form. This library isn't limited to be used just the presentation layer. It's also useful for streamlining intricate business logic. You'll find it beneficial whenever you seek to implement logic in a unidirectional manner.
 
 - [Data Flow](#data-flow)
 - [Usage](#usage)
 - [Documentation](#documentation)
-- [Benchmark](#benchmark)
 - [Examples](#examples)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -29,18 +33,23 @@
 
 ## Data Flow
 
-<img src="https://github.com/DevYeom/OneWay/blob/assets/flow_description.png" alt="flow_description"/>
+When using the `Store`, the data flow is as follows.
+
+<img src="https://github.com/DevYeom/OneWay/blob/assets/flow_description_v2_1.png" alt="flow_description_1"/>
+
+When working on UI, it is better to use `ViewStore` to ensure Main Thread operation.
+
+<img src="https://github.com/DevYeom/OneWay/blob/assets/flow_description_v2_2.png" alt="flow_description_1"/>
 
 ## Usage
 
-### Implementing a Way
+### Implementing a Reducer
 
-It is easy to think of a **Way** as a path through which data passes. You can inherit a **Way** and should implement as below. It is also freely customizable and encapsulatable, since **Way** is a class.
+After adopting the `Reducer` protocol, define the `Action` and `State`, and then implement the logic for each `Action` within the `reduce(state:action:)` function.
 
 ```swift
-final class CounterWay: Way<CounterWay.Action, CounterWay.State> {
-
-    enum Action {
+final class CountingReducer: Reducer {
+    enum Action: Sendable {
         case increment
         case decrement
         case twice
@@ -50,14 +59,16 @@ final class CounterWay: Way<CounterWay.Action, CounterWay.State> {
         var number: Int
     }
 
-    override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
+    func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
         switch action {
         case .increment:
             state.number += 1
             return .none
+
         case .decrement:
             state.number -= 1
             return .none
+
         case .twice:
             return .concat(
                 .just(.increment),
@@ -65,163 +76,112 @@ final class CounterWay: Way<CounterWay.Action, CounterWay.State> {
             )
         }
     }
-
 }
 ```
 
 ### Sending Actions
 
-Sending an action to a **Way** causes changes in the `state` via `reduce()`.
+Sending an action to a **Store** causes changes in the `state` via `Reducer`.
 
 ```swift
-let way = CounterWay(initialState: .init(number: 0))
+let store = Store(
+    reducer: CountingReducer(),
+    state: CountingReducer.State(number: 0)
+)
 
-way.send(.increment)
-way.send(.decrement)
-way.send(.twice)
+await store.send(.increment)
+await store.send(.decrement)
+await store.send(.twice)
 
-print(way.state.number) // 2
+print(await store.state.number) // 2
 ```
 
-### Subscribing a Way
+The usage is the same for `ViewStore`. However, when working within `MainActor`, such as in `UIViewController` or `View`'s body, `await` can be omitted.
 
-When a value changes, it can receive a new value. It guarantees that the same value does not come down consecutively. In general, you don't need to add `removeDuplicates()`. But if you want to receive all values when the way's state changes, use `map` operator to way's publisher.
+```swift
+let store = ViewStore(
+    reducer: CountingReducer(),
+    state: CountingReducer.State(number: 0)
+)
+
+store.send(.increment)
+store.send(.decrement)
+store.send(.twice)
+
+print(store.state.number) // 2
+```
+
+### Observing States
+
+When a value changes, you can receive a new value. It guarantees that the same value does not come down consecutively.
 
 ```swift
 // number <- 10, 10, 20 ,20
 
-way.publisher.number
-    .sink { number in
-        print(number) // 10, 20
-    }
-    .store(in: &cancellables)
+for await state in store.states {
+    print(state.number) // 10, 20
+}
+```
 
-way.publisher.map(\.number)
-    .sink { number in
-        print(number) // 10, 10, 20, 20
+Of course, you can observe specific properties only.
+
+```swift
+// number <- 10, 10, 20 ,20
+
+for await number in store.states.number {
+    print(number) // 10, 20
+}
+```
+
+If you want to continue receiving the value even when the same value is assigned to the `State`, you can use `@Sensitive`. For explanations of other useful property wrappers, refer to [here](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/sensitive).
+
+```swift
+final class CountingReducer: Reducer {
+    // ...
+    struct State: Equatable {
+        @Sensitive var number: Int
     }
-    .store(in: &cancellables)
+    // ...
+}
+
+// number <- 10, 10, 20 ,20
+
+for await state in store.states {
+    print(state.number) // 10, 10, 20, 20
 }
 ```
 
 ### Global States
 
-You can easily subscribe to global states by overriding `bind()`.
+You can easily receive to global states by implementing `bind()`. If there are changes in publishers or streams that necessitate rebinding, you can call `reset()` of `Store`.
 
 ```swift
-let globalTextSubject = PassthroughSubject<String, Never>()
-let globalNumberSubject = PassthroughSubject<Int, Never>()
+let textPublisher = PassthroughSubject<String, Never>()
+let numberPublisher = PassthroughSubject<Int, Never>()
 
-final class CounterWay: Way<CounterWay.Action, CounterWay.State> {
+final class CountingReducer: Reducer {
 // ...
-    override func bind() -> SideWay<Action, Never> {
+    func bind() -> AnyEffect<Action> {
         return .merge(
-            globalTextSubject
-                .map({ Action.saveText($0) })
-                .eraseToSideWay(),
-            globalNumberSubject
-                .map({ Action.saveNumber($0) })
-                .eraseToSideWay()
+            .sequence { send in
+                for await text in textPublisher.values {
+                    send(Action.response(text))
+                }
+            },
+            .sequence { send in
+                for await number in numberPublisher.values {
+                    send(Action.response(String(number)))
+                }
+            }
         )
     }
 // ...
 }
 ```
 
-### Catching Errors
-
-There are several functions that handle errors. It is a little easier to understand if you refer to [unit tests](https://github.com/DevYeom/OneWay/blob/main/Tests/OneWayTests/SideWayTests.swift#L119-L216).
-
-```swift
-override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
-    switch action {
-    // ...
-    case .fetchDataWithError:
-        return fetchData()
-            .map({ Action.dataDidLoad($0) })
-            .catch({ Action.handleError($0) })
-            .eraseToSideWay()
-    case .fetchDataWithJustReturn:
-        return fetchData()
-            .map({ Action.dataDidLoad($0) })
-            .catchToReturn(Action.failToLoad)
-            .eraseToSideWay()
-    case .fetchDataWithIgnoringErrors:
-        return fetchData()
-            .map({ Action.dataDidLoad($0) })
-            .catchToNever()
-            .eraseToSideWay()
-    // ...
-    }
-}
-```
-
-### Swift Concurrency
-
-`async/await` can also be used with **Way**.
-
-```swift
-final class CounterWay: Way<CounterWay.Action, CounterWay.State> {
-
-    enum Action {
-        case fetchNumber
-        case setNumber(Int)
-    }
-
-    struct State: Equatable {
-        var number: Int
-    }
-
-    override func reduce(state: inout State, action: Action) -> SideWay<Action, Never> {
-        switch action {
-        case .fetchNumber:
-            return .async {
-                let number = await fetchNumber()
-                return Action.setNumber(number)
-            }
-        case .setNumber(let number):
-            state.number = number
-            return .none
-        }
-    }
-
-}
-```
-
-### Supporting NSObject
-
-**Way** is a class, not a protocol. Therefore, multiple inheritance is not possible. There are often situations where you have to inherit NSObject. **NSWay** was added for this occasion. In this case, inherit and implement **NSWay**, and in other cases, inherit **Way**.
-
-```swift
-final class CounterWay: NSWay<CounterWay.Action, CounterWay.State> {
-    // ...
-}
-```
-
-### Thread Safe or Not
-
-**Way** has a `ThreadOption` to consider the multithreaded environment. This option can be passed as an argument to the initializer. Once set, it cannot be changed. In a general environment, it is better to use the default option(`current`) for better performance. But, if it is initialized with the `current` option, all interactions (i.e. sending actions) with an instance of **Way** must be done on the same thread.
-
-```swift
-let way = CounterWay(initialState: initialState, threadOption: .current)
-let threadSafeWay = CounterWay(initialState: initialState, threadOption: .threadSafe)
-```
-
 ## Documentation
 
-Learn how to use OneWay by going through the [documentation](https://devyeom-docs.github.io/oneway/documentation/oneway) created using DocC.
-
-## Benchmark
-
-Compared to other libraries, **OneWay** shows very good performance.
-
-For more details, 👉 [OneWayBenchmark](https://github.com/DevYeom/OneWayBenchmark)
-
-> Lower is better
-
-<img src="https://github.com/DevYeom/OneWayBenchmark/blob/main/Resources/benchmark_220622_1.png" alt="Benchmark1"/>
-
-<img src="https://github.com/DevYeom/OneWayBenchmark/blob/main/Resources/benchmark_220622_2.png" alt="Benchmark2"/>
+To learn how to use **OneWay** in more detail, go through the [documentation](https://swiftpackageindex.com/DevYeom/OneWay/2.0.0/documentation/OneWay).
 
 ## Examples
 
@@ -233,8 +193,8 @@ For more details, 👉 [OneWayBenchmark](https://github.com/DevYeom/OneWayBenchm
 
 |        |Minimum Version|
 |-------:|--------------:|
-|Swift   |5.5            |
-|Xcode   |13.0           |
+|Swift   |5.9            |
+|Xcode   |15.0           |
 |iOS     |13.0           |
 |macOS   |10.15          |
 |tvOS    |13.0           |
@@ -248,18 +208,13 @@ To integrate **OneWay** into your Xcode project using Swift Package Manager, add
 
 ```swift
 dependencies: [
-  .package(url: "https://github.com/DevYeom/OneWay", from: "1.0.0"),
+  .package(url: "https://github.com/DevYeom/OneWay", from: "2.0.0"),
 ]
 ```
 
-## Next Step
-
-- [x] Testing queue for asynchronous test case.
-- [ ] Debugging tool that can log all actions and states.
-
 ## References
 
-These are the references that inspired OneWay a lot.
+These are the references that have provided much inspiration.
 
 - [Flux](https://github.com/facebook/flux)
 - [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)

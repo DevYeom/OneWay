@@ -40,6 +40,12 @@ public struct Sensitive<Value> where Value: Equatable {
     }
 }
 
+extension Sensitive: CustomStringConvertible {
+    public var description: String {
+        String(describing: storage.value)
+    }
+}
+
 extension Sensitive: Sendable where Value: Sendable { }
 extension Sensitive: Equatable { }
 extension Sensitive: Hashable where Value: Hashable {

@@ -5,9 +5,11 @@
 //  Copyright (c) 2022 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
+import Combine
 import OneWay
 import XCTest
 
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 final class StoreTests: XCTestCase {
     private var sut: Store<TestReducer>!
 
@@ -99,6 +101,28 @@ final class StoreTests: XCTestCase {
         XCTAssertEqual(state.text, "Success")
     }
 
+    func test_bind() async {
+        var result: Set<String> = []
+
+        // https://forums.swift.org/t/how-to-use-combine-publisher-with-swift-concurrency-publisher-values-could-miss-events/67193
+        Task {
+            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC)
+            textPublisher.send("first")
+            numberPublisher.send(1)
+            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC)
+            textPublisher.send("second")
+            numberPublisher.send(2)
+        }
+
+        let states = await sut.states
+        for await state in states {
+            result.insert(state.text)
+            if result.count > 4 { break }
+        }
+
+        XCTAssertEqual(result, ["", "first", "1", "second", "2"])
+    }
+
     func test_removeDuplicates() async {
         await sut.send(.response("First"))
         await sut.send(.response("First"))
@@ -120,6 +144,10 @@ final class StoreTests: XCTestCase {
     }
 }
 
+private let textPublisher = PassthroughSubject<String, Never>()
+private let numberPublisher = PassthroughSubject<Int, Never>()
+
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 fileprivate final class TestReducer: Reducer {
     enum Action: Sendable {
         case increment
@@ -159,5 +187,20 @@ fileprivate final class TestReducer: Reducer {
             state.text = response
             return .none
         }
+    }
+
+    func bind() -> AnyEffect<Action> {
+        return .merge(
+            .sequence { send in
+                for await text in textPublisher.values {
+                    send(Action.response(text))
+                }
+            },
+            .sequence { send in
+                for await number in numberPublisher.values {
+                    send(Action.response(String(number)))
+                }
+            }
+        )
     }
 }

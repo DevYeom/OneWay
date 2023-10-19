@@ -20,8 +20,11 @@ final class StoreTests: XCTestCase {
     }
 
     func test_initialState() async {
+        let initialState = await sut.initialState
         let state = await sut.state
         let states = await sut.states
+
+        XCTAssertEqual(initialState, TestReducer.State(count: 0, text: ""))
         XCTAssertEqual(state.count, 0)
         XCTAssertEqual(state.text, "")
 

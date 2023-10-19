@@ -12,6 +12,7 @@ where R.Action: Sendable, R.State: Equatable {
     public typealias Action = R.Action
     public typealias State = R.State
 
+    public let initialState: State
     public var state: State {
         didSet {
             if oldValue != state {
@@ -31,6 +32,7 @@ where R.Action: Sendable, R.State: Equatable {
         reducer: @autoclosure () -> R,
         state: State
     ) {
+        self.initialState = state
         self.state = state
         self.reducer = reducer()
         (states, continuation) = AsyncStream<State>.makeStream()

@@ -45,6 +45,12 @@ public struct Heap<Value> {
     }
 }
 
+extension Heap: CustomStringConvertible {
+    public var description: String {
+        String(describing: storage.value)
+    }
+}
+
 extension Heap: Sendable where Value: Sendable { }
 extension Heap: Equatable where Value: Equatable {
     public static func == (lhs: Heap, rhs: Heap) -> Bool {

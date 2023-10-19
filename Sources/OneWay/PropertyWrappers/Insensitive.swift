@@ -14,6 +14,12 @@ public struct Insensitive<Value> {
     }
 }
 
+extension Insensitive: CustomStringConvertible {
+    public var description: String {
+        String(describing: wrappedValue)
+    }
+}
+
 extension Insensitive: Sendable where Value: Sendable { }
 extension Insensitive: Equatable where Value: Equatable {
     public static func == (lhs: Insensitive, rhs: Insensitive) -> Bool {

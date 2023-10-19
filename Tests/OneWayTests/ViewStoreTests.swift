@@ -21,6 +21,7 @@ final class ViewStoreTests: XCTestCase {
     }
 
     func test_initialState() async {
+        XCTAssertEqual(sut.initialState, TestReducer.State(count: 0))
         XCTAssertEqual(sut.state.count, 0)
 
         for await state in sut.states {

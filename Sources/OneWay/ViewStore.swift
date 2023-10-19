@@ -13,6 +13,7 @@ where R.Action: Sendable, R.State: Equatable {
     public typealias Action = R.Action
     public typealias State = R.State
 
+    public let initialState: State
     public var state: State { didSet { continuation.yield(state) } }
     public var states: DynamicStream<State> { DynamicStream(stream) }
 
@@ -25,6 +26,7 @@ where R.Action: Sendable, R.State: Equatable {
         reducer: @autoclosure () -> R,
         state: State
     ) {
+        self.initialState = state
         self.state = state
         self.store = Store(
             reducer: reducer(),

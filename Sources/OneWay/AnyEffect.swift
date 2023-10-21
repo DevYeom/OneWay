@@ -12,7 +12,7 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     public var values: AsyncStream<Element> { base.values }
 
     private var base: any Effect<Element>
-    
+
     /// Creates a type-erasing effect to wrap the provided effect.
     ///
     /// - Parameter base: An effect to wrap with a type-eraser.
@@ -51,7 +51,7 @@ extension AnyEffect {
     @inlinable
     public static func async(
         priority: TaskPriority? = nil,
-        operation: @escaping () async -> Element
+        operation: @Sendable @escaping () async -> Element
     ) -> AnyEffect<Element> {
         Effects.Async(
             priority: priority,
@@ -70,7 +70,7 @@ extension AnyEffect {
     @inlinable
     public static func sequence(
         priority: TaskPriority? = nil,
-        operation: @escaping ((Element) -> Void) async -> Void
+        operation: @Sendable @escaping ((Element) -> Void) async -> Void
     ) -> AnyEffect<Element> {
         Effects.Sequence(
             priority: priority,

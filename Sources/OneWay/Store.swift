@@ -7,11 +7,12 @@
 
 import Foundation
 
-/// ``Store`` is a space where data flows. Because it is made with Actor, it is completely 
+/// ``Store`` is a space where data flows. Because it is made with Actor, it is completely
 /// thread-safe. It stores the `State` and can change the `State` by receiving `Actions`. You can
 /// define `Action` and `State` in ``Reducer``. If you create a data flow through ``Store``, you can
 /// make it flow in one direction.
-public actor Store<R: Reducer> where R.Action: Sendable, R.State: Equatable {
+public actor Store<R: Reducer>
+where R.Action: Sendable, R.State: Sendable & Equatable {
     /// A convenience type alias for referring to a action of a given reducer's action.
     public typealias Action = R.Action
 
@@ -30,7 +31,7 @@ public actor Store<R: Reducer> where R.Action: Sendable, R.State: Equatable {
         }
     }
 
-    /// The state stream that emits state when the state changes. Use this stream to observe the 
+    /// The state stream that emits state when the state changes. Use this stream to observe the
     /// state changes
     public var states: AsyncStream<State>
 
@@ -44,11 +45,11 @@ public actor Store<R: Reducer> where R.Action: Sendable, R.State: Equatable {
     /// Initializes a store from a reducer and an initial state.
     ///
     /// - Parameters:
-    ///   - reducer: The reducer is responsible for transitioning the current state to the next 
+    ///   - reducer: The reducer is responsible for transitioning the current state to the next
     ///   state.
     ///   - state: The state to initialize a store.
     public init(
-        reducer: @autoclosure () -> R,
+        reducer: @Sendable @autoclosure () -> R,
         state: State
     ) {
         self.initialState = state
@@ -94,9 +95,9 @@ public actor Store<R: Reducer> where R.Action: Sendable, R.State: Equatable {
     }
 
     private func bindExternalEffect() {
+        let values = reducer.bind().values
         bindingTask?.cancel()
         bindingTask = Task { [weak self] in
-            guard let values = self?.reducer.bind().values else { return }
             for await value in values {
                 await self?.send(value)
             }

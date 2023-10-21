@@ -5,6 +5,8 @@
 //  Copyright (c) 2022 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
+import Foundation
+
 /// When applied to a property of `State`, the comparable value will always remain the same, even if
 /// the actual value changes.
 ///

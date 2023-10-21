@@ -16,8 +16,6 @@ import Foundation
 public protocol Effect<Element>: Sendable {
     associatedtype Element: Sendable
 
-    var completion: (() -> Void)? { get set }
-
     /// The elements produced by the effect, as an asynchronous sequence.
     var values: AsyncStream<Element> { get }
 }
@@ -33,16 +31,11 @@ public enum Effects {
     /// An effect that does nothing and finishes immediately. It is useful for situations where you
     /// must return a effect, but you don't need to do anything.
     public struct Empty<Element: Sendable>: Effect {
-        public var completion: (() -> Void)?
-
         /// Initializes a `Empty` effect.
         public init() { }
 
         public var values: AsyncStream<Element> {
             AsyncStream { continuation in
-                continuation.onTermination = { _ in
-                    completion?()
-                }
                 continuation.finish()
             }
         }
@@ -50,8 +43,6 @@ public enum Effects {
 
     /// An effect that immediately emits the value passed in.
     public struct Just<Element: Sendable>: Effect {
-        public var completion: (() -> Void)?
-
         private let element: Element
 
         /// Initializes a `Just` effect.
@@ -63,10 +54,6 @@ public enum Effects {
 
         public var values: AsyncStream<Element> {
             AsyncStream { continuation in
-                continuation.onTermination = { _ in
-                    completion?()
-                }
-
                 continuation.yield(element)
                 continuation.finish()
             }
@@ -75,8 +62,6 @@ public enum Effects {
 
     /// An effect that can supply a single value asynchronously in the future.
     public struct Async<Element: Sendable>: Effect {
-        public var completion: (() -> Void)?
-
         private let priority: TaskPriority?
         private let operation: () async -> Element
 
@@ -96,10 +81,6 @@ public enum Effects {
 
         public var values: AsyncStream<Element> {
             AsyncStream { continuation in
-                continuation.onTermination = { _ in
-                    completion?()
-                }
-
                 Task(priority: priority) {
                     let result = await operation()
                     continuation.yield(result)
@@ -112,8 +93,6 @@ public enum Effects {
     /// An effect that can supply multiple values asynchronously in the future. It can be used for
     /// observing an asynchronous sequence.
     public struct Sequence<Element: Sendable>: Effect {
-        public var completion: (() -> Void)?
-
         private let priority: TaskPriority?
         private let operation: ((Element) -> Void) async -> Void
 
@@ -133,10 +112,6 @@ public enum Effects {
 
         public var values: AsyncStream<Element> {
             AsyncStream { continuation in
-                continuation.onTermination = { _ in
-                    completion?()
-                }
-
                 Task(priority: priority) {
                     await operation({ element in
                         continuation.yield(element)
@@ -150,8 +125,6 @@ public enum Effects {
     /// An effect that concatenates a list of effects together into a single effect, which runs the
     /// effects one after the other.
     public struct Concat<Element>: Effect where Element: Sendable {
-        public var completion: (() -> Void)?
-
         private let priority: TaskPriority?
         private let effects: [AnyEffect<Element>]
 
@@ -171,10 +144,6 @@ public enum Effects {
 
         public var values: AsyncStream<Element> {
             AsyncStream { continuation in
-                continuation.onTermination = { _ in
-                    completion?()
-                }
-
                 Task(priority: priority) {
                     for effect in effects {
                         for await value in effect.values {
@@ -190,8 +159,6 @@ public enum Effects {
     /// An effect that merges a list of effects together into a single effect, which runs the 
     /// effects at the same time.
     public struct Merge<Element>: Effect where Element: Sendable {
-        public var completion: (() -> Void)?
-
         private let priority: TaskPriority?
         private let effects: [AnyEffect<Element>]
 
@@ -211,10 +178,6 @@ public enum Effects {
 
         public var values: AsyncStream<Element> {
             AsyncStream { continuation in
-                continuation.onTermination = { _ in
-                    completion?()
-                }
-
                 Task(priority: priority) {
                     if #available(macOS 14.0, iOS 17.0, watchOS 10.0, tvOS 17.0, *) {
                         await withDiscardingTaskGroup { group in

@@ -9,14 +9,7 @@ import Foundation
 
 /// An effect that performs type erasure by wrapping another effect.
 public struct AnyEffect<Element>: Effect where Element: Sendable {
-    public var completion: (() -> Void)? {
-        get { base.completion }
-        set { base.completion = newValue }
-    }
-
-    public var values: AsyncStream<Element> {
-        base.values
-    }
+    public var values: AsyncStream<Element> { base.values }
 
     private var base: any Effect<Element>
     

@@ -18,10 +18,6 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://github.com/pointfreeco/combine-schedulers",
-            from: "1.0.0"
-        ),
-        .package(
             url: "https://github.com/pointfreeco/swift-clocks",
             from: "1.0.0"
         ),
@@ -35,10 +31,6 @@ let package = Package(
             name: "OneWayTests",
             dependencies: [
                 "OneWay",
-                .product(
-                    name: "CombineSchedulers",
-                    package: "combine-schedulers"
-                ),
                 .product(
                     name: "Clocks",
                     package: "swift-clocks"

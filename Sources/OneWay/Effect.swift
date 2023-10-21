@@ -30,7 +30,7 @@ extension Effect {
 public enum Effects {
     /// An effect that does nothing and finishes immediately. It is useful for situations where you
     /// must return a effect, but you don't need to do anything.
-    public struct Empty<Element: Sendable>: Effect {
+    public struct Empty<Element>: Effect where Element: Sendable {
         /// Initializes a `Empty` effect.
         public init() { }
 
@@ -42,7 +42,7 @@ public enum Effects {
     }
 
     /// An effect that immediately emits the value passed in.
-    public struct Just<Element: Sendable>: Effect {
+    public struct Just<Element>: Effect where Element: Sendable {
         private let element: Element
 
         /// Initializes a `Just` effect.
@@ -61,9 +61,9 @@ public enum Effects {
     }
 
     /// An effect that can supply a single value asynchronously in the future.
-    public struct Async<Element: Sendable>: Effect {
+    public struct Async<Element>: Effect where Element: Sendable {
         private let priority: TaskPriority?
-        private let operation: () async -> Element
+        private let operation: @Sendable () async -> Element
 
         /// Initializes a `Async` effect.
         ///
@@ -73,7 +73,7 @@ public enum Effects {
         ///   - operation: The operation to perform.
         public init(
             priority: TaskPriority? = nil,
-            operation: @escaping () async -> Element
+            operation: @Sendable @escaping () async -> Element
         ) {
             self.priority = priority
             self.operation = operation
@@ -92,9 +92,9 @@ public enum Effects {
 
     /// An effect that can supply multiple values asynchronously in the future. It can be used for
     /// observing an asynchronous sequence.
-    public struct Sequence<Element: Sendable>: Effect {
+    public struct Sequence<Element>: Effect where Element: Sendable {
         private let priority: TaskPriority?
-        private let operation: ((Element) -> Void) async -> Void
+        private let operation: @Sendable ((Element) -> Void) async -> Void
 
         /// Initializes a `Sequence` effect.
         ///
@@ -104,7 +104,7 @@ public enum Effects {
         ///   - operation: The operation to perform.
         public init(
             priority: TaskPriority? = nil,
-            operation: @escaping ((Element) -> Void) async -> Void
+            operation: @Sendable @escaping ((Element) -> Void) async -> Void
         ) {
             self.priority = priority
             self.operation = operation
@@ -156,7 +156,7 @@ public enum Effects {
         }
     }
 
-    /// An effect that merges a list of effects together into a single effect, which runs the 
+    /// An effect that merges a list of effects together into a single effect, which runs the
     /// effects at the same time.
     public struct Merge<Element>: Effect where Element: Sendable {
         private let priority: TaskPriority?

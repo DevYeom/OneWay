@@ -66,17 +66,18 @@ final class StoreTests: XCTestCase {
 
     func test_threadSafeSendingActions() async {
         let iterations: Int = 10_000
+        let sut = sut!
         DispatchQueue.concurrentPerform(
             iterations: iterations / 2,
             execute: { _ in
                 Task.detached {
-                    await self.sut.send(.increment)
+                    await sut.send(.increment)
                 }
             }
         )
         for _ in 0 ..< iterations / 2 {
             Task.detached {
-                await self.sut.send(.increment)
+                await sut.send(.increment)
             }
         }
 

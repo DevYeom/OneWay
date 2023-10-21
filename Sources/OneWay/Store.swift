@@ -32,7 +32,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         }
     }
 
-    /// The state stream that emits state when the state changes. Use this stream to observe the 
+    /// The state stream that emits state when the state changes. Use this stream to observe the
     /// state changes
     public var states: AsyncStream<State>
 
@@ -46,11 +46,11 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     /// Initializes a store from a reducer and an initial state.
     ///
     /// - Parameters:
-    ///   - reducer: The reducer is responsible for transitioning the current state to the next 
+    ///   - reducer: The reducer is responsible for transitioning the current state to the next
     ///   state.
     ///   - state: The state to initialize a store.
     public init(
-        reducer: @autoclosure () -> R,
+        reducer: @Sendable @autoclosure () -> R,
         state: State
     ) {
         self.initialState = state
@@ -96,9 +96,9 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     }
 
     private func bindExternalEffect() {
+        let values = reducer.bind().values
         bindingTask?.cancel()
         bindingTask = Task { [weak self] in
-            guard let values = self?.reducer.bind().values else { return }
             for await value in values {
                 await self?.send(value)
             }

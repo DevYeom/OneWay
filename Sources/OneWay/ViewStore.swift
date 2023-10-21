@@ -5,6 +5,9 @@
 //  Copyright (c) 2022 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
+#if canImport(Combine)
+import Combine
+#endif
 import Foundation
 
 /// `ViewStore` is an object that manages state values within the context of the `MainActor`.
@@ -12,8 +15,8 @@ import Foundation
 /// It can observe state changes and send actions. It can primarily be used in SwiftUI's `View`,
 /// `UIView` or `UIViewController` operating on main thread.
 @MainActor
-public final class ViewStore<R: Reducer>: ObservableObject
-where R.Action: Sendable, R.State: Equatable {
+public final class ViewStore<R: Reducer>
+where R.Action: Sendable, R.State: Sendable & Equatable {
     /// A convenience type alias for referring to a action of a given reducer's action.
     public typealias Action = R.Action
 
@@ -27,7 +30,9 @@ where R.Action: Sendable, R.State: Equatable {
     public var state: State {
         didSet {
             continuation.yield(state)
+#if canImport(Combine)
             objectWillChange.send()
+#endif
         }
     }
 
@@ -47,7 +52,7 @@ where R.Action: Sendable, R.State: Equatable {
     ///   state.
     ///   - state: The state to initialize a store.
     public init(
-        reducer: @autoclosure () -> R,
+        reducer: @Sendable @autoclosure () -> R,
         state: State
     ) {
         self.initialState = state
@@ -88,6 +93,10 @@ where R.Action: Sendable, R.State: Equatable {
         }
     }
 }
+
+#if canImport(Combine)
+extension ViewStore: ObservableObject { }
+#endif
 
 /// A dynamic stream of the ``ViewStore``'s state.
 ///

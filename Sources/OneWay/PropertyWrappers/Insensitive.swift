@@ -5,6 +5,11 @@
 //  Copyright (c) 2022 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
+/// When applied to a property of `State`, the comparable value will always remain the same, even if
+/// the actual value changes.
+///
+/// It is useful when the actual value of the `State` changes, but rendering of the `View` is not
+/// required.
 @propertyWrapper
 public struct Insensitive<Value> {
     public var wrappedValue: Value

@@ -7,6 +7,11 @@
 
 import Foundation
 
+/// When applied to a property of `State`, assigning the same value will result in different values
+/// for comparison.
+///
+/// It is useful in cases where the value hasn't actually changed, but the `View` needs to be
+/// rendered again.
 @propertyWrapper
 public struct Sensitive<Value> where Value: Equatable {
     fileprivate struct Storage: Equatable {

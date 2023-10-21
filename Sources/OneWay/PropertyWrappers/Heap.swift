@@ -7,11 +7,11 @@
 
 import Foundation
 
-/// When applied to a field, the corresponding value will always be heap-allocated.
+/// When applied to a property of `State`, the corresponding value will always be heap-allocated.
 /// This happens because this wrapper is a class and classes are always heap-allocated.
 ///
-/// Use of this wrapper is required on large value types
-/// because they can overflow the Swift runtime stack.
+/// Use of this wrapper is required on large value types because they can overflow the Swift runtime
+/// stack.
 ///
 /// - SeeAlso: [`CopyOnWrite.swift` located in `square/wire` repository](https://github.com/square/wire/blob/master/wire-runtime-swift/src/main/swift/propertyWrappers/CopyOnWrite.swift)
 @propertyWrapper

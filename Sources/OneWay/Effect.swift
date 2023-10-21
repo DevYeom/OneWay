@@ -7,10 +7,18 @@
 
 import Foundation
 
-public protocol Effect<Element> {
+/// A protocol encapsulating a unit of work that can be executed in the external environment and can
+/// provide data to the ``Store``.
+///
+/// This is the perfect place to handle side effects, including network requests, saving/loading
+/// from disk, creating timers, interacting with dependencies, and more. Effects are returned from
+/// reducers, allowing the ``Store`` to execute them once the reducer has finished its operation.
+public protocol Effect<Element>: Sendable {
     associatedtype Element: Sendable
 
     var completion: (() -> Void)? { get set }
+
+    /// The elements produced by the effect, as an asynchronous sequence.
     var values: AsyncStream<Element> { get }
 }
 
@@ -22,9 +30,12 @@ extension Effect {
 
 /// A namespace for types that serve as effects.
 public enum Effects {
+    /// An effect that does nothing and finishes immediately. It is useful for situations where you
+    /// must return a effect, but you don't need to do anything.
     public struct Empty<Element: Sendable>: Effect {
         public var completion: (() -> Void)?
 
+        /// Initializes a `Empty` effect.
         public init() { }
 
         public var values: AsyncStream<Element> {
@@ -37,11 +48,15 @@ public enum Effects {
         }
     }
 
+    /// An effect that immediately emits the value passed in.
     public struct Just<Element: Sendable>: Effect {
         public var completion: (() -> Void)?
 
         private let element: Element
 
+        /// Initializes a `Just` effect.
+        ///
+        /// - Parameter element: An element to emit immediately.
         public init(_ element: Element) {
             self.element = element
         }
@@ -58,12 +73,19 @@ public enum Effects {
         }
     }
 
+    /// An effect that can supply a single value asynchronously in the future.
     public struct Async<Element: Sendable>: Effect {
         public var completion: (() -> Void)?
 
         private let priority: TaskPriority?
         private let operation: () async -> Element
 
+        /// Initializes a `Async` effect.
+        ///
+        /// - Parameters:
+        ///   - priority: The priority of the task.
+        ///     Pass `nil` to use the priority from `Task.currentPriority`.
+        ///   - operation: The operation to perform.
         public init(
             priority: TaskPriority? = nil,
             operation: @escaping () async -> Element
@@ -87,12 +109,20 @@ public enum Effects {
         }
     }
 
+    /// An effect that can supply multiple values asynchronously in the future. It can be used for
+    /// observing an asynchronous sequence.
     public struct Sequence<Element: Sendable>: Effect {
         public var completion: (() -> Void)?
 
         private let priority: TaskPriority?
         private let operation: ((Element) -> Void) async -> Void
 
+        /// Initializes a `Sequence` effect.
+        ///
+        /// - Parameters:
+        ///   - priority: The priority of the task.
+        ///     Pass `nil` to use the priority from `Task.currentPriority`.
+        ///   - operation: The operation to perform.
         public init(
             priority: TaskPriority? = nil,
             operation: @escaping ((Element) -> Void) async -> Void
@@ -117,12 +147,20 @@ public enum Effects {
         }
     }
 
+    /// An effect that concatenates a list of effects together into a single effect, which runs the
+    /// effects one after the other.
     public struct Concat<Element>: Effect where Element: Sendable {
         public var completion: (() -> Void)?
 
         private let priority: TaskPriority?
         private let effects: [AnyEffect<Element>]
 
+        /// Initializes a `Concat` effect.
+        ///
+        /// - Parameters:
+        ///   - priority: The priority of the task.
+        ///     Pass `nil` to use the priority from `Task.currentPriority`.
+        ///   - effects: A list of effects.
         public init(
             priority: TaskPriority? = nil,
             _ effects: [AnyEffect<Element>]
@@ -149,12 +187,20 @@ public enum Effects {
         }
     }
 
+    /// An effect that merges a list of effects together into a single effect, which runs the 
+    /// effects at the same time.
     public struct Merge<Element>: Effect where Element: Sendable {
         public var completion: (() -> Void)?
 
         private let priority: TaskPriority?
         private let effects: [AnyEffect<Element>]
 
+        /// Initializes a `Merge` effect.
+        ///
+        /// - Parameters:
+        ///   - priority: The priority of the task.
+        ///     Pass `nil` to use the priority from `Task.currentPriority`.
+        ///   - effects: A list of effects.
         public init(
             priority: TaskPriority? = nil,
             _ effects: [AnyEffect<Element>]

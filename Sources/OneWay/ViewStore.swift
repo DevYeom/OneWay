@@ -7,19 +7,32 @@
 
 import Foundation
 
+/// `ViewStore` is an object that manages state values within the context of the `MainActor`.
+///
+/// It can observe state changes and send actions. It can primarily be used in SwiftUI's `View`,
+/// `UIView` or `UIViewController` operating on main thread.
 @MainActor
 public final class ViewStore<R: Reducer>: ObservableObject
 where R.Action: Sendable, R.State: Equatable {
+    /// A convenience type alias for referring to a action of a given reducer's action.
     public typealias Action = R.Action
+
+    /// A convenience type alias for referring to a state of a given reducer's state.
     public typealias State = R.State
 
+    /// The initial state of a store.
     public let initialState: State
+
+    /// The current state of a store.
     public var state: State {
         didSet {
             continuation.yield(state)
             objectWillChange.send()
         }
     }
+
+    /// The state stream that emits state when the state changes. Use this stream to observe the
+    /// state changes
     public var states: DynamicStream<State> { DynamicStream(stream) }
 
     private let store: Store<R>
@@ -27,6 +40,12 @@ where R.Action: Sendable, R.State: Equatable {
     private let continuation: AsyncStream<State>.Continuation
     private var task: Task<Void, Never>?
 
+    /// Initializes a view store from a reducer and an initial state.
+    ///
+    /// - Parameters:
+    ///   - reducer: The reducer is responsible for transitioning the current state to the next
+    ///   state.
+    ///   - state: The state to initialize a store.
     public init(
         reducer: @autoclosure () -> R,
         state: State
@@ -47,10 +66,17 @@ where R.Action: Sendable, R.State: Equatable {
         task = nil
     }
 
+    /// Sends an action to the view store.
+    ///
+    /// - Parameter action: An action defined in the reducer.
     public func send(_ action: Action) {
         Task { await store.send(action) }
     }
 
+    /// Removes all actions and effects in the queue and re-binds for global states.
+    ///
+    /// - Note: This is useful when you need to call `bind()` again. Because you can't call `bind()`
+    ///   directly
     public func reset() {
         Task { await store.reset() }
     }
@@ -63,6 +89,10 @@ where R.Action: Sendable, R.State: Equatable {
     }
 }
 
+/// A dynamic stream of the ``ViewStore``'s state.
+///
+/// This stream supports dynamic member lookup so that you can pluck out a specific field in the
+/// state.
 @dynamicMemberLookup
 public struct DynamicStream<State>: AsyncSequence {
     public typealias Element = State
@@ -91,6 +121,10 @@ public struct DynamicStream<State>: AsyncSequence {
         Iterator(stream.makeAsyncIterator())
     }
 
+    /// Returns the resulting stream with partial state corresponding to the given key path.
+    ///
+    /// - Parameter dynamicMember: a key path for the original state.
+    /// - Returns: A new stream that has a part of the original state.
     public subscript<Property>(
         dynamicMember keyPath: KeyPath<State, Property>
     ) -> AsyncMapSequence<AsyncStream<State>, Property> {

@@ -5,6 +5,13 @@
 //  Copyright (c) 2022 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
+import Foundation
+
+/// A property wrapper that acts like the same value, regardless of changes in its actual value.
+///
+/// When applied to a field and compared with an equals sign, it will always yield `true`. It is
+/// useful when the actual value of the `State` changes, but rendering of the `View` is not
+/// required.
 @propertyWrapper
 public struct Insensitive<Value> {
     public var wrappedValue: Value

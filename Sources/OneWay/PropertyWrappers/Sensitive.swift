@@ -7,6 +7,12 @@
 
 import Foundation
 
+/// A property wrapper that makes a value behave like a different one just by assigning it, even if
+/// the same value is assigned.
+///
+/// When applied to a field, assigning the same value will lead to different values for comparison.
+/// It is useful in cases where the value hasn't actually changed, but the `View` needs to be
+/// rendered again.
 @propertyWrapper
 public struct Sensitive<Value> where Value: Equatable {
     fileprivate struct Storage: Equatable {

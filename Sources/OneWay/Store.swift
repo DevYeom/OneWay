@@ -7,12 +7,23 @@
 
 import Foundation
 
+/// `Store` is an actor that holds and manages state values.
+///
+/// It is fully thread-safe as it is implemented using an actor. It stores the `State` and can
+/// change the `State` by receiving `Actions`. You can define `Action` and `State` in ``Reducer``.
+/// If you create a data flow through `Store`, you can make it flow in one direction.
 public actor Store<R: Reducer>
-where R.Action: Sendable, R.State: Equatable {
+where R.Action: Sendable, R.State: Sendable & Equatable {
+    /// A convenience type alias for referring to a action of a given reducer's action.
     public typealias Action = R.Action
+
+    /// A convenience type alias for referring to a state of a given reducer's state.
     public typealias State = R.State
 
+    /// The initial state of a store.
     public let initialState: State
+
+    /// The current state of a store.
     public var state: State {
         didSet {
             if oldValue != state {
@@ -20,6 +31,9 @@ where R.Action: Sendable, R.State: Equatable {
             }
         }
     }
+
+    /// The state stream that emits state when the state changes. Use this stream to observe the 
+    /// state changes
     public var states: AsyncStream<State>
 
     private let reducer: any Reducer<Action, State>
@@ -29,6 +43,12 @@ where R.Action: Sendable, R.State: Equatable {
     private var bindingTask: Task<Void, Never>?
     private var tasks: [UUID: Task<Void, Never>] = [:]
 
+    /// Initializes a store from a reducer and an initial state.
+    ///
+    /// - Parameters:
+    ///   - reducer: The reducer is responsible for transitioning the current state to the next 
+    ///   state.
+    ///   - state: The state to initialize a store.
     public init(
         reducer: @autoclosure () -> R,
         state: State
@@ -41,6 +61,9 @@ where R.Action: Sendable, R.State: Equatable {
         defer { continuation.yield(state) }
     }
 
+    /// Sends an action to the store.
+    ///
+    /// - Parameter action: An action defined in the reducer.
     public func send(_ action: Action) async {
         actionQueue.append(action)
         guard !isProcessing else { return }
@@ -61,6 +84,10 @@ where R.Action: Sendable, R.State: Equatable {
         isProcessing = false
     }
 
+    /// Removes all actions and effects in the queue and re-binds for global states.
+    ///
+    /// - Note: This is useful when you need to call `bind()` again. Because you can't call `bind()`
+    ///   directly
     public func reset() {
         bindExternalEffect()
         tasks.forEach { $0.value.cancel() }

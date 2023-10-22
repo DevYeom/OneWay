@@ -55,7 +55,7 @@ final class CountingReducer: Reducer {
         case twice
     }
 
-    struct State: Equatable {
+    struct State: Sendable & Equatable {
         var number: Int
     }
 
@@ -138,7 +138,7 @@ If you want to continue receiving the value even when the same value is assigned
 ```swift
 final class CountingReducer: Reducer {
     // ...
-    struct State: Equatable {
+    struct State: Sendable & Equatable {
         @Sensitive var number: Int
     }
     // ...

@@ -43,7 +43,7 @@ final class ViewStoreTests: XCTestCase {
         XCTAssertEqual(sut.state.count, 4)
     }
 
-    func test_dynamicMemberStream() async {
+    func test_dynamicStream() async {
         sut.send(.concat)
 
         var result: [Int] = []
@@ -53,6 +53,66 @@ final class ViewStoreTests: XCTestCase {
         }
 
         XCTAssertEqual(result, [0, 1, 2, 3, 4])
+    }
+
+    func test_dynamicStreamForMultipleConsumers() async {
+        let expectation = expectation(description: #function)
+
+        actor Result {
+            let expectation: XCTestExpectation
+            var values: [Int] = [] {
+                didSet {
+                    if values.reduce(0, +) == 30 {
+                        expectation.fulfill()
+                    }
+                }
+            }
+            var count: Int { values.count }
+
+            init(_ expectation: XCTestExpectation) {
+                self.expectation = expectation
+            }
+
+            func insert(_ value: Int) {
+                values.append(value)
+            }
+        }
+
+        let result = Result(expectation)
+        Task {
+            for await state in sut.states {
+                await result.insert(state.count)
+            }
+        }
+        Task {
+            for await count in sut.states.count {
+                await result.insert(count)
+            }
+        }
+        Task {
+            for await count in sut.states.count {
+                await result.insert(count)
+            }
+        }
+
+        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC)
+        sut.send(.concat)
+
+        await fulfillment(of: [expectation], timeout: 1)
+
+        var values = await result.values
+        // Depending on the time of observation, the initial value may not be received, so the
+        // initial value is excluded.
+        values.removeAll(where: { $0 == 0 })
+        XCTAssertEqual(
+            values.sorted(),
+            [
+                1, 1, 1,
+                2, 2, 2,
+                3, 3, 3,
+                4, 4, 4,
+            ]
+        )
     }
 }
 

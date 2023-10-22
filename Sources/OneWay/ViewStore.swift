@@ -30,6 +30,9 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     public var state: State {
         didSet {
             continuation.yield(state)
+            for continuation in states.continuations {
+                continuation.yield(state)
+            }
 #if canImport(Combine)
             objectWillChange.send()
 #endif
@@ -38,7 +41,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
 
     /// The state stream that emits state when the state changes. Use this stream to observe the
     /// state changes
-    public var states: DynamicStream<State> { DynamicStream(stream) }
+    public lazy var states = DynamicStream(stream)
 
     private let store: Store<R>
     private let stream: AsyncStream<State>
@@ -103,8 +106,10 @@ extension ViewStore: ObservableObject { }
 /// This stream supports dynamic member lookup so that you can pluck out a specific field in the
 /// state.
 @dynamicMemberLookup
-public struct DynamicStream<State>: AsyncSequence {
+public final class DynamicStream<State>: AsyncSequence {
     public typealias Element = State
+
+    fileprivate var continuations: [AsyncStream<Element>.Continuation] = []
 
     public struct Iterator: AsyncIteratorProtocol {
         public typealias Element = State
@@ -120,14 +125,18 @@ public struct DynamicStream<State>: AsyncSequence {
         }
     }
 
-    private let stream: AsyncStream<State>
+    private let upstream: AsyncStream<State>
 
-    public init(_ stream: AsyncStream<State>) {
-        self.stream = stream
+    public init(_ upstream: AsyncStream<State>) {
+        self.upstream = upstream
+    }
+
+    deinit {
+        continuations.forEach { $0.finish() }
     }
 
     public func makeAsyncIterator() -> Iterator {
-        Iterator(stream.makeAsyncIterator())
+        Iterator(upstream.makeAsyncIterator())
     }
 
     /// Returns the resulting stream with partial state corresponding to the given key path.
@@ -137,6 +146,8 @@ public struct DynamicStream<State>: AsyncSequence {
     public subscript<Property>(
         dynamicMember keyPath: KeyPath<State, Property>
     ) -> AsyncMapSequence<AsyncStream<State>, Property> {
-        stream.map { $0[keyPath: keyPath] }
+        let (stream, continuation) = AsyncStream<Element>.makeStream()
+        continuations.append(continuation)
+        return stream.map { $0[keyPath: keyPath] }
     }
 }

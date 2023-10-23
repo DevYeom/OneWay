@@ -43,7 +43,7 @@ final class ViewStoreTests: XCTestCase {
         XCTAssertEqual(sut.state.count, 4)
     }
 
-    func test_dynamicStream() async {
+    func test_dynamicSharedStream() async {
         sut.send(.concat)
 
         var result: [Int] = []
@@ -55,58 +55,24 @@ final class ViewStoreTests: XCTestCase {
         XCTAssertEqual(result, [0, 1, 2, 3, 4])
     }
 
-    func test_dynamicStreamForMultipleConsumers() async {
+    func test_dynamicSharedStreamForMultipleConsumers() async {
         let expectation = expectation(description: #function)
 
-        actor Result {
-            let expectation: XCTestExpectation
-            var values: [Int] = [] {
-                didSet {
-                    if values.reduce(0, +) == 30 {
-                        expectation.fulfill()
-                    }
-                }
-            }
-            var count: Int { values.count }
-
-            init(_ expectation: XCTestExpectation) {
-                self.expectation = expectation
-            }
-
-            func insert(_ value: Int) {
-                values.append(value)
-            }
-        }
-
-        let result = Result(expectation)
-        Task {
-            for await state in sut.states {
-                await result.insert(state.count)
-            }
-        }
-        Task {
-            for await count in sut.states.count {
-                await result.insert(count)
-            }
-        }
-        Task {
-            for await count in sut.states.count {
-                await result.insert(count)
-            }
-        }
+        let result = Result(expectation, target: 30)
+        async let _ = consumeDynamicSharedStream1(result)
+        async let _ = consumeDynamicSharedStream2(result)
+        async let _ = consumeDynamicSharedStream3(result)
 
         try! await Task.sleep(nanoseconds: NSEC_PER_MSEC)
         sut.send(.concat)
 
         await fulfillment(of: [expectation], timeout: 1)
 
-        var values = await result.values
-        // Depending on the time of observation, the initial value may not be received, so the
-        // initial value is excluded.
-        values.removeAll(where: { $0 == 0 })
+        let values = await result.values
         XCTAssertEqual(
             values.sorted(),
             [
+                0, 0, 0,
                 1, 1, 1,
                 2, 2, 2,
                 3, 3, 3,
@@ -116,7 +82,27 @@ final class ViewStoreTests: XCTestCase {
     }
 }
 
-fileprivate final class TestReducer: Reducer {
+extension ViewStoreTests {
+    private func consumeDynamicSharedStream1(_ result: Result) async {
+        for await state in sut.states {
+            await result.insert(state.count)
+        }
+    }
+
+    private func consumeDynamicSharedStream2(_ result: Result) async {
+        for await count in sut.states.count {
+            await result.insert(count)
+        }
+    }
+
+    private func consumeDynamicSharedStream3(_ result: Result) async {
+        for await count in sut.states.count {
+            await result.insert(count)
+        }
+    }
+}
+
+private final class TestReducer: Reducer {
     enum Action: Sendable {
         case increment
         case twice
@@ -147,5 +133,27 @@ fileprivate final class TestReducer: Reducer {
                 .just(.increment)
             )
         }
+    }
+}
+
+private actor Result {
+    let expectation: XCTestExpectation
+    let target: Int
+    var values: [Int] = [] {
+        didSet {
+            if values.reduce(0, +) == target {
+                expectation.fulfill()
+            }
+        }
+    }
+    var count: Int { values.count }
+
+    init(_ expectation: XCTestExpectation, target: Int) {
+        self.expectation = expectation
+        self.target = target
+    }
+
+    func insert(_ value: Int) {
+        values.append(value)
     }
 }

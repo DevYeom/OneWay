@@ -149,7 +149,7 @@ private let textPublisher = PassthroughSubject<String, Never>()
 private let numberPublisher = PassthroughSubject<Int, Never>()
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-fileprivate final class TestReducer: Reducer {
+private final class TestReducer: Reducer {
     enum Action: Sendable {
         case increment
         case incrementMany

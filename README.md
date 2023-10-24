@@ -21,7 +21,12 @@
   </a>
 </p>
 
-**OneWay** is a remarkably simple and lightweight library designed for state management through unidirectional data flow. **OneWay** is implemented based on [Swift Concurrency](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/). The `Store` is implemented with an `Actor`, making it always **thread-safe**. Whether you're working on any platform or within any framework, **OneWay** can seamlessly integrate. With zero third-party dependencies, **OneWay** can be used in its purest form. This library isn't limited to be used just the presentation layer. It's also useful for streamlining intricate business logic. You'll find it beneficial whenever you seek to implement logic in a unidirectional manner.
+**OneWay** is a remarkably simple and lightweight library designed for state management through unidirectional data flow. It is implemented based on [Swift Concurrency](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/). The `Store` is implemented with an `Actor`, making it always **thread-safe**.
+
+Whether you're working on any platform or within any framework, **OneWay** can seamlessly integrate. With zero third-party dependencies, **OneWay** can be used in its purest form. This library isn't limited to be used just the presentation layer. It's also useful for streamlining intricate business logic. You'll find it beneficial whenever you seek to implement logic in a unidirectional manner.
+
+> [!NOTE]
+> OneWay is a good solution for preparing Swift 6.
 
 - [Data Flow](#data-flow)
 - [Usage](#usage)
@@ -195,14 +200,10 @@ To learn how to use **OneWay** in more detail, go through the [documentation](ht
 
 ## Requirements
 
-|        |Minimum Version|
-|-------:|--------------:|
-|Swift   |5.9            |
-|Xcode   |15.0           |
-|iOS     |13.0           |
-|macOS   |10.15          |
-|tvOS    |13.0           |
-|watchOS |6.0            |
+| OneWay | Swift | Xcode | Platforms                                     |
+|--------|-------|-------|-----------------------------------------------|
+| 2.0    | 5.9   | 15.0  | iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0 |
+| 1.0    | 5.5   | 13.0  | iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0 |
 
 ## Installation
 

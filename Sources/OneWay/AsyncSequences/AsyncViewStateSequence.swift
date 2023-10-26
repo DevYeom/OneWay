@@ -13,7 +13,8 @@ import Foundation
 /// state.
 @MainActor
 @dynamicMemberLookup
-public final class AsyncViewStateSequence<State>: AsyncSequence {
+public final class AsyncViewStateSequence<State>: AsyncSequence
+where State: Equatable {
     public typealias Element = State
 
     /// The iterator for an `AsyncViewStateSequence` instance.
@@ -66,13 +67,13 @@ public final class AsyncViewStateSequence<State>: AsyncSequence {
     /// - Returns: A new stream that has a part of the original state.
     public subscript<Property>(
         dynamicMember keyPath: KeyPath<State, Property>
-    ) -> AsyncRemoveDuplicatesSequence<AsyncMapSequence<AsyncStream<State>, Property>> {
+    ) -> AsyncMapSequence<AsyncRemoveDuplicatesSequence<AsyncStream<State>>, Property> {
         let (stream, continuation) = AsyncStream<Element>.makeStream()
         continuations.append(continuation)
         if let last {
             continuation.yield(last)
         }
-        return AsyncRemoveDuplicatesSequence(stream.map { $0[keyPath: keyPath] })
+        return AsyncRemoveDuplicatesSequence(stream).map { $0[keyPath: keyPath] }
     }
 }
 

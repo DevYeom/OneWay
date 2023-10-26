@@ -43,7 +43,7 @@ final class ViewStoreTests: XCTestCase {
         XCTAssertEqual(sut.state.count, 4)
     }
 
-    func test_dynamicSharedStream() async {
+    func test_asyncViewStateSequence() async {
         sut.send(.concat)
 
         var result: [Int] = []
@@ -55,13 +55,17 @@ final class ViewStoreTests: XCTestCase {
         XCTAssertEqual(result, [0, 1, 2, 3, 4])
     }
 
-    func test_dynamicSharedStreamForMultipleConsumers() async {
+    func test_asyncViewStateSequenceForMultipleConsumers() async {
         let expectation = expectation(description: #function)
 
         let result = Result(expectation, target: 30)
-        async let _ = consumeDynamicSharedStream1(result)
-        async let _ = consumeDynamicSharedStream2(result)
-        async let _ = consumeDynamicSharedStream3(result)
+        Task {
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { await self.consumeAsyncViewStateSequence1(result) }
+                group.addTask { await self.consumeAsyncViewStateSequence2(result) }
+                group.addTask { await self.consumeAsyncViewStateSequence3(result) }
+            }
+        }
 
         try! await Task.sleep(nanoseconds: NSEC_PER_MSEC)
         sut.send(.concat)
@@ -80,22 +84,46 @@ final class ViewStoreTests: XCTestCase {
             ]
         )
     }
+
+    func test_asyncRemoveDuplicatesSequence() async {
+        let expectation = expectation(description: #function)
+
+        let result = Result(expectation, target: 20)
+        Task {
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { await self.consumeAsyncViewStateSequence2(result) }
+                group.addTask { await self.consumeAsyncViewStateSequence3(result) }
+            }
+        }
+
+        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC)
+        sut.send(.setCount(10))
+        sut.send(.setCount(10))
+        sut.send(.setCount(10))
+        sut.send(.setCount(10))
+        sut.send(.setCount(10))
+
+        await fulfillment(of: [expectation], timeout: 1)
+
+        let values = await result.values
+        XCTAssertEqual(values.sorted(), [0, 0, 10, 10])
+    }
 }
 
 extension ViewStoreTests {
-    private func consumeDynamicSharedStream1(_ result: Result) async {
+    private func consumeAsyncViewStateSequence1(_ result: Result) async {
         for await state in sut.states {
             await result.insert(state.count)
         }
     }
 
-    private func consumeDynamicSharedStream2(_ result: Result) async {
+    private func consumeAsyncViewStateSequence2(_ result: Result) async {
         for await count in sut.states.count {
             await result.insert(count)
         }
     }
 
-    private func consumeDynamicSharedStream3(_ result: Result) async {
+    private func consumeAsyncViewStateSequence3(_ result: Result) async {
         for await count in sut.states.count {
             await result.insert(count)
         }
@@ -107,6 +135,7 @@ private final class TestReducer: Reducer {
         case increment
         case twice
         case concat
+        case setCount(Int)
     }
 
     struct State: Equatable {
@@ -132,6 +161,10 @@ private final class TestReducer: Reducer {
                 .just(.increment),
                 .just(.increment)
             )
+
+        case .setCount(let count):
+            state.count = count
+            return .none
         }
     }
 }

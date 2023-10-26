@@ -39,7 +39,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
 
     /// The async stream that emits state when the state changes. Use this stream to observe the
     /// state changes
-    public let states: DynamicSharedStream<State>
+    public let states: AsyncViewStateSequence<State>
 
     private let store: Store<R>
     private let continuation: AsyncStream<State>.Continuation
@@ -62,7 +62,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
             state: state
         )
         let (stream, continuation) = AsyncStream<State>.makeStream()
-        self.states = DynamicSharedStream(stream)
+        self.states = AsyncViewStateSequence(stream)
         self.continuation = continuation
         self.task = Task { await observe() }
     }
@@ -99,65 +99,3 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
 #if canImport(Combine)
 extension ViewStore: ObservableObject { }
 #endif
-
-/// A dynamic stream of the ``ViewStore``'s state.
-///
-/// This stream supports dynamic member lookup so that you can pluck out a specific field in the
-/// state.
-@MainActor
-@dynamicMemberLookup
-public final class DynamicSharedStream<State>: AsyncSequence {
-    public typealias Element = State
-
-    public struct Iterator: AsyncIteratorProtocol {
-        public typealias Element = State
-
-        private var iterator: AsyncStream<Element>.Iterator
-
-        init(_ iterator: AsyncStream<Element>.Iterator) {
-            self.iterator = iterator
-        }
-
-        public mutating func next() async -> Element? {
-            await iterator.next()
-        }
-    }
-
-    private let upstream: AsyncStream<Element>
-    private var continuations: [AsyncStream<Element>.Continuation] = []
-    private var latestElement: Element?
-
-    public init(_ upstream: AsyncStream<Element>) {
-        self.upstream = upstream
-    }
-
-    deinit {
-        continuations.forEach { $0.finish() }
-    }
-
-    public nonisolated func makeAsyncIterator() -> Iterator {
-        Iterator(upstream.makeAsyncIterator())
-    }
-
-    fileprivate func send(_ element: Element) {
-        latestElement = element
-        for continuation in continuations {
-            continuation.yield(element)
-        }
-    }
-
-    /// Returns the resulting stream with partial state corresponding to the given key path.
-    ///
-    /// - Parameter dynamicMember: a key path for the original state.
-    /// - Returns: A new stream that has a part of the original state.
-    public subscript<Property>(
-        dynamicMember keyPath: KeyPath<State, Property>
-    ) -> AsyncMapSequence<AsyncStream<State>, Property> {
-        let (stream, continuation) = AsyncStream<Element>.makeStream()
-        continuations.append(continuation)
-        if let latestElement {
-            continuation.yield(latestElement)
-        }
-        return stream.map { $0[keyPath: keyPath] }
-    }
-}

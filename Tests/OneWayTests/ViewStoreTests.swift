@@ -43,6 +43,66 @@ final class ViewStoreTests: XCTestCase {
         XCTAssertEqual(sut.state.count, 4)
     }
 
+    func test_sensitiveState() async {
+        let expectation1 = expectation(description: #function)
+        let expectation2 = expectation(description: #function)
+
+        sut.send(.setSensitiveCount(10))
+        sut.send(.setSensitiveCount(10))
+        sut.send(.setSensitiveCount(10))
+
+        var counts: [Int] = []
+        var sensitiveCounts: [Int] = []
+        Task {
+            for await state in sut.states {
+                counts.append(state.count)
+                if counts.count > 3 {
+                    expectation1.fulfill()
+                }
+            }
+        }
+
+        Task {
+            for await sensitiveCount in sut.states.sensitiveCount {
+                sensitiveCounts.append(sensitiveCount)
+                if sensitiveCounts.count > 3 {
+                    expectation2.fulfill()
+                }
+            }
+        }
+
+        await fulfillment(of: [expectation1, expectation2], timeout: 1)
+
+        XCTAssertEqual(counts, [0, 0, 0, 0])
+        XCTAssertEqual(sensitiveCounts, [0, 10, 10, 10])
+    }
+
+    func test_insensitiveState() async {
+        sut.send(.setInsensitiveCount(10))
+        sut.send(.setInsensitiveCount(20))
+        sut.send(.setInsensitiveCount(30))
+
+        var counts: [Int] = []
+        var insensitiveCounts: [Int] = []
+        Task {
+            for await state in sut.states {
+                counts.append(state.count)
+            }
+        }
+
+        Task {
+            for await insensitiveCount in sut.states.insensitiveCount {
+                insensitiveCounts.append(insensitiveCount)
+            }
+        }
+
+        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
+
+        // only initial value
+        XCTAssertEqual(counts, [0])
+        XCTAssertEqual(insensitiveCounts, [0])
+    }
+
     func test_asyncViewStateSequence() async {
         sut.send(.concat)
 
@@ -136,10 +196,14 @@ private final class TestReducer: Reducer {
         case twice
         case concat
         case setCount(Int)
+        case setSensitiveCount(Int)
+        case setInsensitiveCount(Int)
     }
 
     struct State: Equatable {
         var count: Int
+        @Sensitive var sensitiveCount: Int = 0
+        @Insensitive var insensitiveCount: Int = 0
     }
 
     func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
@@ -164,6 +228,14 @@ private final class TestReducer: Reducer {
 
         case .setCount(let count):
             state.count = count
+            return .none
+
+        case .setSensitiveCount(let count):
+            state.sensitiveCount = count
+            return .none
+
+        case .setInsensitiveCount(let count):
+            state.insensitiveCount = count
             return .none
         }
     }

@@ -49,11 +49,11 @@ extension AnyEffect {
     ///   - operation: The operation to perform.
     /// - Returns: A new effect.
     @inlinable
-    public static func async(
+    public static func single(
         priority: TaskPriority? = nil,
         operation: @Sendable @escaping () async -> Element
     ) -> AnyEffect<Element> {
-        Effects.Async(
+        Effects.Single(
             priority: priority,
             operation: operation
         ).any

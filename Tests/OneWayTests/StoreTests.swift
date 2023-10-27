@@ -179,7 +179,7 @@ private final class TestReducer: Reducer {
             )
 
         case .request:
-            return .async {
+            return .single {
                 return Action.response("Success")
             }
 

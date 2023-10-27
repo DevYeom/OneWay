@@ -8,7 +8,7 @@
 import Foundation
 
 /// An asynchronous sequence that treats consecutive repeated values as unique values.
-public struct AsyncRemoveDuplicatesSequence<Base>: AsyncSequence
+public struct AsyncDistinctSequence<Base>: AsyncSequence
 where Base: AsyncSequence, Base.Element: Equatable {
     public typealias Element = Base.Element
 
@@ -53,4 +53,4 @@ where Base: AsyncSequence, Base.Element: Equatable {
     }
 }
 
-extension AsyncRemoveDuplicatesSequence: Sendable where Base: Sendable, Base.Element: Sendable { }
+extension AsyncDistinctSequence: Sendable where Base: Sendable, Base.Element: Sendable { }

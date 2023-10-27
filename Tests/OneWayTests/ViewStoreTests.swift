@@ -145,14 +145,14 @@ final class ViewStoreTests: XCTestCase {
         )
     }
 
-    func test_asyncRemoveDuplicatesSequence() async {
+    func test_asyncDistinctSequence() async {
         let expectation = expectation(description: #function)
 
         let result = Result(expectation, target: 20)
         Task {
             await withTaskGroup(of: Void.self) { group in
-                group.addTask { await self.consumeAsyncViewStateSequence2(result) }
-                group.addTask { await self.consumeAsyncViewStateSequence3(result) }
+                group.addTask { await self.consumeAsyncDistinctSequence1(result) }
+                group.addTask { await self.consumeAsyncDistinctSequence2(result) }
             }
         }
 
@@ -184,6 +184,18 @@ extension ViewStoreTests {
     }
 
     private func consumeAsyncViewStateSequence3(_ result: Result) async {
+        for await count in sut.states.count {
+            await result.insert(count)
+        }
+    }
+
+    private func consumeAsyncDistinctSequence1(_ result: Result) async {
+        for await count in sut.states.count {
+            await result.insert(count)
+        }
+    }
+
+    private func consumeAsyncDistinctSequence2(_ result: Result) async {
         for await count in sut.states.count {
             await result.insert(count)
         }

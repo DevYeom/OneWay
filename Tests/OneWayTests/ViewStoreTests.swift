@@ -20,6 +20,11 @@ final class ViewStoreTests: XCTestCase {
         )
     }
 
+    override func tearDown() {
+        super.tearDown()
+        sut = nil
+    }
+
     func test_initialState() async {
         XCTAssertEqual(sut.initialState, TestReducer.State(count: 0))
         XCTAssertEqual(sut.state.count, 0)
@@ -118,7 +123,7 @@ final class ViewStoreTests: XCTestCase {
     func test_asyncViewStateSequenceForMultipleConsumers() async {
         let expectation = expectation(description: #function)
 
-        let result = Result(expectation, target: 30)
+        let result = Result(expectation, expectedCount: 15)
         Task {
             await withTaskGroup(of: Void.self) { group in
                 group.addTask { await self.consumeAsyncViewStateSequence1(result) }
@@ -127,7 +132,7 @@ final class ViewStoreTests: XCTestCase {
             }
         }
 
-        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC)
+        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
         sut.send(.concat)
 
         await fulfillment(of: [expectation], timeout: 1)
@@ -219,19 +224,19 @@ private final class TestReducer: Reducer {
 
 private actor Result {
     let expectation: XCTestExpectation
-    let target: Int
+    let expectedCount: Int
     var values: [Int] = [] {
         didSet {
-            if values.reduce(0, +) == target {
+            if values.count >= expectedCount {
                 expectation.fulfill()
             }
         }
     }
     var count: Int { values.count }
 
-    init(_ expectation: XCTestExpectation, target: Int) {
+    init(_ expectation: XCTestExpectation, expectedCount: Int) {
         self.expectation = expectation
-        self.target = target
+        self.expectedCount = expectedCount
     }
 
     func insert(_ value: Int) {

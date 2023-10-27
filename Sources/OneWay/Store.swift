@@ -61,6 +61,11 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         defer { continuation.yield(state) }
     }
 
+    deinit {
+        bindingTask?.cancel()
+        bindingTask = nil
+    }
+
     /// Sends an action to the store.
     ///
     /// - Parameter action: An action defined in the reducer.
@@ -73,11 +78,12 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
             let action = actionQueue.removeFirst()
             let uuid = UUID()
             let effect = reducer.reduce(state: &state, action: action)
-            let task = Task { [weak self, uuid] in
+            let task = Task { [uuid] in
                 for await value in effect.values {
-                    await self?.send(value)
+                    guard !Task.isCancelled else { break }
+                    await send(value)
                 }
-                await self?.removeTask(uuid)
+                removeTask(uuid)
             }
             tasks[uuid] = task
         }
@@ -98,14 +104,17 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     private func bindExternalEffect() {
         let values = reducer.bind().values
         bindingTask?.cancel()
-        bindingTask = Task { [weak self] in
+        bindingTask = Task {
             for await value in values {
-                await self?.send(value)
+                guard !Task.isCancelled else { break }
+                await send(value)
             }
         }
     }
 
     private func removeTask(_ key: UUID) {
-        tasks.removeValue(forKey: key)
+        if let task = tasks.removeValue(forKey: key) {
+            task.cancel()
+        }
     }
 }

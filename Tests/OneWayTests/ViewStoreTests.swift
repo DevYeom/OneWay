@@ -144,30 +144,6 @@ final class ViewStoreTests: XCTestCase {
             ]
         )
     }
-
-    func test_asyncDistinctSequence() async {
-        let expectation = expectation(description: #function)
-
-        let result = Result(expectation, target: 20)
-        Task {
-            await withTaskGroup(of: Void.self) { group in
-                group.addTask { await self.consumeAsyncDistinctSequence1(result) }
-                group.addTask { await self.consumeAsyncDistinctSequence2(result) }
-            }
-        }
-
-        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC)
-        sut.send(.setCount(10))
-        sut.send(.setCount(10))
-        sut.send(.setCount(10))
-        sut.send(.setCount(10))
-        sut.send(.setCount(10))
-
-        await fulfillment(of: [expectation], timeout: 1)
-
-        let values = await result.values
-        XCTAssertEqual(values.sorted(), [0, 0, 10, 10])
-    }
 }
 
 extension ViewStoreTests {
@@ -184,18 +160,6 @@ extension ViewStoreTests {
     }
 
     private func consumeAsyncViewStateSequence3(_ result: Result) async {
-        for await count in sut.states.count {
-            await result.insert(count)
-        }
-    }
-
-    private func consumeAsyncDistinctSequence1(_ result: Result) async {
-        for await count in sut.states.count {
-            await result.insert(count)
-        }
-    }
-
-    private func consumeAsyncDistinctSequence2(_ result: Result) async {
         for await count in sut.states.count {
             await result.insert(count)
         }

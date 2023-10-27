@@ -67,13 +67,13 @@ where State: Equatable {
     /// - Returns: A new stream that has a part of the original state.
     public subscript<Property>(
         dynamicMember keyPath: KeyPath<State, Property>
-    ) -> AsyncMapSequence<AsyncDistinctSequence<AsyncStream<State>>, Property> {
+    ) -> AsyncMapSequence<AsyncStream<State>, Property> {
         let (stream, continuation) = AsyncStream<Element>.makeStream()
         continuations.append(continuation)
         if let last {
             continuation.yield(last)
         }
-        return AsyncDistinctSequence(stream).map { $0[keyPath: keyPath] }
+        return stream.map { $0[keyPath: keyPath] }
     }
 }
 

@@ -118,14 +118,19 @@ print(store.state.number) // 2
 
 ### Observing States
 
-When a value changes, you can receive a new value. It guarantees that the same value does not come down consecutively.
+When the state changes, you can receive a new state. It guarantees that the same state does not come down consecutively.
 
 ```swift
+struct State: Sendable & Equatable {
+    var number: Int
+}
+
 // number <- 10, 10, 20 ,20
 
 for await state in store.states {
-    print(state.number) // 10, 20
+    print(state.number)
 }
+// Prints "10", "20"
 ```
 
 Of course, you can observe specific properties only.
@@ -134,26 +139,46 @@ Of course, you can observe specific properties only.
 // number <- 10, 10, 20 ,20
 
 for await number in store.states.number {
-    print(number) // 10, 20
+    print(number)
 }
+// Prints "10", "20"
 ```
 
 If you want to continue receiving the value even when the same value is assigned to the `State`, you can use `@Sensitive`. For explanations of other useful property wrappers(e.g. [@Heap](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/heap), [@Insensitive](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/insensitive)), refer to [here](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/sensitive).
 
 ```swift
-final class CountingReducer: Reducer {
-    // ...
-    struct State: Sendable & Equatable {
-        @Sensitive var number: Int
-    }
-    // ...
+struct State: Sendable & Equatable {
+    @Sensitive var number: Int
 }
 
 // number <- 10, 10, 20 ,20
 
 for await state in store.states {
-    print(state.number) // 10, 10, 20, 20
+    print(state.number)
 }
+// Prints "10", "10", "20", "20"
+```
+
+When there are multiple properties of the state, it is possible for the state to change due to other properties that are not subscribed to. In such cases, if you are using [AsyncAlgorithms](https://github.com/apple/swift-async-algorithms), you can remove duplicates as follows.
+
+```swift
+struct State: Sendable & Equatable {
+    var number: Int
+    var text: String
+}
+
+// number <- 10
+// text <- "a", "b", "c"
+
+for await number in store.states.number {
+    print(number)
+}
+// Prints "10", "10", "10"
+
+for await number in store.states.number.removeDuplicates() {
+    print(number)
+}
+// Prints "10"
 ```
 
 ### Various Effects

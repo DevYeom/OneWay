@@ -21,6 +21,11 @@ final class StoreTests: XCTestCase {
         )
     }
 
+    override func tearDown() {
+        super.tearDown()
+        sut = nil
+    }
+
     func test_initialState() async {
         let initialState = await sut.initialState
         let state = await sut.state

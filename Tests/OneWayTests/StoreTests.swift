@@ -110,7 +110,6 @@ final class StoreTests: XCTestCase {
             try! await Task.sleep(nanoseconds: NSEC_PER_MSEC)
             textPublisher.send("first")
             numberPublisher.send(1)
-            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC)
             textPublisher.send("second")
             numberPublisher.send(2)
         }
@@ -193,12 +192,12 @@ private final class TestReducer: Reducer {
     func bind() -> AnyEffect<Action> {
         return .merge(
             .sequence { send in
-                for await text in textPublisher.values {
+                for await text in textPublisher.stream {
                     send(Action.response(text))
                 }
             },
             .sequence { send in
-                for await number in numberPublisher.values {
+                for await number in numberPublisher.stream {
                     send(Action.response(String(number)))
                 }
             }

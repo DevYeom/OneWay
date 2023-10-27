@@ -158,7 +158,7 @@ for await state in store.states {
 
 ### Various Effects
 
-**OneWay** supports various effects such as `just`, `concat`, `merge`, `async`, `sequence`, and more. For more details, please refer to the [documentation](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/effects).
+**OneWay** supports various effects such as `just`, `concat`, `merge`, `single`, `sequence`, and more. For more details, please refer to the [documentation](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/effects).
 
 ### Global States
 

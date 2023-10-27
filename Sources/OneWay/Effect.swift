@@ -61,7 +61,7 @@ public enum Effects {
     }
 
     /// An effect that can supply a single value asynchronously in the future.
-    public struct Async<Element>: Effect where Element: Sendable {
+    public struct Single<Element>: Effect where Element: Sendable {
         private let priority: TaskPriority?
         private let operation: @Sendable () async -> Element
 

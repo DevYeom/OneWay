@@ -33,7 +33,7 @@ final class EffectTests: XCTestCase {
     func test_async() async {
         let clock = TestClock()
 
-        let values = Effects.Async {
+        let values = Effects.Single {
             try! await clock.sleep(for: .seconds(100))
             return Action.first
         }.values
@@ -93,15 +93,15 @@ final class EffectTests: XCTestCase {
         let clock = TestClock()
 
         let first = Effects.Just(Action.first).any
-        let second = Effects.Async {
+        let second = Effects.Single {
             try! await clock.sleep(for: .seconds(300))
             return Action.second
         }.any
-        let third = Effects.Async {
+        let third = Effects.Single {
             try! await clock.sleep(for: .seconds(200))
             return Action.third
         }.any
-        let fourth = Effects.Async {
+        let fourth = Effects.Single {
             try! await clock.sleep(for: .seconds(100))
             return Action.fourth
         }.any
@@ -137,23 +137,23 @@ final class EffectTests: XCTestCase {
     func test_concatIncludingMerge() async {
         let clock = TestClock()
 
-        let first = Effects.Async {
+        let first = Effects.Single {
             try! await clock.sleep(for: .seconds(500))
             return Action.first
         }.any
-        let second = Effects.Async {
+        let second = Effects.Single {
             try! await clock.sleep(for: .seconds(200))
             return Action.second
         }.any
-        let third = Effects.Async {
+        let third = Effects.Single {
             try! await clock.sleep(for: .seconds(300))
             return Action.third
         }.any
-        let fourth = Effects.Async {
+        let fourth = Effects.Single {
             try! await clock.sleep(for: .seconds(400))
             return Action.fourth
         }.any
-        let fifth = Effects.Async {
+        let fifth = Effects.Single {
             try! await clock.sleep(for: .seconds(100))
             return Action.fifth
         }.any
@@ -185,23 +185,23 @@ final class EffectTests: XCTestCase {
     func test_merge() async {
         let clock = TestClock()
 
-        let first = Effects.Async {
+        let first = Effects.Single {
             try! await clock.sleep(for: .seconds(100))
             return Action.first
         }.any
-        let second = Effects.Async {
+        let second = Effects.Single {
             try! await clock.sleep(for: .seconds(200))
             return Action.second
         }.any
-        let third = Effects.Async {
+        let third = Effects.Single {
             try! await clock.sleep(for: .seconds(300))
             return Action.third
         }.any
-        let fourth = Effects.Async {
+        let fourth = Effects.Single {
             try! await clock.sleep(for: .seconds(400))
             return Action.fourth
         }.any
-        let fifth = Effects.Async {
+        let fifth = Effects.Single {
             try! await clock.sleep(for: .seconds(500))
             return Action.fifth
         }.any
@@ -235,23 +235,23 @@ final class EffectTests: XCTestCase {
     func test_mergeIncludingConcat() async {
         let clock = TestClock()
 
-        let first = Effects.Async {
+        let first = Effects.Single {
             try! await clock.sleep(for: .seconds(100))
             return Action.first
         }.any
-        let second = Effects.Async {
+        let second = Effects.Single {
             try! await clock.sleep(for: .seconds(300))
             return Action.second
         }.any
-        let third = Effects.Async {
+        let third = Effects.Single {
             try! await clock.sleep(for: .seconds(200))
             return Action.third
         }.any
-        let fourth = Effects.Async {
+        let fourth = Effects.Single {
             try! await clock.sleep(for: .seconds(100))
             return Action.fourth
         }.any
-        let fifth = Effects.Async {
+        let fifth = Effects.Single {
             try! await clock.sleep(for: .seconds(600 + 100))
             return Action.fifth
         }.any

@@ -2,7 +2,7 @@
 //  OneWay
 //  The MIT License (MIT)
 //
-//  Copyright (c) 2022 SeungYeop Yeom ( https://github.com/DevYeom ).
+//  Copyright (c) 2022-2023 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
 import OneWay

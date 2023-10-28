@@ -64,13 +64,18 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         let (stream, continuation) = AsyncStream<State>.makeStream()
         self.states = AsyncViewStateSequence(stream)
         self.continuation = continuation
-        self.task = Task { await observe() }
+        self.task = Task { [weak self] in
+            guard let states = await self?.store.states else { return }
+            for await state in states {
+                guard let self else { break }
+                self.state = state
+            }
+        }
     }
 
     deinit {
         continuation.finish()
         task?.cancel()
-        task = nil
     }
 
     /// Sends an action to the view store.
@@ -86,13 +91,6 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     ///   directly
     public func reset() {
         Task { await store.reset() }
-    }
-
-    private func observe() async {
-        let states = await store.states
-        for await state in states {
-            self.state = state
-        }
     }
 }
 

@@ -101,7 +101,7 @@ final class ViewStoreTests: XCTestCase {
             }
         }
 
-        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
+        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 10)
 
         // only initial value
         XCTAssertEqual(counts, [0])
@@ -132,7 +132,7 @@ final class ViewStoreTests: XCTestCase {
             }
         }
 
-        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
+        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 10)
         sut.send(.concat)
 
         await fulfillment(of: [expectation], timeout: 1)

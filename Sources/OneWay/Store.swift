@@ -63,7 +63,6 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
 
     deinit {
         bindingTask?.cancel()
-        bindingTask = nil
     }
 
     /// Sends an action to the store.

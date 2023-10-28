@@ -65,7 +65,7 @@ public enum Effects {
         private let priority: TaskPriority?
         private let operation: @Sendable () async -> Element
 
-        /// Initializes a `Async` effect.
+        /// Initializes a `Single` effect.
         ///
         /// - Parameters:
         ///   - priority: The priority of the task.

@@ -15,7 +15,7 @@ final class CountingReducer: Reducer {
         case twice
     }
 
-    struct State: Sendable & Equatable {
+    struct State: Sendable, Equatable {
         var number: Int
     }
 

@@ -5,7 +5,7 @@
 //  Copyright (c) 2022 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
-import Combine
+@preconcurrency import Combine
 import Foundation
 
 extension Publisher where Failure == Never {

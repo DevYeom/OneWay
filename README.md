@@ -60,7 +60,7 @@ final class CountingReducer: Reducer {
         case twice
     }
 
-    struct State: Sendable & Equatable {
+    struct State: Sendable, Equatable {
         var number: Int
     }
 
@@ -121,7 +121,7 @@ print(store.state.number) // 2
 When the state changes, you can receive a new state. It guarantees that the same state does not come down consecutively.
 
 ```swift
-struct State: Sendable & Equatable {
+struct State: Sendable, Equatable {
     var number: Int
 }
 
@@ -147,7 +147,7 @@ for await number in store.states.number {
 If you want to continue receiving the value even when the same value is assigned to the `State`, you can use `@Sensitive`. For explanations of other useful property wrappers(e.g. [@Heap](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/heap), [@Insensitive](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/insensitive)), refer to [here](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/sensitive).
 
 ```swift
-struct State: Sendable & Equatable {
+struct State: Sendable, Equatable {
     @Sensitive var number: Int
 }
 
@@ -162,7 +162,7 @@ for await state in store.states {
 When there are multiple properties of the state, it is possible for the state to change due to other properties that are not subscribed to. In such cases, if you are using [AsyncAlgorithms](https://github.com/apple/swift-async-algorithms), you can remove duplicates as follows.
 
 ```swift
-struct State: Sendable & Equatable {
+struct State: Sendable, Equatable {
     var number: Int
     var text: String
 }

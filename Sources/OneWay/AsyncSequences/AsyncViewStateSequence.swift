@@ -14,7 +14,7 @@ import Foundation
 @MainActor
 @dynamicMemberLookup
 public final class AsyncViewStateSequence<State>: AsyncSequence
-where State: Equatable {
+where State: Sendable & Equatable {
     public typealias Element = State
 
     /// The iterator for an `AsyncViewStateSequence` instance.

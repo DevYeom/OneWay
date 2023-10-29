@@ -68,14 +68,15 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
             guard let states = await self?.store.states else { return }
             for await state in states {
                 guard let self else { break }
+                guard !Task.isCancelled else { break }
                 self.state = state
             }
         }
     }
 
     deinit {
-        continuation.finish()
         task?.cancel()
+        continuation.finish()
     }
 
     /// Sends an action to the view store.

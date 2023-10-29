@@ -62,6 +62,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     }
 
     deinit {
+        tasks.forEach { $0.value.cancel() }
         bindingTask?.cancel()
     }
 
@@ -77,12 +78,13 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
             let action = actionQueue.removeFirst()
             let uuid = UUID()
             let effect = reducer.reduce(state: &state, action: action)
-            let task = Task { [uuid] in
+            let task = Task { [weak self, uuid] in
                 for await value in effect.values {
+                    guard let self else { break }
                     guard !Task.isCancelled else { break }
                     await send(value)
                 }
-                removeTask(uuid)
+                await self?.removeTask(uuid)
             }
             tasks[uuid] = task
         }
@@ -103,8 +105,9 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     private func bindExternalEffect() {
         let values = reducer.bind().values
         bindingTask?.cancel()
-        bindingTask = Task {
+        bindingTask = Task { [weak self] in
             for await value in values {
+                guard let self else { break }
                 guard !Task.isCancelled else { break }
                 await send(value)
             }

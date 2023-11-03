@@ -5,11 +5,12 @@
 //  Copyright (c) 2022-2023 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
+import Clocks
 import Combine
 import OneWay
 import XCTest
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
 final class StoreTests: XCTestCase {
     private var sut: Store<TestReducer>!
 
@@ -147,12 +148,40 @@ final class StoreTests: XCTestCase {
 
         XCTAssertEqual(result, ["", "First", "Second", "Third"])
     }
+
+    func test_cancel() async {
+        _clock = TestClock()
+
+        do {
+            await sut.send(.longTimeTask)
+            await _clock.advance(by: .seconds(200))
+
+            let text = await sut.state.text
+            XCTAssertEqual(text, "Success")
+        }
+
+        await sut.send(.response(""))
+
+        do {
+            await sut.send(.longTimeTask)
+            await _clock.advance(by: .seconds(100))
+
+            await sut.send(.cancelLongTimeTask)
+            await _clock.advance(by: .seconds(100))
+
+            let text = await sut.state.text
+            XCTAssertEqual(text, "")
+        }
+    }
 }
 
 private let textPublisher = PassthroughSubject<String, Never>()
 private let numberPublisher = PassthroughSubject<Int, Never>()
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
+private var _clock = TestClock()
+
+@available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
 private final class TestReducer: Reducer {
     enum Action: Sendable {
         case increment
@@ -160,11 +189,17 @@ private final class TestReducer: Reducer {
         case twice
         case request
         case response(String)
+        case longTimeTask
+        case cancelLongTimeTask
     }
 
     struct State: Equatable {
         var count: Int
         var text: String
+    }
+
+    private enum EffectID: Hashable {
+        case longTimeTask
     }
 
     func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
@@ -191,6 +226,16 @@ private final class TestReducer: Reducer {
         case .response(let response):
             state.text = response
             return .none
+
+        case .longTimeTask:
+            return .single {
+                try! await _clock.sleep(for: .seconds(200))
+                return Action.response("Success")
+            }
+            .cancellable(EffectID.longTimeTask)
+
+        case .cancelLongTimeTask:
+            return .cancel(EffectID.longTimeTask)
         }
     }
 

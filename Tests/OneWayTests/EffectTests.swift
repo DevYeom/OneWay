@@ -30,7 +30,29 @@ final class EffectTests: XCTestCase {
         XCTAssertEqual(result, [.first])
     }
 
-    func test_async() async {
+    func test_cancel() async {
+        let cancel = AnyEffect<Action>.cancel("100")
+        let method = cancel.method
+
+        if case .cancel(let id) = method {
+            XCTAssertEqual(id as! String, "100")
+        } else {
+            XCTFail()
+        }
+    }
+
+    func test_cancellable() async {
+        let effect = Effects.Just("").eraseToAnyEffect().cancellable("100")
+        let method = effect.method
+
+        if case .register(let id) = method {
+            XCTAssertEqual(id as! String, "100")
+        } else {
+            XCTFail()
+        }
+    }
+
+    func test_single() async {
         let clock = TestClock()
 
         let values = Effects.Single {

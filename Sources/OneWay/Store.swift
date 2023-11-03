@@ -20,6 +20,8 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     /// A convenience type alias for referring to a state of a given reducer's state.
     public typealias State = R.State
 
+    private typealias TaskID = UUID
+
     /// The initial state of a store.
     public let initialState: State
 
@@ -41,7 +43,8 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     private var isProcessing: Bool = false
     private var actionQueue: [Action] = []
     private var bindingTask: Task<Void, Never>?
-    private var tasks: [UUID: Task<Void, Never>] = [:]
+    private var tasks: [TaskID: Task<Void, Never>] = [:]
+    private var cancellables: [_EffectID: Set<TaskID>] = [:]
 
     /// Initializes a store from a reducer and an initial state.
     ///
@@ -76,17 +79,29 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         isProcessing = true
         while !actionQueue.isEmpty {
             let action = actionQueue.removeFirst()
-            let uuid = UUID()
+            let taskID = TaskID()
             let effect = reducer.reduce(state: &state, action: action)
-            let task = Task { [weak self, uuid] in
+            let task = Task { [weak self, taskID] in
                 for await value in effect.values {
                     guard let self else { break }
                     guard !Task.isCancelled else { break }
                     await send(value)
                 }
-                await self?.removeTask(uuid)
+                await self?.removeTask(taskID)
             }
-            tasks[uuid] = task
+            tasks[taskID] = task
+
+            switch effect.method {
+            case .register(let id):
+                cancellables[_EffectID(id), default: []].insert(taskID)
+
+            case .cancel(let id):
+                let taskIDs = cancellables[_EffectID(id), default: []]
+                taskIDs.forEach { removeTask($0) }
+
+            case .none:
+                break
+            }
         }
         isProcessing = false
     }
@@ -118,5 +133,13 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         if let task = tasks.removeValue(forKey: key) {
             task.cancel()
         }
+    }
+}
+
+private struct _EffectID: Hashable, @unchecked Sendable {
+    private let id: AnyHashable
+
+    fileprivate init(_ id: some Hashable & Sendable) {
+        self.id = id
     }
 }

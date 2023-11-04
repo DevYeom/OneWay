@@ -8,7 +8,6 @@
 #if canImport(Combine)
 import Combine
 #endif
-import Foundation
 
 /// `ViewStore` is an object that manages state values within the context of the `MainActor`.
 ///

@@ -5,8 +5,6 @@
 //  Copyright (c) 2022-2023 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
-import Foundation
-
 /// A property wrapper that acts like the same value, regardless of changes in its actual value.
 ///
 /// When applied to a field and compared with an equals sign, it will always yield `true`. It is

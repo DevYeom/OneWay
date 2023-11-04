@@ -5,8 +5,6 @@
 //  Copyright (c) 2022-2023 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
-import Foundation
-
 /// A property wrapper that makes a value behave like a different one just by assigning it, even if
 /// the same value is assigned.
 ///

@@ -92,20 +92,20 @@ final class EffectTests: XCTestCase {
     func test_concat() async {
         let clock = TestClock()
 
-        let first = Effects.Just(Action.first).any
+        let first = Effects.Just(Action.first).eraseToAnyEffect()
         let second = Effects.Single {
             try! await clock.sleep(for: .seconds(300))
             return Action.second
-        }.any
+        }.eraseToAnyEffect()
         let third = Effects.Single {
             try! await clock.sleep(for: .seconds(200))
             return Action.third
-        }.any
+        }.eraseToAnyEffect()
         let fourth = Effects.Single {
             try! await clock.sleep(for: .seconds(100))
             return Action.fourth
-        }.any
-        let fifth = Effects.Just(Action.fifth).any
+        }.eraseToAnyEffect()
+        let fifth = Effects.Just(Action.fifth).eraseToAnyEffect()
 
         let values = Effects.Concat([
             first,
@@ -140,27 +140,27 @@ final class EffectTests: XCTestCase {
         let first = Effects.Single {
             try! await clock.sleep(for: .seconds(500))
             return Action.first
-        }.any
+        }.eraseToAnyEffect()
         let second = Effects.Single {
             try! await clock.sleep(for: .seconds(200))
             return Action.second
-        }.any
+        }.eraseToAnyEffect()
         let third = Effects.Single {
             try! await clock.sleep(for: .seconds(300))
             return Action.third
-        }.any
+        }.eraseToAnyEffect()
         let fourth = Effects.Single {
             try! await clock.sleep(for: .seconds(400))
             return Action.fourth
-        }.any
+        }.eraseToAnyEffect()
         let fifth = Effects.Single {
             try! await clock.sleep(for: .seconds(100))
             return Action.fifth
-        }.any
+        }.eraseToAnyEffect()
 
         let values = Effects.Concat([
             first,
-            Effects.Merge([fourth, third, second]).any,
+            Effects.Merge([fourth, third, second]).eraseToAnyEffect(),
             fifth,
         ]).values
 
@@ -188,23 +188,23 @@ final class EffectTests: XCTestCase {
         let first = Effects.Single {
             try! await clock.sleep(for: .seconds(100))
             return Action.first
-        }.any
+        }.eraseToAnyEffect()
         let second = Effects.Single {
             try! await clock.sleep(for: .seconds(200))
             return Action.second
-        }.any
+        }.eraseToAnyEffect()
         let third = Effects.Single {
             try! await clock.sleep(for: .seconds(300))
             return Action.third
-        }.any
+        }.eraseToAnyEffect()
         let fourth = Effects.Single {
             try! await clock.sleep(for: .seconds(400))
             return Action.fourth
-        }.any
+        }.eraseToAnyEffect()
         let fifth = Effects.Single {
             try! await clock.sleep(for: .seconds(500))
             return Action.fifth
-        }.any
+        }.eraseToAnyEffect()
 
         let values = Effects.Merge([
             first,
@@ -238,27 +238,27 @@ final class EffectTests: XCTestCase {
         let first = Effects.Single {
             try! await clock.sleep(for: .seconds(100))
             return Action.first
-        }.any
+        }.eraseToAnyEffect()
         let second = Effects.Single {
             try! await clock.sleep(for: .seconds(300))
             return Action.second
-        }.any
+        }.eraseToAnyEffect()
         let third = Effects.Single {
             try! await clock.sleep(for: .seconds(200))
             return Action.third
-        }.any
+        }.eraseToAnyEffect()
         let fourth = Effects.Single {
             try! await clock.sleep(for: .seconds(100))
             return Action.fourth
-        }.any
+        }.eraseToAnyEffect()
         let fifth = Effects.Single {
             try! await clock.sleep(for: .seconds(600 + 100))
             return Action.fifth
-        }.any
+        }.eraseToAnyEffect()
 
         let values = Effects.Merge([
             first,
-            Effects.Concat([second, third, fourth]).any,
+            Effects.Concat([second, third, fourth]).eraseToAnyEffect(),
             fifth,
         ]).values
 

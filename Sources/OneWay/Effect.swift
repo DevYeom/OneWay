@@ -21,7 +21,8 @@ public protocol Effect<Element>: Sendable {
 }
 
 extension Effect {
-    public var any: AnyEffect<Element> {
+    /// Wraps this effect with a type eraser.
+    public func eraseToAnyEffect() -> AnyEffect<Element> {
         AnyEffect(self)
     }
 }

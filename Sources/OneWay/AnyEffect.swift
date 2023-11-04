@@ -27,7 +27,7 @@ extension AnyEffect {
     /// must return a effect, but you don't need to do anything.
     @inlinable
     public static var none: AnyEffect<Element> {
-        Effects.Empty().any
+        Effects.Empty().eraseToAnyEffect()
     }
 
     /// An effect that immediately emits the value passed in.
@@ -38,7 +38,7 @@ extension AnyEffect {
     public static func just(
         _ element: Element
     ) -> AnyEffect<Element> {
-        Effects.Just(element).any
+        Effects.Just(element).eraseToAnyEffect()
     }
 
     /// An effect that can supply a single value asynchronously in the future.
@@ -56,7 +56,7 @@ extension AnyEffect {
         Effects.Single(
             priority: priority,
             operation: operation
-        ).any
+        ).eraseToAnyEffect()
     }
 
     /// An effect that can supply multiple values asynchronously in the future. It can be used for
@@ -75,7 +75,7 @@ extension AnyEffect {
         Effects.Sequence(
             priority: priority,
             operation: operation
-        ).any
+        ).eraseToAnyEffect()
     }
 
     /// An effect that concatenates a list of effects together into a single effect, which runs the
@@ -94,7 +94,7 @@ extension AnyEffect {
         Effects.Concat(
             priority: priority,
             effects
-        ).any
+        ).eraseToAnyEffect()
     }
 
     /// An effect that merges a list of effects together into a single effect, which runs the
@@ -113,6 +113,6 @@ extension AnyEffect {
         Effects.Merge(
             priority: priority,
             effects
-        ).any
+        ).eraseToAnyEffect()
     }
 }

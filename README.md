@@ -181,6 +181,52 @@ for await number in store.states.number.removeDuplicates() {
 // Prints "10"
 ```
 
+### Cancelling Effects
+
+You can make an effect capable of being canceled by using `cancellable()`. And you can use `cancel()` to cancel a cancellable effect.
+
+```swift
+func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
+    switch action {
+// ...
+    case .request:
+        return .single {
+            let result = await api.result()
+            return Action.response(result)
+        }
+        .cancellable("requestID")
+
+    case .cancel:
+        return .cancel("requestID")
+// ...
+    }
+}
+```
+
+You can assign anything that conforms [Hashable](https://developer.apple.com/documentation/swift/hashable) as an identifier for the effect, not just a string.
+
+```swift
+enum EffectID {
+    case request
+}
+
+func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
+    switch action {
+// ...
+    case .request:
+        return .single {
+            let result = await api.result()
+            return Action.response(result)
+        }
+        .cancellable(EffectID.request)
+
+    case .cancel:
+        return .cancel(EffectID.request)
+// ...
+    }
+}
+```
+
 ### Various Effects
 
 **OneWay** supports various effects such as `just`, `concat`, `merge`, `single`, `sequence`, and more. For more details, please refer to the [documentation](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/effects).

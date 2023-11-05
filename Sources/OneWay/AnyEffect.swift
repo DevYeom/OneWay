@@ -5,8 +5,6 @@
 //  Copyright (c) 2022-2023 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
-import Foundation
-
 /// An effect that performs type erasure by wrapping another effect.
 public struct AnyEffect<Element>: Effect where Element: Sendable {
     public var values: AsyncStream<Element> { base.values }

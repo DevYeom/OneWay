@@ -5,8 +5,6 @@
 //  Copyright (c) 2022-2023 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
-import Foundation
-
 /// A property wrapper that allows for an easy way to implement storing data in heap memory.
 ///
 /// When applied to a field, the corresponding value will always be heap-allocated. This happens

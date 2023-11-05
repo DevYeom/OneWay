@@ -5,8 +5,6 @@
 //  Copyright (c) 2022-2023 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
-import Foundation
-
 /// A protocol defining a reduce fuction to transition the current state to the next state and a
 /// bind function for observing global states.
 public protocol Reducer<Action, State> {

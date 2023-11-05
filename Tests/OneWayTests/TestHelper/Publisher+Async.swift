@@ -6,7 +6,6 @@
 //
 
 @preconcurrency import Combine
-import Foundation
 
 extension Publisher where Failure == Never {
     public var stream: AsyncStream<Output> {

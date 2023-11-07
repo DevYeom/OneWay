@@ -7,6 +7,19 @@
 
 /// An effect that performs type erasure by wrapping another effect.
 public struct AnyEffect<Element>: Effect where Element: Sendable {
+    /// A convenience type alias for representing a hashable identifier.
+    public typealias EffectID = Hashable & Sendable
+
+    /// Enumeration of methods representing additional functionality for AnyEffect.
+    public enum Method: Sendable {
+        case register(any EffectID)
+        case cancel(any EffectID)
+        case none
+    }
+
+    /// A method of the AnyEffect
+    public var method: Method = .none
+
     public var values: AsyncStream<Element> { base.values }
 
     private var base: any Effect<Element>
@@ -17,6 +30,18 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     public init<Base>(_ base: Base)
     where Base: Effect, Base.Element == Element {
         self.base = base
+    }
+
+    /// Assigning an identifier to make it possible to cancel the effect.
+    ///
+    /// - Parameter id: The effect's identifier.
+    /// - Returns: A new effect that can be canceled by an identifier.
+    public consuming func cancellable(
+        _ id: some EffectID
+    ) -> AnyEffect {
+        var copy = self
+        copy.method = .register(id)
+        return copy
     }
 }
 
@@ -37,6 +62,19 @@ extension AnyEffect {
         _ element: Element
     ) -> AnyEffect<Element> {
         Effects.Just(element).eraseToAnyEffect()
+    }
+
+    /// An effect that allows canceling by using an identifier.
+    ///
+    /// - Parameter id: The identifier of the effect to be canceled.
+    /// - Returns: A new effect.
+    @inlinable
+    public static func cancel(
+        _ id: some EffectID
+    ) -> AnyEffect {
+        var copy = AnyEffect.none
+        copy.method = .cancel(id)
+        return copy
     }
 
     /// An effect that can supply a single value asynchronously in the future.

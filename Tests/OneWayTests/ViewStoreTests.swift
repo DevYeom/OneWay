@@ -41,11 +41,7 @@ final class ViewStoreTests: XCTestCase {
         sut.send(.increment)
         sut.send(.twice)
 
-        while sut.state.count < 4 {
-            await Task.yield()
-        }
-
-        XCTAssertEqual(sut.state.count, 4)
+        await expect { sut.state.count == 4 }
     }
 
     func test_sensitiveState() async {

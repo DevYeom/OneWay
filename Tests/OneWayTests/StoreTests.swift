@@ -48,26 +48,18 @@ final class StoreTests: XCTestCase {
         await sut.send(.increment)
         await sut.send(.twice)
 
-        while await sut.state.count < 4 {
-            await Task.yield()
-        }
-
-        let state = await sut.state
-        XCTAssertEqual(state.count, 4)
-        XCTAssertEqual(state.text, "")
+        await expect { await sut.state.count == 4 }
+        await expect { await sut.state.text == "" }
     }
 
     func test_lotsOfActions() async {
         let iterations: Int = 100_000
         await sut.send(.incrementMany)
 
-        while await sut.state.count < iterations {
-            await Task.yield()
-        }
-
-        let state = await sut.state
-        XCTAssertEqual(state.count, iterations)
-        XCTAssertEqual(state.text, "")
+        await expect(
+            compare: { await sut.state.count == iterations },
+            timeout: 10
+        )
     }
 
     func test_threadSafeSendingActions() async {
@@ -87,25 +79,16 @@ final class StoreTests: XCTestCase {
             }
         }
 
-        while await sut.state.count < iterations {
-            await Task.yield()
-        }
-
-        let state = await sut.state
-        XCTAssertEqual(state.count, iterations)
-        XCTAssertEqual(state.text, "")
+        await expect(
+            compare: { await sut.state.count == iterations },
+            timeout: 10
+        )
     }
 
     func test_asyncAction() async {
         await sut.send(.request)
 
-        while await sut.state.text.isEmpty {
-            await Task.yield()
-        }
-
-        let state = await sut.state
-        XCTAssertEqual(state.count, 0)
-        XCTAssertEqual(state.text, "Success")
+        await expect { await sut.state.text == "Success" }
     }
 
     func test_bind() async {

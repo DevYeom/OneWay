@@ -8,8 +8,7 @@
 import Foundation
 
 extension AsyncStream {
-    public func eraseToAnyEffect() async throws -> AnyEffect<Element> {
-        let actions = try await self.gather().map(AnyEffect.just(_:))
-        return Effects.Merge(actions).eraseToAnyEffect()
+    public func eraseToAnyEffect() -> AnyEffect<Element> {
+        return Effects.Stream(self).eraseToAnyEffect()
     }
 }

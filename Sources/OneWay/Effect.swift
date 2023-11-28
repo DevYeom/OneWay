@@ -205,4 +205,14 @@ public enum Effects {
             }
         }
     }
+    
+    /// An effect that can be generated from AsyncStream manually.
+    public struct Stream<Element>: Effect where Element: Sendable {
+        public var values: AsyncStream<Element>
+        init(
+            _ stream: AsyncStream<Element>
+        ) {
+            self.values = stream
+        }
+    }
 }

@@ -106,7 +106,7 @@ extension AnyEffect {
     @inlinable
     public static func sequence(
         priority: TaskPriority? = nil,
-        operation: @Sendable @escaping ((Element) -> Void) async -> Void
+        operation: @Sendable @escaping (@escaping (Element) -> Void) async -> Void
     ) -> AnyEffect<Element> {
         Effects.Sequence(
             priority: priority,

@@ -93,7 +93,7 @@ public enum Effects {
     /// observing an asynchronous sequence.
     public struct Sequence<Element>: Effect where Element: Sendable {
         private let priority: TaskPriority?
-        private let operation: @Sendable ((Element) -> Void) async -> Void
+        private let operation: @Sendable (@escaping (Element) -> Void) async -> Void
 
         /// Initializes a `Sequence` effect.
         ///
@@ -103,7 +103,7 @@ public enum Effects {
         ///   - operation: The operation to perform.
         public init(
             priority: TaskPriority? = nil,
-            operation: @Sendable @escaping ((Element) -> Void) async -> Void
+            operation: @Sendable @escaping (@escaping (Element) -> Void) async -> Void
         ) {
             self.priority = priority
             self.operation = operation

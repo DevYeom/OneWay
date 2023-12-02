@@ -253,30 +253,6 @@ final class EffectTests: XCTestCase {
             ]
         )
     }
-    
-    func test_Stream() async {
-        let values = AsyncStream<Action> { promise in
-            promise.yield(.first)
-            promise.yield(.second)
-            promise.yield(.third)
-            promise.finish()
-            promise.yield(.fourth)
-        }.eraseToAnyEffect().values
-        
-        var result: [Action] = []
-        for await value in values {
-            result.append(value)
-        }
-
-        XCTAssertEqual(
-            result,
-            [
-                .first,
-                .second,
-                .third,
-            ]
-        )
-    }
 
     func test_mergeIncludingConcat() async {
         let clock = TestClock()

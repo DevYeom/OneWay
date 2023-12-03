@@ -8,15 +8,17 @@ OneWay is a remarkably simple and lightweight library designed for state managem
 
 ```swift
 // Define a reducer
-final class CountingReducer: Reducer {
+struct CountingReducer: Reducer {
     enum Action: Sendable {
         case increment
         case decrement
         case twice
+        case setIsLoading(Bool)
     }
 
     struct State: Sendable, Equatable {
         var number: Int
+        var isLoading: Bool
     }
 
     // Implement the logic for each Action
@@ -32,9 +34,15 @@ final class CountingReducer: Reducer {
 
         case .twice:
             return .concat(
+                .just(.setIsLoading(true)),
                 .just(.increment),
-                .just(.increment)
+                .just(.increment),
+                .just(.setIsLoading(false))
             )
+
+        case .setIsLoading(let isLoading):
+            state.isLoading = isLoading
+            return .none
         }
     }
 }

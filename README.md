@@ -53,15 +53,17 @@ When working on UI, it is better to use `ViewStore` to ensure main thread operat
 After adopting the `Reducer` protocol, define the `Action` and `State`, and then implement the logic for each `Action` within the `reduce(state:action:)` function.
 
 ```swift
-final class CountingReducer: Reducer {
+struct CountingReducer: Reducer {
     enum Action: Sendable {
         case increment
         case decrement
         case twice
+        case setIsLoading(Bool)
     }
 
     struct State: Sendable, Equatable {
         var number: Int
+        var isLoading: Bool
     }
 
     func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
@@ -76,9 +78,15 @@ final class CountingReducer: Reducer {
 
         case .twice:
             return .concat(
+                .just(.setIsLoading(true)),
                 .just(.increment),
-                .just(.increment)
+                .just(.increment),
+                .just(.setIsLoading(false))
             )
+
+        case .setIsLoading(let isLoading):
+            state.isLoading = isLoading
+            return .none
         }
     }
 }
@@ -231,7 +239,7 @@ func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
 
 **OneWay** supports various effects such as `just`, `concat`, `merge`, `single`, `sequence`, and more. For more details, please refer to the [documentation](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/effects).
 
-### Global States
+### External States
 
 You can easily receive to global states by implementing `bind()`. If there are changes in publishers or streams that necessitate rebinding, you can call `reset()` of `Store`.
 
@@ -239,7 +247,7 @@ You can easily receive to global states by implementing `bind()`. If there are c
 let textPublisher = PassthroughSubject<String, Never>()
 let numberPublisher = PassthroughSubject<Int, Never>()
 
-final class CountingReducer: Reducer {
+struct CountingReducer: Reducer {
 // ...
     func bind() -> AnyEffect<Action> {
         return .merge(

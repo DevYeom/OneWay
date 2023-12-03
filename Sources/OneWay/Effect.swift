@@ -112,9 +112,7 @@ public enum Effects {
         public var values: AsyncStream<Element> {
             AsyncStream { continuation in
                 Task(priority: priority) {
-                    await operation({ element in
-                        continuation.yield(element)
-                    })
+                    await operation { continuation.yield($0) }
                     continuation.finish()
                 }
             }

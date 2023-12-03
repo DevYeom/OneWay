@@ -13,11 +13,14 @@ import XCTest
 @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
 final class StoreTests: XCTestCase {
     private var sut: Store<TestReducer>!
+    private var clock: TestClock<Duration>!
 
     override func setUp() {
         super.setUp()
+        let clock = TestClock()
+        self.clock = clock
         sut = Store(
-            reducer: TestReducer(),
+            reducer: TestReducer(clock: clock),
             state: .init(count: 0, text: "")
         )
     }
@@ -133,11 +136,9 @@ final class StoreTests: XCTestCase {
     }
 
     func test_cancel() async {
-        _clock = TestClock()
-
         do {
             await sut.send(.longTimeTask)
-            await _clock.advance(by: .seconds(200))
+            await clock.advance(by: .seconds(200))
 
             let text = await sut.state.text
             XCTAssertEqual(text, "Success")
@@ -147,10 +148,10 @@ final class StoreTests: XCTestCase {
 
         do {
             await sut.send(.longTimeTask)
-            await _clock.advance(by: .seconds(100))
+            await clock.advance(by: .seconds(100))
 
             await sut.send(.cancelLongTimeTask)
-            await _clock.advance(by: .seconds(100))
+            await clock.advance(by: .seconds(100))
 
             let text = await sut.state.text
             XCTAssertEqual(text, "")
@@ -184,6 +185,12 @@ private struct TestReducer: Reducer {
     private enum EffectID: Hashable {
         case longTimeTask
     }
+    
+    private let clock: TestClock<Duration>
+    
+    init(clock: TestClock<Duration>) {
+        self.clock = clock
+    }
 
     func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
         switch action {
@@ -212,7 +219,7 @@ private struct TestReducer: Reducer {
 
         case .longTimeTask:
             return .single {
-                try! await _clock.sleep(for: .seconds(200))
+                try! await clock.sleep(for: .seconds(200))
                 return Action.response("Success")
             }
             .cancellable(EffectID.longTimeTask)

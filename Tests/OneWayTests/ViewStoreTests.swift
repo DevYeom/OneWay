@@ -41,7 +41,7 @@ final class ViewStoreTests: XCTestCase {
         sut.send(.increment)
         sut.send(.twice)
 
-        await expect { sut.state.count == 4 }
+        await sendableExpect { await sut.state.count == 4 }
     }
 
     func test_sensitiveState() async {

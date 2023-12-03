@@ -165,7 +165,7 @@ private let numberPublisher = PassthroughSubject<Int, Never>()
 private var _clock = TestClock()
 
 @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
-private final class TestReducer: Reducer {
+private struct TestReducer: Reducer {
     enum Action: Sendable {
         case increment
         case incrementMany

@@ -167,7 +167,7 @@ extension ViewStoreTests {
     }
 }
 
-private final class TestReducer: Reducer {
+private struct TestReducer: Reducer {
     enum Action: Sendable {
         case increment
         case twice

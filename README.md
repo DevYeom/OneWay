@@ -36,7 +36,7 @@ Whether you're working on any platform or within any framework, **OneWay** can s
 - [Installation](#installation)
 - [References](#references)
 
-## Data Flow
+# Data Flow
 
 When using the `Store`, the data flow is as follows.
 
@@ -46,22 +46,24 @@ When working on UI, it is better to use `ViewStore` to ensure main thread operat
 
 <img src="https://github.com/DevYeom/OneWay/blob/assets/flow_description_v2_2.png" alt="flow_description_1"/>
 
-## Usage
+# Usage
 
-### Implementing a Reducer
+## Implementing a Reducer
 
 After adopting the `Reducer` protocol, define the `Action` and `State`, and then implement the logic for each `Action` within the `reduce(state:action:)` function.
 
 ```swift
-final class CountingReducer: Reducer {
+struct CountingReducer: Reducer {
     enum Action: Sendable {
         case increment
         case decrement
         case twice
+        case setIsLoading(Bool)
     }
 
     struct State: Sendable, Equatable {
         var number: Int
+        var isLoading: Bool
     }
 
     func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
@@ -76,15 +78,21 @@ final class CountingReducer: Reducer {
 
         case .twice:
             return .concat(
+                .just(.setIsLoading(true)),
                 .just(.increment),
-                .just(.increment)
+                .just(.increment),
+                .just(.setIsLoading(false))
             )
+
+        case .setIsLoading(let isLoading):
+            state.isLoading = isLoading
+            return .none
         }
     }
 }
 ```
 
-### Sending Actions
+## Sending Actions
 
 Sending an action to a **Store** causes changes in the `state` via `Reducer`.
 
@@ -116,7 +124,7 @@ store.send(.twice)
 print(store.state.number) // 2
 ```
 
-### Observing States
+## Observing States
 
 When the state changes, you can receive a new state. It guarantees that the same state does not come down consecutively.
 
@@ -181,7 +189,7 @@ for await number in store.states.number.removeDuplicates() {
 // Prints "10"
 ```
 
-### Cancelling Effects
+## Cancelling Effects
 
 You can make an effect capable of being canceled by using `cancellable()`. And you can use `cancel()` to cancel a cancellable effect.
 
@@ -227,11 +235,11 @@ func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
 }
 ```
 
-### Various Effects
+## Various Effects
 
 **OneWay** supports various effects such as `just`, `concat`, `merge`, `single`, `sequence`, and more. For more details, please refer to the [documentation](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/effects).
 
-### Global States
+## External States
 
 You can easily receive to global states by implementing `bind()`. If there are changes in publishers or streams that necessitate rebinding, you can call `reset()` of `Store`.
 
@@ -239,7 +247,7 @@ You can easily receive to global states by implementing `bind()`. If there are c
 let textPublisher = PassthroughSubject<String, Never>()
 let numberPublisher = PassthroughSubject<Int, Never>()
 
-final class CountingReducer: Reducer {
+struct CountingReducer: Reducer {
 // ...
     func bind() -> AnyEffect<Action> {
         return .merge(
@@ -259,24 +267,24 @@ final class CountingReducer: Reducer {
 }
 ```
 
-## Documentation
+# Documentation
 
 To learn how to use **OneWay** in more detail, go through the [documentation](https://swiftpackageindex.com/DevYeom/OneWay/main/documentation/OneWay).
 
-## Examples
+# Examples
 
 - [OneWayExample](https://github.com/DevYeom/OneWayExample)
   - [UIKit](https://github.com/DevYeom/OneWayExample/tree/main/CounterUIKit/Counter)
   - [SwiftUI](https://github.com/DevYeom/OneWayExample/tree/main/CounterSwiftUI/Counter)
 
-## Requirements
+# Requirements
 
 | OneWay | Swift | Xcode | Platforms                                     |
 |--------|-------|-------|-----------------------------------------------|
 | 2.0    | 5.9   | 15.0  | iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0 |
 | 1.0    | 5.5   | 13.0  | iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0 |
 
-## Installation
+# Installation
 
 **OneWay** is only supported by Swift Package Manager.
 
@@ -288,7 +296,7 @@ dependencies: [
 ]
 ```
 
-## References
+# References
 
 These are the references that have provided much inspiration.
 
@@ -297,6 +305,6 @@ These are the references that have provided much inspiration.
 - [ReactorKit](https://github.com/ReactorKit/ReactorKit)
 - [awesome-state](https://github.com/tnfe/awesome-state)
 
-## License
+# License
 
 This library is released under the MIT license. See [LICENSE](LICENSE) for details.

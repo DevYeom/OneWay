@@ -12,7 +12,7 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
 
     /// Enumeration of methods representing additional functionality for AnyEffect.
     public enum Method: Sendable {
-        case register(any EffectID)
+        case register(any EffectID, cancelInFlight: Bool)
         case cancel(any EffectID)
         case none
     }
@@ -40,7 +40,64 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
         _ id: some EffectID
     ) -> AnyEffect {
         var copy = self
-        copy.method = .register(id)
+        copy.method = .register(id, cancelInFlight: false)
+        return copy
+    }
+    
+    /// Sends elements only after a specified time interval elapses between events.
+    ///
+    /// - Parameters:
+    ///   - id: The effect's identifier.
+    ///   - dueTime: The duration for which the effect should wait before sending an element.
+    /// - Returns: A new effect that sends elements only after a specified time elapses.
+    public consuming func debounce(
+        id: some EffectID,
+        for dueTime: Double
+    ) -> Self {
+        var copy = self
+        copy.method = .register(id, cancelInFlight: true)
+        let values = copy.values
+        copy.base = Effects.Sequence(
+            operation: { send in
+                let NSEC_PER_SEC = 1_000_000_000 as Double
+                for await value in values {
+                    guard !Task.isCancelled else { return }
+                    let dueTime = NSEC_PER_SEC * dueTime
+                    try? await Task.sleep(nanoseconds: UInt64(dueTime))
+                    guard !Task.isCancelled else { return }
+                    send(value)
+                }
+            }
+        )
+        return copy
+    }
+
+    /// Sends elements only after a specified time interval elapses between events.
+    ///
+    /// - Parameters:
+    ///   - id: The effect's identifier.
+    ///   - dueTime: The duration for which the effect should wait before sending an element.
+    ///   - clock: The clock used for measuring time intervals.
+    /// - Returns: A new effect that sends elements only after a specified time elapses.
+    @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
+    public consuming func debounce<C: Clock>(
+        id: some EffectID,
+        for dueTime: C.Instant.Duration,
+        clock: C = ContinuousClock()
+    ) -> Self {
+        var copy = self
+        copy.method = .register(id, cancelInFlight: true)
+        let values = copy.values
+        copy.base = Effects.Sequence(
+            operation: { send in
+                for await value in values {
+                    guard !Task.isCancelled else { return }
+                    try? await clock.sleep(for: dueTime)
+                    guard !Task.isCancelled else { return }
+                    send(value)
+                }
+            }
+        )
         return copy
     }
 }

@@ -45,7 +45,7 @@ final class EffectTests: XCTestCase {
         let effect = Effects.Just("").eraseToAnyEffect().cancellable("100")
         let method = effect.method
 
-        if case let .register(id, cancelInFlight) = method {
+        if case let .register(id, _) = method {
             XCTAssertEqual(id as! String, "100")
         } else {
             XCTFail()

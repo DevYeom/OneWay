@@ -35,8 +35,10 @@ struct CountingReducer: Reducer {
         case .twice:
             return .concat(
                 .just(.setIsLoading(true)),
-                .just(.increment),
-                .just(.increment),
+                .merge(
+                    .just(.increment),
+                    .just(.increment),
+                ),
                 .just(.setIsLoading(false))
             )
 

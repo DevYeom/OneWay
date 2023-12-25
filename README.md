@@ -23,7 +23,7 @@
 
 **OneWay** is a remarkably simple and lightweight library designed for state management through unidirectional data flow. It is implemented based on [Swift Concurrency](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/). The `Store` is implemented with an `Actor`, making it always **thread-safe**.
 
-Whether you're working on any platform or within any framework, **OneWay** can seamlessly integrate. With zero third-party dependencies, **OneWay** can be used in its purest form. This library isn't limited to be used just the presentation layer. It's also useful for streamlining intricate business logic. You'll find it beneficial whenever you seek to implement logic in a unidirectional manner.
+Whether you're working on any platform or within any framework, **OneWay** can seamlessly integrate. With zero third-party dependencies, **OneWay** can be used in its purest form. This library isn't limited to use only for the presentation layer. It's also useful for streamlining intricate business logic. You'll find it beneficial whenever you seek to implement logic in a unidirectional manner.
 
 > [!NOTE]
 > OneWay is a good solution for preparing Swift 6.
@@ -79,8 +79,10 @@ struct CountingReducer: Reducer {
         case .twice:
             return .concat(
                 .just(.setIsLoading(true)),
-                .just(.increment),
-                .just(.increment),
+                .merge(
+                    .just(.increment),
+                    .just(.increment),
+                ),
                 .just(.setIsLoading(false))
             )
 
@@ -241,7 +243,7 @@ func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
 
 ### External States
 
-You can easily receive to global states by implementing `bind()`. If there are changes in publishers or streams that necessitate rebinding, you can call `reset()` of `Store`.
+You can easily receive to external states by implementing `bind()`. If there are changes in publishers or streams that necessitate rebinding, you can call `reset()` of `Store`.
 
 ```swift
 let textPublisher = PassthroughSubject<String, Never>()

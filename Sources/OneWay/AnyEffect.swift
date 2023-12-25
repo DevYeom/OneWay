@@ -48,11 +48,11 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     ///
     /// - Parameters:
     ///   - id: The effect's identifier.
-    ///   - dueTime: The duration for which the effect should wait before sending an element.
+    ///   - seconds: The duration for which the effect should wait before sending an element.
     /// - Returns: A new effect that sends elements only after a specified time elapses.
     public consuming func debounce(
         id: some EffectID,
-        for dueTime: Double
+        for seconds: Double
     ) -> Self {
         var copy = self
         copy.method = .register(id, cancelInFlight: true)
@@ -62,7 +62,7 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
                 let NSEC_PER_SEC = 1_000_000_000 as Double
                 for await value in values {
                     guard !Task.isCancelled else { return }
-                    let dueTime = NSEC_PER_SEC * dueTime
+                    let dueTime = NSEC_PER_SEC * seconds
                     try? await Task.sleep(nanoseconds: UInt64(dueTime))
                     guard !Task.isCancelled else { return }
                     send(value)

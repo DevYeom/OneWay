@@ -92,7 +92,11 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
             tasks[taskID] = task
 
             switch effect.method {
-            case .register(let id):
+            case let .register(id, cancelInFlight):
+                if cancelInFlight {
+                    let taskIDs = cancellables[_EffectID(id), default: []]
+                    taskIDs.forEach { removeTask($0) }
+                }
                 cancellables[_EffectID(id), default: []].insert(taskID)
 
             case .cancel(let id):

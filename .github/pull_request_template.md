@@ -1,6 +1,6 @@
 ### Related Issues 💭
 
-<!-- If an related issue doesn't exist, remove this section. -->
+<!-- If no related issues exist, remove this section. -->
 
 ### Description 📝
 

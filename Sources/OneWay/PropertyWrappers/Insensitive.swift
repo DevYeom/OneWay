@@ -26,7 +26,7 @@ extension Insensitive: CustomStringConvertible {
 }
 
 extension Insensitive: Sendable where Value: Sendable { }
-extension Insensitive: Equatable where Value: Equatable {
+extension Insensitive: Equatable {
     public static func == (lhs: Insensitive, rhs: Insensitive) -> Bool {
         true
     }

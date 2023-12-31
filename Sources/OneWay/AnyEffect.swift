@@ -43,7 +43,7 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
         copy.method = .register(id, cancelInFlight: false)
         return copy
     }
-    
+
     /// Sends elements only after a specified time interval elapses between events.
     ///
     /// - Parameters:
@@ -59,11 +59,11 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
         let values = copy.values
         copy.base = Effects.Sequence(
             operation: { send in
-                let NSEC_PER_SEC = 1_000_000_000 as Double
+                guard !Task.isCancelled else { return }
+                let NSEC_PER_SEC: Double = 1_000_000_000
+                let dueTime = NSEC_PER_SEC * seconds
+                try? await Task.sleep(nanoseconds: UInt64(dueTime))
                 for await value in values {
-                    guard !Task.isCancelled else { return }
-                    let dueTime = NSEC_PER_SEC * seconds
-                    try? await Task.sleep(nanoseconds: UInt64(dueTime))
                     guard !Task.isCancelled else { return }
                     send(value)
                 }
@@ -90,9 +90,9 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
         let values = copy.values
         copy.base = Effects.Sequence(
             operation: { send in
+                guard !Task.isCancelled else { return }
+                try? await clock.sleep(for: dueTime)
                 for await value in values {
-                    guard !Task.isCancelled else { return }
-                    try? await clock.sleep(for: dueTime)
                     guard !Task.isCancelled else { return }
                     send(value)
                 }

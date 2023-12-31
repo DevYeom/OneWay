@@ -203,6 +203,52 @@ final class StoreTests: XCTestCase {
 
         await expect { await sut.state.count == 2 }
     }
+
+    func test_deboouncedSequence() async {
+        for _ in 0..<5 {
+            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
+            await sut.send(.debouncedSequence)
+        }
+        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 550)
+        for _ in 0..<5 {
+            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
+            await sut.send(.debouncedSequence)
+        }
+        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 550)
+
+        await expect { await sut.state.count == 10 }
+
+        for _ in 0..<5 {
+            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
+            await sut.send(.debouncedSequence)
+        }
+        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100) // 100ms < 500ms
+
+        await expect { await sut.state.count == 10 }
+    }
+
+    func test_deboouncedSequenceWithClock() async {
+        for _ in 0..<5 {
+            await clock.advance(by: .seconds(10))
+            await sut.send(.debouncedSequenceWithClock)
+        }
+        await clock.advance(by: .seconds(100))
+        for _ in 0..<5 {
+            await clock.advance(by: .seconds(10))
+            await sut.send(.debouncedSequenceWithClock)
+        }
+        await clock.advance(by: .seconds(100))
+
+        await expect { await sut.state.count == 10 }
+
+        for _ in 0..<5 {
+            await clock.advance(by: .seconds(10))
+            await sut.send(.debouncedSequenceWithClock)
+        }
+        await clock.advance(by: .seconds(10)) // 10s < 100s
+
+        await expect { await sut.state.count == 10 }
+    }
 }
 
 private let textPublisher = PassthroughSubject<String, Never>()
@@ -223,6 +269,8 @@ private struct TestReducer: Reducer {
         case cancelLongTimeTask
         case debouncedIncrement
         case debouncedIncrementWithClock
+        case debouncedSequence
+        case debouncedSequenceWithClock
     }
 
     struct State: Equatable {
@@ -242,6 +290,7 @@ private struct TestReducer: Reducer {
 
     enum Debounce {
         case increment
+        case incrementSequence
     }
 
     func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
@@ -286,6 +335,26 @@ private struct TestReducer: Reducer {
         case .debouncedIncrementWithClock:
             return .just(.increment)
                 .debounce(id: Debounce.increment, for: .seconds(100), clock: clock)
+
+        case .debouncedSequence:
+            return .sequence { send in
+                send(.increment)
+                send(.increment)
+                send(.increment)
+                send(.increment)
+                send(.increment)
+            }
+            .debounce(id: Debounce.incrementSequence, for: 0.5)
+
+        case .debouncedSequenceWithClock:
+            return .sequence { send in
+                send(.increment)
+                send(.increment)
+                send(.increment)
+                send(.increment)
+                send(.increment)
+            }
+            .debounce(id: Debounce.incrementSequence, for: .seconds(100), clock: clock)
         }
     }
 

@@ -37,7 +37,7 @@ struct CountingReducer: Reducer {
                 .just(.setIsLoading(true)),
                 .merge(
                     .just(.increment),
-                    .just(.increment),
+                    .just(.increment)
                 ),
                 .just(.setIsLoading(false))
             )

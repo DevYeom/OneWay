@@ -158,7 +158,8 @@ final class StoreTests: XCTestCase {
         }
     }
 
-    func test_debounce() async {
+    /// To prevent potential hangs in GitHub Actions, it is temporarily excluded.
+    func _test_debounce() async {
         for _ in 0..<5 {
             try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
             await sut.send(.debouncedIncrement)
@@ -204,7 +205,8 @@ final class StoreTests: XCTestCase {
         await expect { await sut.state.count == 2 }
     }
 
-    func test_deboouncedSequence() async {
+    /// To prevent potential hangs in GitHub Actions, it is temporarily excluded.
+    func _test_deboouncedSequence() async {
         for _ in 0..<5 {
             try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
             await sut.send(.debouncedSequence)

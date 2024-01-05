@@ -26,7 +26,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     public let initialState: State
 
     /// The current state of a store.
-    public var state: State {
+    public private(set) var state: State {
         didSet {
             continuation.yield(state)
             states.send(state)
@@ -96,4 +96,29 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
 
 #if canImport(Combine)
 extension ViewStore: ObservableObject { }
+#endif
+
+
+#if canImport(SwiftUI)
+import SwiftUI
+
+extension ViewStore {
+    func binding<T>(_ keyPath: WritableKeyPath<State, T>) -> Binding<T> {
+        Binding(
+            get: { self.state[keyPath: keyPath] },
+            set: { value in
+                Task {
+                    await self.store.justSetStateValue((value, keyPath))
+                }
+            }
+        )
+    }
+}
+
+extension Store {
+    fileprivate func justSetStateValue<T>(_ setter: (T, WritableKeyPath<State, T>)) {
+        guard !isProcessing else { return }
+        self.state[keyPath: setter.1] = setter.0
+    }
+}
 #endif

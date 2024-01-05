@@ -26,7 +26,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     public let initialState: State
 
     /// The current state of a store.
-    public var state: State {
+    public private(set) var state: State {
         didSet {
             continuation.yield(state)
             states.send(state)
@@ -91,6 +91,20 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     ///   directly
     public func reset() {
         Task { await store.reset() }
+    }
+}
+
+extension ViewStore {
+    public var isProcessing: Bool {
+        get async {
+            await store.isProcessing
+        }
+    }
+    
+    public var isActionQueueEmpty: Bool {
+        get async {
+            await store.actionQueue.isEmpty
+        }
     }
 }
 

@@ -45,17 +45,26 @@ final class ViewStoreTests: XCTestCase {
     }
 
     func test_sensitiveState() async {
-        var counts: [Int] = []
-        var sensitiveCounts: [Int] = []
+        actor Result {
+            var counts: [Int] = []
+            var sensitiveCounts: [Int] = []
+            func appendCount(_ count: Int) {
+                counts.append(count)
+            }
+            func appendSensitiveCount(_ count: Int) {
+                sensitiveCounts.append(count)
+            }
+        }
+        let result = Result()
 
-        Task {
+        Task { @MainActor in
             for await state in sut.states {
-                counts.append(state.count)
+                await result.appendCount(state.count)
             }
         }
-        Task {
+        Task { @MainActor in
             for await sensitiveCount in sut.states.sensitiveCount {
-                sensitiveCounts.append(sensitiveCount)
+                await result.appendSensitiveCount(sensitiveCount)
             }
         }
 
@@ -63,22 +72,31 @@ final class ViewStoreTests: XCTestCase {
         sut.send(.setSensitiveCount(10))
         sut.send(.setSensitiveCount(10))
 
-        await expect { counts == [0, 0, 0, 0] }
-        await expect { sensitiveCounts == [0, 10, 10, 10] }
+        await sendableExpect { await result.counts == [0, 0, 0, 0] }
+        await sendableExpect { await result.sensitiveCounts == [0, 10, 10, 10] }
     }
 
     func test_insensitiveState() async {
-        var counts: [Int] = []
-        var insensitiveCounts: [Int] = []
-
-        Task {
-            for await state in sut.states {
-                counts.append(state.count)
+        actor Result {
+            var counts: [Int] = []
+            var insensitiveCounts: [Int] = []
+            func appendCount(_ count: Int) {
+                counts.append(count)
+            }
+            func appendInsensitiveCount(_ count: Int) {
+                insensitiveCounts.append(count)
             }
         }
-        Task {
+        let result = Result()
+
+        Task { @MainActor in
+            for await state in sut.states {
+                await result.appendCount(state.count)
+            }
+        }
+        Task { @MainActor in
             for await insensitiveCount in sut.states.insensitiveCount {
-                insensitiveCounts.append(insensitiveCount)
+                await result.appendInsensitiveCount(insensitiveCount)
             }
         }
 
@@ -87,8 +105,8 @@ final class ViewStoreTests: XCTestCase {
         sut.send(.setInsensitiveCount(30))
 
         // only initial value
-        await expect { counts == [0] }
-        await expect { insensitiveCounts == [0] }
+        await sendableExpect { await result.counts == [0] }
+        await sendableExpect { await result.insensitiveCounts == [0] }
     }
 
     func test_asyncViewStateSequence() async {
@@ -107,7 +125,7 @@ final class ViewStoreTests: XCTestCase {
         let expectation = expectation(description: #function)
 
         let result = Result(expectation, expectedCount: 15)
-        Task {
+        Task { @MainActor in
             await withTaskGroup(of: Void.self) { group in
                 group.addTask { await self.consumeAsyncViewStateSequence1(result) }
                 group.addTask { await self.consumeAsyncViewStateSequence2(result) }

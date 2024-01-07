@@ -26,7 +26,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     public let initialState: State
 
     /// The current state of a store.
-    public var state: State {
+    public private(set) var state: State {
         didSet {
             if oldValue != state {
                 continuation.yield(state)

@@ -40,8 +40,8 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
 
     private let reducer: any Reducer<Action, State>
     private let continuation: AsyncStream<State>.Continuation
-    public private(set) var isProcessing: Bool = false
-    public private(set) var actionQueue: [Action] = []
+    private var isProcessing: Bool = false
+    private var actionQueue: [Action] = []
     private var bindingTask: Task<Void, Never>?
     private var tasks: [TaskID: Task<Void, Never>] = [:]
     private var cancellables: [_EffectID: Set<TaskID>] = [:]

@@ -94,20 +94,6 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     }
 }
 
-extension ViewStore {
-    public var isProcessing: Bool {
-        get async {
-            await store.isProcessing
-        }
-    }
-    
-    public var isActionQueueEmpty: Bool {
-        get async {
-            await store.actionQueue.isEmpty
-        }
-    }
-}
-
 #if canImport(Combine)
 extension ViewStore: ObservableObject { }
 #endif

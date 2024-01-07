@@ -10,7 +10,6 @@ import OneWay
 import XCTest
 
 @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
-@MainActor
 final class EffectTests: XCTestCase {
     enum Action: Sendable {
         case first

@@ -190,14 +190,22 @@ extension AnyEffect {
         ).eraseToAnyEffect()
     }
     
+    /// An effect that concatenates a list of effects together into a single effect, which runs the
+    /// effects one after the other.
+    ///
+    /// - Parameters:
+    ///   - priority: The priority of the task.
+    ///     Pass `nil` to use the priority from `Task.currentPriority`.
+    ///   - build: A builder that makes effects.
+    /// - Returns: A new effect.
     @inlinable
     public static func concat(
         priority: TaskPriority? = nil,
-        @EffectsBuilder _ effects: () -> [AnyEffect<Element>]
+        @EffectsBuilder<Element> _ build: () -> [AnyEffect<Element>]
     ) -> AnyEffect<Element> {
         Effects.Concat(
             priority: priority,
-            effects()
+            build()
         ).eraseToAnyEffect()
     }
 
@@ -220,14 +228,22 @@ extension AnyEffect {
         ).eraseToAnyEffect()
     }
     
+    /// An effect that merges a list of effects together into a single effect, which runs the
+    /// effects at the same time.
+    ///
+    /// - Parameters:
+    ///   - priority: The priority of the task.
+    ///     Pass `nil` to use the priority from `Task.currentPriority`.
+    ///   - build: A builder that makes effects.
+    /// - Returns: A new effect.
     @inlinable
     public static func merge(
         priority: TaskPriority? = nil,
-        @EffectsBuilder _ effects: () -> [AnyEffect<Element>]
+        @EffectsBuilder<Element> _ build: () -> [AnyEffect<Element>]
     ) -> AnyEffect<Element> {
         Effects.Merge(
             priority: priority,
-            effects()
+            build()
         ).eraseToAnyEffect()
     }
 }

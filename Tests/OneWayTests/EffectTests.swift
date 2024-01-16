@@ -301,4 +301,109 @@ final class EffectTests: XCTestCase {
             ]
         )
     }
+
+    func test_createSynchronously() async {
+        let values = Effects.Create { continuation in
+            continuation.yield(Action.first)
+            continuation.yield(Action.second)
+            continuation.yield(Action.third)
+            continuation.yield(Action.fourth)
+            continuation.yield(Action.fifth)
+            continuation.finish()
+        }.values
+
+        var result: [Action] = []
+        for await value in values {
+            result.append(value)
+        }
+
+        XCTAssertEqual(
+            result,
+            [
+                .first,
+                .second,
+                .third,
+                .fourth,
+                .fifth,
+            ]
+        )
+    }
+
+    func test_createAsynchronously() async {
+        let clock = TestClock()
+
+        let values = Effects.Create { continuation in
+            Task { @MainActor in
+                try! await clock.sleep(for: .seconds(100))
+                continuation.yield(Action.first)
+                continuation.yield(Action.second)
+            }
+            Task { @MainActor in
+                try! await clock.sleep(for: .seconds(200))
+                continuation.yield(Action.third)
+                continuation.yield(Action.fourth)
+                continuation.yield(Action.fifth)
+            }
+            Task { @MainActor in
+                try! await clock.sleep(for: .seconds(300))
+                continuation.finish()
+            }
+        }.values
+
+        var result: [Action] = []
+        await clock.advance(by: .seconds(300))
+        for await value in values {
+            result.append(value)
+        }
+
+        XCTAssertEqual(
+            result,
+            [
+                .first,
+                .second,
+                .third,
+                .fourth,
+                .fifth,
+            ]
+        )
+    }
+
+    func test_createAsynchronouslyWithCompletionHandler() async {
+        let values = Effects.Create { continuation in
+            perform { action in
+                continuation.yield(action)
+                if action == .fifth {
+                    continuation.finish()
+                }
+            }
+        }.values
+
+        var result: [Action] = []
+        for await value in values {
+            result.append(value)
+        }
+
+        XCTAssertEqual(
+            result,
+            [
+                .first,
+                .second,
+                .third,
+                .fourth,
+                .fifth,
+            ]
+        )
+
+        func perform(completionHandler: @Sendable @escaping (Action) -> Void) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                completionHandler(.first)
+                completionHandler(.second)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                completionHandler(.third)
+                completionHandler(.fourth)
+                completionHandler(.fifth)
+            }
+        }
+    }
 }

@@ -1,6 +1,7 @@
 PLATFORM_IOS = iOS Simulator,name=iPhone 15
 PLATFORM_MACOS = macOS
 PLATFORM_TVOS = tvOS Simulator,name=Apple TV
+PLATFORM_VISIONOS = visionOS Simulator,name=Apple Vision Pro
 PLATFORM_WATCHOS = watchOS Simulator,name=Apple Watch Series 9 (45mm)
 CONFIG = debug
 
@@ -15,6 +16,7 @@ test:
 		"$(PLATFORM_IOS)" \
 		"$(PLATFORM_MACOS)" \
 		"$(PLATFORM_TVOS)" \
+		"$(PLATFORM_VISIONOS)" \
 		"$(PLATFORM_WATCHOS)"; \
 	do \
 		xcodebuild clean build test \

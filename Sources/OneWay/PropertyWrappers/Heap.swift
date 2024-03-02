@@ -2,7 +2,7 @@
 //  OneWay
 //  The MIT License (MIT)
 //
-//  Copyright (c) 2022-2023 SeungYeop Yeom ( https://github.com/DevYeom ).
+//  Copyright (c) 2022-2024 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
 /// A property wrapper that allows for an easy way to implement storing data in heap memory.

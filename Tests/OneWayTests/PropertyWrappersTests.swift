@@ -13,10 +13,10 @@ final class PropertyWrappersTests: XCTestCase {
         super.setUp()
     }
 
-    func test_heap() {
+    func test_copyOnWrite() {
         struct Storage {
-            @Heap var value: Int
-            @Heap var optionalValue: Int?
+            @CopyOnWrite var value: Int
+            @CopyOnWrite var optionalValue: Int?
         }
 
         do {

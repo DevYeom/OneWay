@@ -8,6 +8,7 @@
 import OneWay
 import XCTest
 
+#if !os(Linux)
 @MainActor
 final class ViewStoreTests: XCTestCase {
     private var sut: ViewStore<TestReducer>!
@@ -244,3 +245,4 @@ private actor Result {
         values.append(value)
     }
 }
+#endif

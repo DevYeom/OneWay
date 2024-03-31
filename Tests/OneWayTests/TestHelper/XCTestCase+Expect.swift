@@ -50,3 +50,9 @@ extension XCTestCase {
         }
     }
 }
+
+#if canImport(Darwin)
+#else
+let NSEC_PER_SEC: UInt64 = 1_000_000_000
+let NSEC_PER_MSEC: UInt64 = 1_000_000
+#endif

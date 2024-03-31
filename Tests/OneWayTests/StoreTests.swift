@@ -6,7 +6,9 @@
 //
 
 import Clocks
+#if canImport(Combine)
 import Combine
+#endif
 import OneWay
 import XCTest
 
@@ -94,6 +96,7 @@ final class StoreTests: XCTestCase {
         await expect { await sut.state.text == "Success" }
     }
 
+    #if canImport(Combine)
     func test_bind() async {
         var result: Set<String> = []
 
@@ -114,6 +117,7 @@ final class StoreTests: XCTestCase {
 
         XCTAssertEqual(result, ["", "first", "1", "second", "2"])
     }
+    #endif
 
     func test_removeDuplicates() async {
         await sut.send(.response("First"))
@@ -251,8 +255,10 @@ final class StoreTests: XCTestCase {
     }
 }
 
+#if canImport(Combine)
 private let textPublisher = PassthroughSubject<String, Never>()
 private let numberPublisher = PassthroughSubject<Int, Never>()
+#endif
 
 @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
 private var _clock = TestClock()
@@ -358,6 +364,7 @@ private struct TestReducer: Reducer {
         }
     }
 
+#if canImport(Combine)
     func bind() -> AnyEffect<Action> {
         return .merge(
             .sequence { send in
@@ -372,4 +379,5 @@ private struct TestReducer: Reducer {
             }
         )
     }
+#endif
 }

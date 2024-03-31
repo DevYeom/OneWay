@@ -26,7 +26,8 @@ let package = Package(
     targets: [
         .target(
             name: "OneWay",
-            dependencies: []
+            dependencies: [],
+            resources: [.copy("PrivacyInfo.xcprivacy")]
         ),
         .testTarget(
             name: "OneWayTests",

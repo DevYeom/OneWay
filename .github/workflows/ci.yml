@@ -25,4 +25,4 @@ jobs:
       with:
         xcode-version: '15.2'
     - name: Build and test
-      run: make test-all
+      run: swift test --parallel

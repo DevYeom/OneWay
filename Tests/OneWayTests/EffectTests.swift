@@ -61,7 +61,7 @@ final class EffectTests: XCTestCase {
         }.values
 
         var result: [Action] = []
-        await clock.advance(by: .seconds(100))
+        Task { await clock.advance(by: .seconds(100)) }
         for await value in values {
             result.append(value)
         }
@@ -138,7 +138,7 @@ final class EffectTests: XCTestCase {
         ]).values
 
         var result: [Action] = []
-        await clock.advance(by: .seconds(100 + 200 + 300))
+        Task { await clock.advance(by: .seconds(100 + 200 + 300)) }
         for await value in values {
             result.append(value)
         }
@@ -187,7 +187,7 @@ final class EffectTests: XCTestCase {
         ]).values
 
         var result: [Action] = []
-        await clock.advance(by: .seconds(500 + 400 + 100))
+        Task { await clock.advance(by: .seconds(500 + 400 + 100)) }
         for await value in values {
             result.append(value)
         }
@@ -237,7 +237,7 @@ final class EffectTests: XCTestCase {
         ]).values
 
         var result: [Action] = []
-        await clock.advance(by: .seconds(500))
+        Task { await clock.advance(by: .seconds(500)) }
         for await value in values {
             result.append(value)
         }
@@ -285,7 +285,7 @@ final class EffectTests: XCTestCase {
         ]).values
 
         var result: [Action] = []
-        await clock.advance(by: .seconds(700))
+        Task { await clock.advance(by: .seconds(700)) }
         for await value in values {
             result.append(value)
         }
@@ -351,7 +351,7 @@ final class EffectTests: XCTestCase {
         }.values
 
         var result: [Action] = []
-        await clock.advance(by: .seconds(300))
+        Task { await clock.advance(by: .seconds(300)) }
         for await value in values {
             result.append(value)
         }

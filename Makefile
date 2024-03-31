@@ -11,7 +11,7 @@ test-all:
 	CONFIG=debug make test
 	CONFIG=release make test
 
-test:
+test: build
 	for platform in \
 		"$(PLATFORM_IOS)" \
 		"$(PLATFORM_MACOS)" \
@@ -19,10 +19,25 @@ test:
 		"$(PLATFORM_VISIONOS)" \
 		"$(PLATFORM_WATCHOS)"; \
 	do \
-		xcodebuild clean build test \
+		xcodebuild test \
 			-scheme OneWay \
 			-configuration $(CONFIG) \
 			-destination platform="$$platform" || exit 1; \
 	done;
 
-.PHONY: test-all test
+build:
+	for platform in \
+		"$(PLATFORM_IOS)" \
+		"$(PLATFORM_MACOS)" \
+		"$(PLATFORM_TVOS)" \
+		"$(PLATFORM_VISIONOS)" \
+		"$(PLATFORM_WATCHOS)"; \
+	do \
+		xcodebuild \
+			-scheme OneWay \
+			-configuration $(CONFIG) \
+			-destination generic/platform="$$platform" || exit 1; \
+	done;
+
+
+.PHONY: test-all test build

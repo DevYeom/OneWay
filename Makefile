@@ -5,13 +5,13 @@ PLATFORM_VISIONOS = visionOS Simulator,name=Apple Vision Pro
 PLATFORM_WATCHOS = watchOS Simulator,name=Apple Watch Series 9 (45mm)
 CONFIG = debug
 
-default: test-all
+default: test-swift
 
-test-all:
-	CONFIG=debug make test
-	CONFIG=release make test
+build-all:
+	CONFIG=debug make build
+	CONFIG=release make build
 
-test:
+build:
 	for platform in \
 		"$(PLATFORM_IOS)" \
 		"$(PLATFORM_MACOS)" \
@@ -19,10 +19,14 @@ test:
 		"$(PLATFORM_VISIONOS)" \
 		"$(PLATFORM_WATCHOS)"; \
 	do \
-		xcodebuild clean build test \
+		xcodebuild build \
 			-scheme OneWay \
 			-configuration $(CONFIG) \
 			-destination platform="$$platform" || exit 1; \
 	done;
 
-.PHONY: test-all test
+test-swift:
+	swift test --parallel -c debug
+	swift test --parallel -c release
+
+.PHONY: build-all build test-swift

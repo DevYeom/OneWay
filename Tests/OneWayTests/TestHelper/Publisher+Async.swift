@@ -5,6 +5,7 @@
 //  Copyright (c) 2022-2024 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
+#if canImport(Combine)
 @preconcurrency import Combine
 
 extension Publisher where Failure == Never {
@@ -21,3 +22,4 @@ extension Publisher where Failure == Never {
         }
     }
 }
+#endif

@@ -5,6 +5,7 @@
 //  Copyright (c) 2022-2024 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
+#if !os(Linux)
 #if canImport(Combine)
 import Combine
 #endif
@@ -96,4 +97,5 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
 
 #if canImport(Combine)
 extension ViewStore: ObservableObject { }
+#endif
 #endif

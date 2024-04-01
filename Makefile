@@ -19,7 +19,7 @@ build:
 		"$(PLATFORM_VISIONOS)" \
 		"$(PLATFORM_WATCHOS)"; \
 	do \
-		xcodebuild build \
+		xcodebuild clean build \
 			-scheme OneWay \
 			-configuration $(CONFIG) \
 			-destination platform="$$platform" || exit 1; \

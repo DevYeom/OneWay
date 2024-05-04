@@ -27,11 +27,9 @@ struct CountingReducer: Reducer {
         case .increment:
             state.number += 1
             return .none
-
         case .decrement:
             state.number -= 1
             return .none
-
         case .twice:
             return .concat(
                 .just(.setIsLoading(true)),
@@ -41,7 +39,6 @@ struct CountingReducer: Reducer {
                 ),
                 .just(.setIsLoading(false))
             )
-
         case .setIsLoading(let isLoading):
             state.isLoading = isLoading
             return .none
@@ -80,7 +77,7 @@ OneWay is released under the MIT license. See LICENSE for details.
 
 ### PropertyWrappers
 
-- ``Heap``
+- ``CopyOnWrite``
 - ``Insensitive``
 - ``Sensitive``
 

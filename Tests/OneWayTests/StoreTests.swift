@@ -68,7 +68,7 @@ final class StoreTests: XCTestCase {
     }
 
     func test_threadSafeSendingActions() async {
-        let iterations: Int = 10_000
+        let iterations: Int = 100_000
         let sut = sut!
         DispatchQueue.concurrentPerform(
             iterations: iterations / 2,

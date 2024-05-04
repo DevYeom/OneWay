@@ -75,10 +75,11 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     public func send(_ action: Action) async {
         actionQueue.append(action)
         guard !isProcessing else { return }
-
         isProcessing = true
-        while !actionQueue.isEmpty {
-            let action = actionQueue.removeFirst()
+        await Task.yield()
+        let count = actionQueue.count
+        for index in Int.zero ..< count {
+            let action = actionQueue[index]
             let taskID = TaskID()
             let effect = reducer.reduce(state: &state, action: action)
             let task = Task { [weak self, taskID] in
@@ -107,6 +108,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
                 break
             }
         }
+        actionQueue = []
         isProcessing = false
     }
 

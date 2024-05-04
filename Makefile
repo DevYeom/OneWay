@@ -26,7 +26,7 @@ build:
 	done;
 
 test-swift:
-	swift test --parallel -c debug
-	swift test --parallel -c release
+	swift test -c debug
+	swift test -c release
 
 .PHONY: build-all build test-swift

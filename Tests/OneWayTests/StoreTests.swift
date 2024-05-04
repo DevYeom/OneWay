@@ -141,11 +141,14 @@ final class StoreTests: XCTestCase {
 
     func test_cancel() async {
         do {
-            await sut.send(.longTimeTask)
-            await clock.advance(by: .seconds(200))
+            let before = await sut.state.text
+            XCTAssertEqual(before, "")
 
-            let text = await sut.state.text
-            XCTAssertEqual(text, "Success")
+            await sut.send(.longTimeTask)
+            await clock.advance(by: .seconds(200 + 1))
+
+            let after = await sut.state.text
+            XCTAssertEqual(after, "Success")
         }
 
         await sut.send(.response(""))

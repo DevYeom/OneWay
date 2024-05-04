@@ -9,10 +9,11 @@ import OneWay
 import XCTest
 
 #if !os(Linux)
-@MainActor
 final class ViewStoreTests: XCTestCase {
+    @MainActor
     private var sut: ViewStore<TestReducer>!
 
+    @MainActor
     override func setUp() {
         super.setUp()
         sut = ViewStore(
@@ -21,11 +22,13 @@ final class ViewStoreTests: XCTestCase {
         )
     }
 
+    @MainActor
     override func tearDown() {
         super.tearDown()
         sut = nil
     }
 
+    @MainActor
     func test_initialState() async {
         XCTAssertEqual(sut.initialState, TestReducer.State(count: 0))
         XCTAssertEqual(sut.state.count, 0)
@@ -37,14 +40,17 @@ final class ViewStoreTests: XCTestCase {
         }
     }
 
+    @MainActor
     func test_sendSeveralActions() async {
         sut.send(.increment)
         sut.send(.increment)
         sut.send(.twice)
 
-        await sendableExpect { await sut.state.count == 4 }
+        nonisolated(unsafe) let sut = sut!
+        await sendableExpectWithMainActor { await sut.state.count == 4 }
     }
 
+    @MainActor
     func test_sensitiveState() async {
         actor Result {
             var counts: [Int] = []
@@ -73,10 +79,11 @@ final class ViewStoreTests: XCTestCase {
         sut.send(.setSensitiveCount(10))
         sut.send(.setSensitiveCount(10))
 
-        await sendableExpect { await result.counts == [0, 0, 0, 0] }
-        await sendableExpect { await result.sensitiveCounts == [0, 10, 10, 10] }
+        await sendableExpectWithMainActor { await result.counts == [0, 0, 0, 0] }
+        await sendableExpectWithMainActor { await result.sensitiveCounts == [0, 10, 10, 10] }
     }
 
+    @MainActor
     func test_insensitiveState() async {
         actor Result {
             var counts: [Int] = []
@@ -106,10 +113,11 @@ final class ViewStoreTests: XCTestCase {
         sut.send(.setInsensitiveCount(30))
 
         // only initial value
-        await sendableExpect { await result.counts == [0] }
-        await sendableExpect { await result.insensitiveCounts == [0] }
+        await sendableExpectWithMainActor { await result.counts == [0] }
+        await sendableExpectWithMainActor { await result.insensitiveCounts == [0] }
     }
 
+    @MainActor
     func test_asyncViewStateSequence() async {
         sut.send(.concat)
 
@@ -122,22 +130,37 @@ final class ViewStoreTests: XCTestCase {
         XCTAssertEqual(result, [0, 1, 2, 3, 4])
     }
 
+    @MainActor
     func test_asyncViewStateSequenceForMultipleConsumers() async {
         let expectation = expectation(description: #function)
 
+        nonisolated(unsafe) let `self` = self
+        nonisolated(unsafe) let sut = sut!
         let result = Result(expectation, expectedCount: 15)
         Task { @MainActor in
             await withTaskGroup(of: Void.self) { group in
-                group.addTask { await self.consumeAsyncViewStateSequence1(result) }
-                group.addTask { await self.consumeAsyncViewStateSequence2(result) }
-                group.addTask { await self.consumeAsyncViewStateSequence3(result) }
+                group.addTask { @MainActor in
+                    for await state in sut.states {
+                        await result.insert(state.count)
+                    }
+                }
+                group.addTask { @MainActor in
+                    for await count in sut.states.count {
+                        await result.insert(count)
+                    }
+                }
+                group.addTask { @MainActor in
+                    for await count in sut.states.count {
+                        await result.insert(count)
+                    }
+                }
             }
         }
 
         try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 10)
         sut.send(.concat)
 
-        await fulfillment(of: [expectation], timeout: 1)
+        await self.fulfillment(of: [expectation], timeout: 1)
 
         let values = await result.values
         XCTAssertEqual(
@@ -150,26 +173,6 @@ final class ViewStoreTests: XCTestCase {
                 4, 4, 4,
             ]
         )
-    }
-}
-
-extension ViewStoreTests {
-    private func consumeAsyncViewStateSequence1(_ result: Result) async {
-        for await state in sut.states {
-            await result.insert(state.count)
-        }
-    }
-
-    private func consumeAsyncViewStateSequence2(_ result: Result) async {
-        for await count in sut.states.count {
-            await result.insert(count)
-        }
-    }
-
-    private func consumeAsyncViewStateSequence3(_ result: Result) async {
-        for await count in sut.states.count {
-            await result.insert(count)
-        }
     }
 }
 

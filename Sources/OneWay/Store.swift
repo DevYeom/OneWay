@@ -44,7 +44,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     private var actionQueue: [Action] = []
     private var bindingTask: Task<Void, Never>?
     private var tasks: [TaskID: Task<Void, Never>] = [:]
-    private var cancellables: [_EffectID: Set<TaskID>] = [:]
+    private var cancellables: [EffectIDWrapper: Set<TaskID>] = [:]
 
     /// Initializes a store from a reducer and an initial state.
     ///
@@ -95,13 +95,13 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
             switch effect.method {
             case let .register(id, cancelInFlight):
                 if cancelInFlight {
-                    let taskIDs = cancellables[_EffectID(id), default: []]
+                    let taskIDs = cancellables[EffectIDWrapper(id), default: []]
                     taskIDs.forEach { removeTask($0) }
                 }
-                cancellables[_EffectID(id), default: []].insert(taskID)
+                cancellables[EffectIDWrapper(id), default: []].insert(taskID)
 
             case .cancel(let id):
-                let taskIDs = cancellables[_EffectID(id), default: []]
+                let taskIDs = cancellables[EffectIDWrapper(id), default: []]
                 taskIDs.forEach { removeTask($0) }
 
             case .none:
@@ -142,7 +142,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     }
 }
 
-private struct _EffectID: Hashable, @unchecked Sendable {
+private struct EffectIDWrapper: Hashable, @unchecked Sendable {
     private let id: AnyHashable
 
     fileprivate init(_ id: some Hashable & Sendable) {

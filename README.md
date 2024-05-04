@@ -25,9 +25,6 @@
 
 Whether you're working on any platform or within any framework, **OneWay** can seamlessly integrate. With zero third-party dependencies, **OneWay** can be used in its purest form. This library isn't limited to use only for the presentation layer. It's also useful for streamlining intricate business logic. You'll find it beneficial whenever you seek to implement logic in a unidirectional manner.
 
-> [!NOTE]
-> OneWay is a good solution for preparing Swift 6.
-
 - [Data Flow](#data-flow)
 - [Usage](#usage)
 - [Documentation](#documentation)
@@ -71,11 +68,9 @@ struct CountingReducer: Reducer {
         case .increment:
             state.number += 1
             return .none
-
         case .decrement:
             state.number -= 1
             return .none
-
         case .twice:
             return .concat(
                 .just(.setIsLoading(true)),
@@ -85,7 +80,6 @@ struct CountingReducer: Reducer {
                 ),
                 .just(.setIsLoading(false))
             )
-
         case .setIsLoading(let isLoading):
             state.isLoading = isLoading
             return .none
@@ -154,7 +148,7 @@ for await number in store.states.number {
 // Prints "10", "20"
 ```
 
-If you want to continue receiving the value even when the same value is assigned to the `State`, you can use `@Sensitive`. For explanations of other useful property wrappers(e.g. [@Heap](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/heap), [@Insensitive](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/insensitive)), refer to [here](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/sensitive).
+If you want to continue receiving the value even when the same value is assigned to the `State`, you can use `@Sensitive`. For explanations of other useful property wrappers(e.g. [@CopyOnWrite](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/copyonwrite), [@Insensitive](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/insensitive)), refer to [here](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/sensitive).
 
 ```swift
 struct State: Sendable, Equatable {

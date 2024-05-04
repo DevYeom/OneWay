@@ -333,18 +333,18 @@ final class EffectTests: XCTestCase {
         let clock = TestClock()
 
         let values = Effects.Create { continuation in
-            Task { @MainActor in
+            Task {
                 try! await clock.sleep(for: .seconds(100))
                 continuation.yield(Action.first)
                 continuation.yield(Action.second)
             }
-            Task { @MainActor in
+            Task {
                 try! await clock.sleep(for: .seconds(200))
                 continuation.yield(Action.third)
                 continuation.yield(Action.fourth)
                 continuation.yield(Action.fifth)
             }
-            Task { @MainActor in
+            Task {
                 try! await clock.sleep(for: .seconds(300))
                 continuation.finish()
             }

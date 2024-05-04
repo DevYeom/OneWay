@@ -9,23 +9,26 @@ import OneWay
 import XCTest
 
 #if !os(Linux)
-@MainActor
 final class ViewStoreTests: XCTestCase {
+    @MainActor
     private var sut: ViewStore<TestReducer>!
 
+    @MainActor
     override func setUp() {
         super.setUp()
         sut = ViewStore(
             reducer: TestReducer(),
-            state: .init(count: 0)
+            state: TestReducer.State(count: 0)
         )
     }
 
+    @MainActor
     override func tearDown() {
         super.tearDown()
         sut = nil
     }
 
+    @MainActor
     func test_initialState() async {
         XCTAssertEqual(sut.initialState, TestReducer.State(count: 0))
         XCTAssertEqual(sut.state.count, 0)
@@ -37,16 +40,21 @@ final class ViewStoreTests: XCTestCase {
         }
     }
 
+#if swift(>=5.10)
+    @MainActor
     func test_sendSeveralActions() async {
         sut.send(.increment)
         sut.send(.increment)
         sut.send(.twice)
 
-        await sendableExpect { await sut.state.count == 4 }
+        nonisolated(unsafe) let sut = sut!
+        await sendableExpectWithMainActor { await sut.state.count == 4 }
     }
+#endif
 
+    @MainActor
     func test_triggeredState() async {
-        actor Result {
+        actor TestResult {
             var counts: [Int] = []
             var triggeredCounts: [Int] = []
             func appendCount(_ count: Int) {
@@ -56,7 +64,7 @@ final class ViewStoreTests: XCTestCase {
                 triggeredCounts.append(count)
             }
         }
-        let result = Result()
+        let result = TestResult()
 
         Task { @MainActor in
             for await state in sut.states {
@@ -73,12 +81,13 @@ final class ViewStoreTests: XCTestCase {
         sut.send(.setTriggeredCount(10))
         sut.send(.setTriggeredCount(10))
 
-        await sendableExpect { await result.counts == [0, 0, 0, 0] }
-        await sendableExpect { await result.triggeredCounts == [0, 10, 10, 10] }
+        await sendableExpectWithMainActor { await result.counts == [0, 0, 0, 0] }
+        await sendableExpectWithMainActor { await result.triggeredCounts == [0, 10, 10, 10] }
     }
 
+    @MainActor
     func test_ignoredState() async {
-        actor Result {
+        actor TestResult {
             var counts: [Int] = []
             var ignoredCounts: [Int] = []
             func appendCount(_ count: Int) {
@@ -88,7 +97,7 @@ final class ViewStoreTests: XCTestCase {
                 ignoredCounts.append(count)
             }
         }
-        let result = Result()
+        let result = TestResult()
 
         Task { @MainActor in
             for await state in sut.states {
@@ -106,10 +115,11 @@ final class ViewStoreTests: XCTestCase {
         sut.send(.setIgnoredCount(30))
 
         // only initial value
-        await sendableExpect { await result.counts == [0] }
-        await sendableExpect { await result.ignoredCounts == [0] }
+        await sendableExpectWithMainActor { await result.counts == [0] }
+        await sendableExpectWithMainActor { await result.ignoredCounts == [0] }
     }
 
+    @MainActor
     func test_asyncViewStateSequence() async {
         sut.send(.concat)
 
@@ -122,15 +132,30 @@ final class ViewStoreTests: XCTestCase {
         XCTAssertEqual(result, [0, 1, 2, 3, 4])
     }
 
+#if swift(>=5.10)
+    @MainActor
     func test_asyncViewStateSequenceForMultipleConsumers() async {
         let expectation = expectation(description: #function)
 
-        let result = Result(expectation, expectedCount: 15)
+        nonisolated(unsafe) let sut = sut!
+        let result = TestResult(expectation, expectedCount: 15)
         Task { @MainActor in
             await withTaskGroup(of: Void.self) { group in
-                group.addTask { await self.consumeAsyncViewStateSequence1(result) }
-                group.addTask { await self.consumeAsyncViewStateSequence2(result) }
-                group.addTask { await self.consumeAsyncViewStateSequence3(result) }
+                group.addTask { @MainActor in
+                    for await state in sut.states {
+                        await result.insert(state.count)
+                    }
+                }
+                group.addTask { @MainActor in
+                    for await count in sut.states.count {
+                        await result.insert(count)
+                    }
+                }
+                group.addTask { @MainActor in
+                    for await count in sut.states.count {
+                        await result.insert(count)
+                    }
+                }
             }
         }
 
@@ -151,26 +176,7 @@ final class ViewStoreTests: XCTestCase {
             ]
         )
     }
-}
-
-extension ViewStoreTests {
-    private func consumeAsyncViewStateSequence1(_ result: Result) async {
-        for await state in sut.states {
-            await result.insert(state.count)
-        }
-    }
-
-    private func consumeAsyncViewStateSequence2(_ result: Result) async {
-        for await count in sut.states.count {
-            await result.insert(count)
-        }
-    }
-
-    private func consumeAsyncViewStateSequence3(_ result: Result) async {
-        for await count in sut.states.count {
-            await result.insert(count)
-        }
-    }
+#endif
 }
 
 private struct TestReducer: Reducer {
@@ -224,7 +230,7 @@ private struct TestReducer: Reducer {
     }
 }
 
-private actor Result {
+private actor TestResult {
     let expectation: XCTestExpectation
     let expectedCount: Int
     var values: [Int] = [] {

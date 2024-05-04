@@ -44,7 +44,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     private var actionQueue: [Action] = []
     private var bindingTask: Task<Void, Never>?
     private var tasks: [TaskID: Task<Void, Never>] = [:]
-    private var cancellables: [_EffectID: Set<TaskID>] = [:]
+    private var cancellables: [EffectIDWrapper: Set<TaskID>] = [:]
 
     /// Initializes a store from a reducer and an initial state.
     ///
@@ -75,10 +75,11 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     public func send(_ action: Action) async {
         actionQueue.append(action)
         guard !isProcessing else { return }
-
         isProcessing = true
-        while !actionQueue.isEmpty {
-            let action = actionQueue.removeFirst()
+        await Task.yield()
+        let count = actionQueue.count
+        for index in Int.zero ..< count {
+            let action = actionQueue[index]
             let taskID = TaskID()
             let effect = reducer.reduce(state: &state, action: action)
             let task = Task { [weak self, taskID] in
@@ -94,19 +95,20 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
             switch effect.method {
             case let .register(id, cancelInFlight):
                 if cancelInFlight {
-                    let taskIDs = cancellables[_EffectID(id), default: []]
+                    let taskIDs = cancellables[EffectIDWrapper(id), default: []]
                     taskIDs.forEach { removeTask($0) }
                 }
-                cancellables[_EffectID(id), default: []].insert(taskID)
+                cancellables[EffectIDWrapper(id), default: []].insert(taskID)
 
             case .cancel(let id):
-                let taskIDs = cancellables[_EffectID(id), default: []]
+                let taskIDs = cancellables[EffectIDWrapper(id), default: []]
                 taskIDs.forEach { removeTask($0) }
 
             case .none:
                 break
             }
         }
+        actionQueue = []
         isProcessing = false
     }
 
@@ -140,7 +142,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     }
 }
 
-private struct _EffectID: Hashable, @unchecked Sendable {
+private struct EffectIDWrapper: Hashable, @unchecked Sendable {
     private let id: AnyHashable
 
     fileprivate init(_ id: some Hashable & Sendable) {

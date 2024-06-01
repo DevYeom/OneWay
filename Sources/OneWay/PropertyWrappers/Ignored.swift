@@ -11,7 +11,7 @@
 /// useful when the actual value of the `State` changes, but rendering of the `View` is not
 /// required.
 @propertyWrapper
-public struct Insensitive<Value> {
+public struct Ignored<Value> {
     public var wrappedValue: Value
 
     public init(wrappedValue: Value) {
@@ -19,20 +19,23 @@ public struct Insensitive<Value> {
     }
 }
 
-extension Insensitive: CustomStringConvertible {
+extension Ignored: CustomStringConvertible {
     public var description: String {
         String(describing: wrappedValue)
     }
 }
 
-extension Insensitive: Sendable where Value: Sendable { }
-extension Insensitive: Equatable {
-    public static func == (lhs: Insensitive, rhs: Insensitive) -> Bool {
+extension Ignored: Sendable where Value: Sendable { }
+extension Ignored: Equatable {
+    public static func == (lhs: Ignored, rhs: Ignored) -> Bool {
         true
     }
 }
-extension Insensitive: Hashable where Value: Hashable {
+extension Ignored: Hashable where Value: Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(wrappedValue)
     }
 }
+
+@available(*, deprecated, renamed: "Ignored")
+public typealias Insensitive = Ignored

@@ -12,7 +12,7 @@
 /// It is useful in cases where the value hasn't actually changed, but the `View` needs to be
 /// rendered again.
 @propertyWrapper
-public struct Sensitive<Value> where Value: Equatable {
+public struct Triggered<Value> where Value: Equatable {
     fileprivate struct Storage: Equatable {
         var value: Value
         var version: UInt8
@@ -44,24 +44,27 @@ public struct Sensitive<Value> where Value: Equatable {
     }
 }
 
-extension Sensitive: CustomStringConvertible {
+extension Triggered: CustomStringConvertible {
     public var description: String {
         String(describing: storage.value)
     }
 }
 
-extension Sensitive: Sendable where Value: Sendable { }
-extension Sensitive: Equatable { }
-extension Sensitive: Hashable where Value: Hashable {
+extension Triggered: Sendable where Value: Sendable { }
+extension Triggered: Equatable { }
+extension Triggered: Hashable where Value: Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(storage)
     }
 }
 
-extension Sensitive.Storage: Sendable where Value: Sendable { }
-extension Sensitive.Storage: Hashable where Value: Hashable {
+extension Triggered.Storage: Sendable where Value: Sendable { }
+extension Triggered.Storage: Hashable where Value: Hashable {
     fileprivate func hash(into hasher: inout Hasher) {
         hasher.combine(value)
         hasher.combine(version)
     }
 }
+
+@available(*, deprecated, renamed: "Triggered")
+public typealias Sensitive = Triggered

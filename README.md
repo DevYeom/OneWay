@@ -148,11 +148,11 @@ for await number in store.states.number {
 // Prints "10", "20"
 ```
 
-If you want to continue receiving the value even when the same value is assigned to the `State`, you can use `@Sensitive`. For explanations of other useful property wrappers(e.g. [@CopyOnWrite](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/copyonwrite), [@Insensitive](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/insensitive)), refer to [here](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/sensitive).
+If you want to continue receiving the value even when the same value is assigned to the `State`, you can use `@Triggered`. For explanations of other useful property wrappers(e.g. [@CopyOnWrite](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/copyonwrite), [@Ignored](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/ignored)), refer to [here](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/triggered).
 
 ```swift
 struct State: Sendable, Equatable {
-    @Sensitive var number: Int
+    @Triggered var number: Int
 }
 
 // number <- 10, 10, 20 ,20

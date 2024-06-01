@@ -78,7 +78,7 @@ OneWay is released under the MIT license. See LICENSE for details.
 ### PropertyWrappers
 
 - ``CopyOnWrite``
-- ``Insensitive``
-- ``Sensitive``
+- ``Ignored``
+- ``Triggered``
 
 ### Articles

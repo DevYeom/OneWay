@@ -45,15 +45,15 @@ final class ViewStoreTests: XCTestCase {
         await sendableExpect { await sut.state.count == 4 }
     }
 
-    func test_sensitiveState() async {
+    func test_triggeredState() async {
         actor Result {
             var counts: [Int] = []
-            var sensitiveCounts: [Int] = []
+            var triggeredCounts: [Int] = []
             func appendCount(_ count: Int) {
                 counts.append(count)
             }
-            func appendSensitiveCount(_ count: Int) {
-                sensitiveCounts.append(count)
+            func appendTriggeredCount(_ count: Int) {
+                triggeredCounts.append(count)
             }
         }
         let result = Result()
@@ -64,28 +64,28 @@ final class ViewStoreTests: XCTestCase {
             }
         }
         Task { @MainActor in
-            for await sensitiveCount in sut.states.sensitiveCount {
-                await result.appendSensitiveCount(sensitiveCount)
+            for await triggeredCount in sut.states.triggeredCount {
+                await result.appendTriggeredCount(triggeredCount)
             }
         }
 
-        sut.send(.setSensitiveCount(10))
-        sut.send(.setSensitiveCount(10))
-        sut.send(.setSensitiveCount(10))
+        sut.send(.setTriggeredCount(10))
+        sut.send(.setTriggeredCount(10))
+        sut.send(.setTriggeredCount(10))
 
         await sendableExpect { await result.counts == [0, 0, 0, 0] }
-        await sendableExpect { await result.sensitiveCounts == [0, 10, 10, 10] }
+        await sendableExpect { await result.triggeredCounts == [0, 10, 10, 10] }
     }
 
-    func test_insensitiveState() async {
+    func test_ignoredState() async {
         actor Result {
             var counts: [Int] = []
-            var insensitiveCounts: [Int] = []
+            var ignoredCounts: [Int] = []
             func appendCount(_ count: Int) {
                 counts.append(count)
             }
-            func appendInsensitiveCount(_ count: Int) {
-                insensitiveCounts.append(count)
+            func appendIgnoredCount(_ count: Int) {
+                ignoredCounts.append(count)
             }
         }
         let result = Result()
@@ -96,18 +96,18 @@ final class ViewStoreTests: XCTestCase {
             }
         }
         Task { @MainActor in
-            for await insensitiveCount in sut.states.insensitiveCount {
-                await result.appendInsensitiveCount(insensitiveCount)
+            for await ignoredCount in sut.states.ignoredCount {
+                await result.appendIgnoredCount(ignoredCount)
             }
         }
 
-        sut.send(.setInsensitiveCount(10))
-        sut.send(.setInsensitiveCount(20))
-        sut.send(.setInsensitiveCount(30))
+        sut.send(.setIgnoredCount(10))
+        sut.send(.setIgnoredCount(20))
+        sut.send(.setIgnoredCount(30))
 
         // only initial value
         await sendableExpect { await result.counts == [0] }
-        await sendableExpect { await result.insensitiveCounts == [0] }
+        await sendableExpect { await result.ignoredCounts == [0] }
     }
 
     func test_asyncViewStateSequence() async {
@@ -179,14 +179,14 @@ private struct TestReducer: Reducer {
         case twice
         case concat
         case setCount(Int)
-        case setSensitiveCount(Int)
-        case setInsensitiveCount(Int)
+        case setTriggeredCount(Int)
+        case setIgnoredCount(Int)
     }
 
     struct State: Equatable {
         var count: Int
-        @Sensitive var sensitiveCount: Int = 0
-        @Insensitive var insensitiveCount: Int = 0
+        @Triggered var triggeredCount: Int = 0
+        @Ignored var ignoredCount: Int = 0
     }
 
     func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
@@ -213,12 +213,12 @@ private struct TestReducer: Reducer {
             state.count = count
             return .none
 
-        case .setSensitiveCount(let count):
-            state.sensitiveCount = count
+        case .setTriggeredCount(let count):
+            state.triggeredCount = count
             return .none
 
-        case .setInsensitiveCount(let count):
-            state.insensitiveCount = count
+        case .setIgnoredCount(let count):
+            state.ignoredCount = count
             return .none
         }
     }

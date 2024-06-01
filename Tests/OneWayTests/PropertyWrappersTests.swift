@@ -52,9 +52,9 @@ final class PropertyWrappersTests: XCTestCase {
         }
     }
 
-    func test_sensitive() {
+    func test_triggered() {
         struct Storage: Equatable {
-            @Sensitive var value: Int
+            @Triggered var value: Int
         }
 
         do {
@@ -83,9 +83,9 @@ final class PropertyWrappersTests: XCTestCase {
         }
     }
 
-    func test_insensitive() {
+    func test_ignored() {
         struct Storage: Equatable {
-            @Insensitive var value: Int
+            @Ignored var value: Int
         }
 
         do {

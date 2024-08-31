@@ -23,7 +23,7 @@ final class StoreTests: XCTestCase {
         self.clock = clock
         sut = Store(
             reducer: TestReducer(clock: clock),
-            state: .init(count: 0, text: "")
+            state: TestReducer.State(count: 0, text: "")
         )
     }
 
@@ -103,10 +103,10 @@ final class StoreTests: XCTestCase {
         // https://forums.swift.org/t/how-to-use-combine-publisher-with-swift-concurrency-publisher-values-could-miss-events/67193
         Task {
             try! await Task.sleep(nanoseconds: NSEC_PER_MSEC)
-            textPublisher.send("first")
-            numberPublisher.send(1)
-            textPublisher.send("second")
-            numberPublisher.send(2)
+            testPublisher.text.send("first")
+            testPublisher.number.send(1)
+            testPublisher.text.send("second")
+            testPublisher.number.send(2)
         }
 
         let states = await sut.states
@@ -259,12 +259,13 @@ final class StoreTests: XCTestCase {
 }
 
 #if canImport(Combine)
-private let textPublisher = PassthroughSubject<String, Never>()
-private let numberPublisher = PassthroughSubject<Int, Never>()
+/// Just for testing
+private struct TestPublisher: @unchecked Sendable {
+    let text = PassthroughSubject<String, Never>()
+    let number = PassthroughSubject<Int, Never>()
+}
+private let testPublisher = TestPublisher()
 #endif
-
-@available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
-private var _clock = TestClock()
 
 @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
 private struct TestReducer: Reducer {
@@ -371,12 +372,12 @@ private struct TestReducer: Reducer {
     func bind() -> AnyEffect<Action> {
         return .merge(
             .sequence { send in
-                for await text in textPublisher.stream {
+                for await text in testPublisher.text.stream {
                     send(Action.response(text))
                 }
             },
             .sequence { send in
-                for await number in numberPublisher.stream {
+                for await number in testPublisher.number.stream {
                     send(Action.response(String(number)))
                 }
             }

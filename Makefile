@@ -5,7 +5,7 @@ PLATFORM_VISIONOS = visionOS Simulator,name=Apple Vision Pro
 PLATFORM_WATCHOS = watchOS Simulator,name=Apple Watch Series 9 (45mm)
 CONFIG = debug
 
-default: test-swift
+default: test
 
 build-all:
 	CONFIG=debug make build
@@ -25,8 +25,8 @@ build:
 			-destination platform="$$platform" || exit 1; \
 	done;
 
-test-swift:
+test:
 	swift test -c debug
 	swift test -c release
 
-.PHONY: build-all build test-swift
+.PHONY: build-all build test

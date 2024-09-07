@@ -21,9 +21,9 @@
   </a>
 </p>
 
-**OneWay** is a remarkably simple and lightweight library designed for state management through unidirectional data flow. It is implemented based on [Swift Concurrency](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/). The `Store` is implemented with an `Actor`, making it always **thread-safe**.
+**OneWay** is a simple, lightweight library for state management using a unidirectional data flow, fully compatiable with Swift 6 and built on [Swift Concurrency](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/). Its structure makes it easier to maintain thread safety at all times.
 
-Whether you're working on any platform or within any framework, **OneWay** can seamlessly integrate. With zero third-party dependencies, **OneWay** can be used in its purest form. This library isn't limited to use only for the presentation layer. It's also useful for streamlining intricate business logic. You'll find it beneficial whenever you seek to implement logic in a unidirectional manner.
+It integrates effortlessly across platforms and frameworks, with zero third-party dependencies, allowing you to use it in its purest form. **OneWay** can be used anywhere, not just in the presentation layer, to simplify the complex business logic. If you're looking to implement unidirectional logic, **OneWay** is a straightforward and practical solution.
 
 - [Data Flow](#data-flow)
 - [Usage](#usage)

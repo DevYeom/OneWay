@@ -63,6 +63,18 @@ where State: Sendable & Equatable {
     ///
     /// - Parameter dynamicMember: a key path for the original state.
     /// - Returns: A new stream that has a part of the original state.
+    #if swift(>=6)
+    public subscript<Property>(
+        dynamicMember keyPath: KeyPath<State, Property> & Sendable
+    ) -> AsyncMapSequence<AsyncStream<State>, Property> {
+        let (stream, continuation) = AsyncStream<Element>.makeStream()
+        continuations.append(continuation)
+        if let last {
+            continuation.yield(last)
+        }
+        return stream.map { $0[keyPath: keyPath] }
+    }
+    #else
     public subscript<Property>(
         dynamicMember keyPath: KeyPath<State, Property>
     ) -> AsyncMapSequence<AsyncStream<State>, Property> {
@@ -73,6 +85,7 @@ where State: Sendable & Equatable {
         }
         return stream.map { $0[keyPath: keyPath] }
     }
+    #endif
 }
 
 extension AsyncViewStateSequence: Sendable where State: Sendable { }

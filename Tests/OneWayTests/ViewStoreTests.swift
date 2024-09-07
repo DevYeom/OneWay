@@ -14,8 +14,7 @@ final class ViewStoreTests: XCTestCase {
     private var sut: ViewStore<TestReducer>!
 
     @MainActor
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
         sut = ViewStore(
             reducer: TestReducer(),
             state: TestReducer.State(count: 0)
@@ -23,8 +22,7 @@ final class ViewStoreTests: XCTestCase {
     }
 
     @MainActor
-    override func tearDown() {
-        super.tearDown()
+    override func tearDown() async throws {
         sut = nil
     }
 
@@ -40,17 +38,15 @@ final class ViewStoreTests: XCTestCase {
         }
     }
 
-#if swift(>=5.10)
     @MainActor
     func test_sendSeveralActions() async {
         sut.send(.increment)
         sut.send(.increment)
         sut.send(.twice)
 
-        nonisolated(unsafe) let sut = sut!
+        let sut = sut!
         await sendableExpectWithMainActor { await sut.state.count == 4 }
     }
-#endif
 
     @MainActor
     func test_triggeredState() async {
@@ -132,27 +128,26 @@ final class ViewStoreTests: XCTestCase {
         XCTAssertEqual(result, [0, 1, 2, 3, 4])
     }
 
-#if swift(>=5.10)
     @MainActor
     func test_asyncViewStateSequenceForMultipleConsumers() async {
         let expectation = expectation(description: #function)
 
-        nonisolated(unsafe) let sut = sut!
+        let sut = sut!
         let result = TestResult(expectation, expectedCount: 15)
         Task { @MainActor in
             await withTaskGroup(of: Void.self) { group in
-                group.addTask { @MainActor in
-                    for await state in sut.states {
+                group.addTask {
+                    for await state in await sut.states {
                         await result.insert(state.count)
                     }
                 }
-                group.addTask { @MainActor in
-                    for await count in sut.states.count {
+                group.addTask {
+                    for await count in await sut.states.count {
                         await result.insert(count)
                     }
                 }
-                group.addTask { @MainActor in
-                    for await count in sut.states.count {
+                group.addTask {
+                    for await count in await sut.states.count {
                         await result.insert(count)
                     }
                 }
@@ -176,7 +171,6 @@ final class ViewStoreTests: XCTestCase {
             ]
         )
     }
-#endif
 }
 
 private struct TestReducer: Reducer {

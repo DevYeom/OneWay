@@ -8,7 +8,7 @@
 #if canImport(Combine)
 @preconcurrency import Combine
 
-extension Publisher where Failure == Never {
+extension Publisher where Failure == Never, Output: Sendable {
     public var stream: AsyncStream<Output> {
         AsyncStream { continuation in
             let cancellable = self.sink { completion in

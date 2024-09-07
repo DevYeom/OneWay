@@ -65,6 +65,3 @@ extension Triggered.Storage: Hashable where Value: Hashable {
         hasher.combine(version)
     }
 }
-
-@available(*, deprecated, renamed: "Triggered")
-public typealias Sensitive = Triggered

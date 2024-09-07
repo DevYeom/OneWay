@@ -36,6 +36,3 @@ extension Ignored: Hashable where Value: Hashable {
         hasher.combine(wrappedValue)
     }
 }
-
-@available(*, deprecated, renamed: "Ignored")
-public typealias Insensitive = Ignored

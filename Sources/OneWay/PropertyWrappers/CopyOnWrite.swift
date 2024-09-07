@@ -62,6 +62,3 @@ extension CopyOnWrite: Hashable where Value : Hashable {
 }
 
 extension CopyOnWrite.Reference: @unchecked Sendable where Value: Sendable { }
-
-@available(*, deprecated, renamed: "CopyOnWrite")
-public typealias Heap = CopyOnWrite

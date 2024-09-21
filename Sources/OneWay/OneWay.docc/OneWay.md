@@ -60,6 +60,10 @@ Whether you're using UIKit or SwiftUI, you can seamlessly apply it everywhere an
 
 OneWay is released under the MIT license. See LICENSE for details.
 
+## Articles
+
+- doc:Testing
+
 ## Topics
 
 ### Essentials
@@ -80,7 +84,3 @@ OneWay is released under the MIT license. See LICENSE for details.
 - ``CopyOnWrite``
 - ``Ignored``
 - ``Triggered``
-
-### Articles
-
-- doc:Testing

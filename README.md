@@ -263,6 +263,39 @@ struct CountingReducer: Reducer {
 }
 ```
 
+### Testing
+
+**OneWay** provides the `expect` and `xctExpect` functions to help you write concise and clear tests. These functions work asynchronously, allowing you to verify if the state updates as expected.
+
+#### When using `Testing`
+
+You can use the `expect` function to easily check the state value.
+
+```swift
+@Test
+func incrementTwice() async {
+    await sut.send(.increment)
+    await sut.send(.increment)
+
+    await sut.expect(\.count, 2)
+}
+```
+
+#### When using `XCTest`
+
+The `xctExpect` function is used within an XCTest environment to assert the state value.
+
+```swift
+func test_incrementTwice() async {
+    await sut.send(.increment)
+    await sut.send(.increment)
+
+    await sut.xctExpect(\.count, 2)
+}
+```
+
+For more details, please refer to the [Testing](https://swiftpackageindex.com/DevYeom/OneWay/main/documentation/OneWay/Testing) article.
+
 ## Documentation
 
 To learn how to use **OneWay** in more detail, go through the [documentation](https://swiftpackageindex.com/DevYeom/OneWay/main/documentation/OneWay).

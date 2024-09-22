@@ -156,6 +156,7 @@ import CoreFoundation
 import Testing
 
 extension Store {
+    #if swift(>=6)
     /// Allows the expectation of a certain property value in the store's state. It compares the
     /// current value of the given `keyPath` in the state with an expected `input` value. The
     /// function works asynchronously, yielding control to allow other tasks to execute, especially
@@ -167,7 +168,6 @@ extension Store {
     ///   - timeout: The maximum amount of time (in seconds) to wait for the store to finish
     ///   processing before timing out. Defaults to 2 seconds.
     ///   - sourceLocation: The source location for tracking the test location.
-    #if swift(>=6)
     public func expect<Property>(
         _ keyPath: KeyPath<State, Property> & Sendable,
         _ input: Property,
@@ -199,6 +199,17 @@ extension Store {
         }
     }
     #else
+    /// Allows the expectation of a certain property value in the store's state. It compares the
+    /// current value of the given `keyPath` in the state with an expected `input` value. The
+    /// function works asynchronously, yielding control to allow other tasks to execute, especially
+    /// when the store is processing or updating its state.
+    ///
+    /// - Parameters:
+    ///   - keyPath: A key path that specifies the property in the `State` to be compared.
+    ///   - input: The expected value of the property at the given key path.
+    ///   - timeout: The maximum amount of time (in seconds) to wait for the store to finish
+    ///   processing before timing out. Defaults to 2 seconds.
+    ///   - sourceLocation: The source location for tracking the test location.
     public func expect<Property>(
         _ keyPath: KeyPath<State, Property>,
         _ input: Property,
@@ -238,6 +249,7 @@ import CoreFoundation
 import XCTest
 
 extension Store {
+    #if swift(>=6)
     /// An `XCTest`-specific helper that asynchronously waits for the store to finish processing
     /// before comparing a specific property in the state to an expected value. It uses
     /// `XCTAssertEqual` to validate that the retrieved value matches the input.
@@ -249,7 +261,6 @@ extension Store {
     ///   processing before timing out. Defaults to 2 seconds.
     ///   - file: The file path from which the function is called (default is the current file).
     ///   - line: The line number from which the function is called (default is the current line).
-    #if swift(>=6)
     public func xctExpect<Property>(
         _ keyPath: KeyPath<State, Property> & Sendable,
         _ input: Property,
@@ -282,6 +293,17 @@ extension Store {
         }
     }
     #else
+    /// An `XCTest`-specific helper that asynchronously waits for the store to finish processing
+    /// before comparing a specific property in the state to an expected value. It uses
+    /// `XCTAssertEqual` to validate that the retrieved value matches the input.
+    ///
+    /// - Parameters:
+    ///   - keyPath: A key path that specifies the property in the `State` to be compared.
+    ///   - input: The expected value of the property at the given key path.
+    ///   - timeout: The maximum amount of time (in seconds) to wait for the store to finish
+    ///   processing before timing out. Defaults to 2 seconds.
+    ///   - file: The file path from which the function is called (default is the current file).
+    ///   - line: The line number from which the function is called (default is the current line).
     public func xctExpect<Property>(
         _ keyPath: KeyPath<State, Property>,
         _ input: Property,

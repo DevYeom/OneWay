@@ -20,15 +20,17 @@ jobs:
     - uses: actions/checkout@v4
     - name: Select Xcode
       run: sudo xcode-select -s /Applications/Xcode_16.app
-    - name: Build
+    - name: Run Swift Tests
+      run: |
+        make test
+        make test-swift6
+    - name: Build for All Platforms
       run: make build-all
-    - name: Test
-      run: make test
 
   linux:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
     - uses: actions/checkout@v4
-    - name: Test
+    - name: Run Swift Tests
       run: make test

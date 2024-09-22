@@ -26,7 +26,11 @@ build:
 	done;
 
 test:
-	swift test -c debug
-	swift test -c release
+	swift package clean
+	swift test
 
-.PHONY: build-all build test
+test-swift6:
+	swift package clean
+	swift test -Xswiftc -swift-version -Xswiftc 6
+
+.PHONY: build-all build test test-swift6

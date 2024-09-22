@@ -75,9 +75,10 @@ OneWay is released under the MIT license. See LICENSE for details.
 
 ### Miscellaneous
 
-- ``Effects``
+- ``AsyncViewStateSequence``
 - ``AnyEffect``
-- ``DynamicSharedStream``
+- ``Effects``
+- ``EffectsBuilder``
 
 ### PropertyWrappers
 

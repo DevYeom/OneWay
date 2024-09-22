@@ -4,8 +4,8 @@
   <a href="https://github.com/DevYeom/OneWay/releases/latest">
     <img alt="release" src="https://img.shields.io/github/v/release/DevYeom/OneWay.svg">
   </a>
-  <a href="https://github.com/DevYeom/OneWay/actions">
-    <img alt="CI" src="https://github.com/DevYeom/OneWay/workflows/CI/badge.svg">
+  <a href="https://github.com/DevYeom/OneWay/actions/workflows/ci.yml">
+    <img alt="CI" src="https://github.com/DevYeom/OneWay/actions/workflows/ci.yml/badge.svg">
   </a>
   <a href="LICENSE">
     <img alt="license" src="https://img.shields.io/badge/license-MIT-indigo.svg">

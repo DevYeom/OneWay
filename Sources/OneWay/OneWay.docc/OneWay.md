@@ -60,11 +60,11 @@ Whether you're using UIKit or SwiftUI, you can seamlessly apply it everywhere an
 
 OneWay is released under the MIT license. See LICENSE for details.
 
-## Articles
+## Topics
+
+### Articles
 
 - doc:Testing
-
-## Topics
 
 ### Essentials
 

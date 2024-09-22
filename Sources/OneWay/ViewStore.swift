@@ -64,7 +64,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         let (stream, continuation) = AsyncStream<State>.makeStream()
         self.states = AsyncViewStateSequence(stream)
         self.continuation = continuation
-        self.task = Task { [weak self] in
+        self.task = Task { @MainActor [weak self] in
             guard let states = await self?.store.states else { return }
             for await state in states {
                 guard let self else { break }
@@ -83,7 +83,9 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     ///
     /// - Parameter action: An action defined in the reducer.
     public func send(_ action: Action) {
-        Task { await store.send(action) }
+        Task { @MainActor in
+            await store.send(action)
+        }
     }
 
     /// Removes all actions and effects in the queue and re-binds for global states.
@@ -91,7 +93,9 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     /// - Note: This is useful when you need to call `bind()` again. Because you can't call `bind()`
     ///   directly
     public func reset() {
-        Task { await store.reset() }
+        Task { @MainActor in
+            await store.reset()
+        }
     }
 }
 
@@ -114,14 +118,25 @@ extension ViewStore {
     ///   - timeout: The maximum amount of time (in seconds) to wait for the store to finish
     ///   processing before timing out. Defaults to 2 seconds.
     ///   - sourceLocation: The source location for tracking the test location.
+    #if swift(>=6)
+    public func expect<Property>(
+        _ keyPath: KeyPath<State, Property> & Sendable,
+        _ input: Property,
+        timeout: TimeInterval = 2,
+        sourceLocation: Testing.SourceLocation = #_sourceLocation
+    ) async where Property: Sendable & Equatable {
+        await store.expect(keyPath, input, timeout: timeout, sourceLocation: sourceLocation)
+    }
+    #else
     public func expect<Property: Equatable>(
         _ keyPath: KeyPath<State, Property>,
         _ input: Property,
         timeout: TimeInterval = 2,
         sourceLocation: Testing.SourceLocation = #_sourceLocation
-    ) async {
+    ) async where Property: Sendable & Equatable {
         await store.expect(keyPath, input, timeout: timeout, sourceLocation: sourceLocation)
     }
+    #endif
 }
 #endif
 
@@ -140,15 +155,27 @@ extension ViewStore {
     ///   processing before timing out. Defaults to 2 seconds.
     ///   - file: The file path from which the function is called (default is the current file).
     ///   - line: The line number from which the function is called (default is the current line).
+    #if swift(>=6)
+    public func xctExpect<Property: Equatable>(
+        _ keyPath: KeyPath<State, Property> & Sendable,
+        _ input: Property,
+        timeout: TimeInterval = 2,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async where Property: Sendable & Equatable {
+        await store.xctExpect(keyPath, input, timeout: timeout, file: file, line: line)
+    }
+    #else
     public func xctExpect<Property: Equatable>(
         _ keyPath: KeyPath<State, Property>,
         _ input: Property,
         timeout: TimeInterval = 2,
         file: StaticString = #filePath,
         line: UInt = #line
-    ) async {
+    ) async where Property: Sendable & Equatable {
         await store.xctExpect(keyPath, input, timeout: timeout, file: file, line: line)
     }
+    #endif
 }
 #endif
 #endif

@@ -125,6 +125,9 @@ extension ViewStore {
         timeout: TimeInterval = 2,
         sourceLocation: Testing.SourceLocation = #_sourceLocation
     ) async where Property: Sendable & Equatable {
+        await Task { @MainActor in
+            await Task.yield()
+        }.value
         await store.expect(keyPath, input, timeout: timeout, sourceLocation: sourceLocation)
     }
     #else
@@ -134,6 +137,9 @@ extension ViewStore {
         timeout: TimeInterval = 2,
         sourceLocation: Testing.SourceLocation = #_sourceLocation
     ) async where Property: Sendable & Equatable {
+        await Task { @MainActor in
+            await Task.yield()
+        }.value
         await store.expect(keyPath, input, timeout: timeout, sourceLocation: sourceLocation)
     }
     #endif
@@ -163,6 +169,9 @@ extension ViewStore {
         file: StaticString = #filePath,
         line: UInt = #line
     ) async where Property: Sendable & Equatable {
+        await Task { @MainActor in
+            await Task.yield()
+        }.value
         await store.xctExpect(keyPath, input, timeout: timeout, file: file, line: line)
     }
     #else
@@ -173,6 +182,9 @@ extension ViewStore {
         file: StaticString = #filePath,
         line: UInt = #line
     ) async where Property: Sendable & Equatable {
+        await Task { @MainActor in
+            await Task.yield()
+        }.value
         await store.xctExpect(keyPath, input, timeout: timeout, file: file, line: line)
     }
     #endif

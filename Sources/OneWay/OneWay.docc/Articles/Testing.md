@@ -4,7 +4,13 @@ Using OneWay for Unit Testing.
 
 ## Overview
 
-**OneWay** provides the `expect` and `xctExpect` functions to help you write concise and clear tests. These functions work asynchronously, allowing you to verify if the state updates as expected.
+**OneWay** provides the `expect` function to help you write concise and clear tests. This function works asynchronously, allowing you to verify whether the state updates as expected.
+
+Before using the `expect` function, make sure to import the **OneWayTesting** module.
+
+```swift
+import OneWayTesting
+```
 
 #### When using Testing
 
@@ -22,7 +28,7 @@ func incrementTwice() async {
 
 #### When using XCTest
 
-The `xctExpect` function is used within an XCTest environment to assert the state value.
+The `expect` function is used in the same way within the `XCTest` environment.
 
 ```swift
 func test_incrementTwice() async {
@@ -56,18 +62,18 @@ func test_incrementTwice() async {
     await sut.send(.increment)
     await sut.send(.increment)
 
-    await sut.xctExpect(\.count, 2, timeout: 5)
+    await sut.expect(\.count, 2, timeout: 5)
 }
 ```
 
-## Failed Tests
+## Diagnosing Issues
 
-When a test fails, the output provides detailed information about the failure, making it easy to diagnose issues. Below are example screenshots showing how a failure appears for both `expect` and `xctExpect` functions.
+When a test fails, the output provides detailed information about the failure, making it easier to diagnose the issue. Below are example screenshots showing how a failure appears.
 
-#### Failure with expect
+#### When using Testing
 
-![failure with expect](expect-failure.png)
+![failure with expect](expect-testing-failure.png)
 
-#### Failure with xctExpect
+#### When using XCTest
 
-![failure with xctExpect](xct-expect-failure.png)
+![failure with xctExpect](expect-xctest-failure.png)

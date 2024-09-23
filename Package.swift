@@ -16,6 +16,10 @@ let package = Package(
             name: "OneWay",
             targets: ["OneWay"]
         ),
+        .library(
+            name: "OneWayTesting",
+            targets: ["OneWayTesting"]
+        ),
     ],
     dependencies: [
         .package(
@@ -26,18 +30,26 @@ let package = Package(
     targets: [
         .target(
             name: "OneWay",
-            dependencies: [],
             resources: [.copy("PrivacyInfo.xcprivacy")]
         ),
         .testTarget(
             name: "OneWayTests",
             dependencies: [
                 "OneWay",
+                "OneWayTesting",
                 .product(
                     name: "Clocks",
                     package: "swift-clocks"
                 ),
             ]
+        ),
+        .target(
+            name: "OneWayTesting",
+            dependencies: ["OneWay"]
+        ),
+        .testTarget(
+            name: "OneWayTestingTests",
+            dependencies: ["OneWayTesting"]
         ),
     ]
 )

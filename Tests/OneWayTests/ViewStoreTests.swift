@@ -44,7 +44,7 @@ final class ViewStoreTests: XCTestCase {
         sut.send(.increment)
         sut.send(.twice)
 
-        await sut.xctExpect(\.count, 4)
+        await sut.expect(\.count, 4)
     }
 
     @MainActor

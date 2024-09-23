@@ -10,6 +10,7 @@ import Clocks
 import Combine
 #endif
 import OneWay
+import OneWayTesting
 import XCTest
 
 @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
@@ -53,14 +54,14 @@ final class StoreTests: XCTestCase {
         await sut.send(.increment)
         await sut.send(.twice)
 
-        await sut.xctExpect(\.count, 4)
-        await sut.xctExpect(\.text, "")
+        await sut.expect(\.count, 4)
+        await sut.expect(\.text, "")
     }
 
     func test_lotsOfActions() async {
         let iterations: Int = 100_000
         await sut.send(.incrementMany)
-        await sut.xctExpect(\.count, iterations, timeout: 5)
+        await sut.expect(\.count, iterations, timeout: 5)
     }
 
     func test_threadSafeSendingActions() async {
@@ -80,12 +81,12 @@ final class StoreTests: XCTestCase {
             }
         }
 
-        await sut.xctExpect(\.count, iterations)
+        await sut.expect(\.count, iterations)
     }
 
     func test_asyncAction() async {
         await sut.send(.request)
-        await sut.xctExpect(\.text, "Success")
+        await sut.expect(\.text, "Success")
     }
 
     #if canImport(Combine)
@@ -169,7 +170,7 @@ final class StoreTests: XCTestCase {
         }
         try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 550)
 
-        await sut.xctExpect(\.count, 2)
+        await sut.expect(\.count, 2)
 
         for _ in 0..<5 {
             try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
@@ -177,7 +178,7 @@ final class StoreTests: XCTestCase {
         }
         try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100) // 100ms < 500ms
 
-        await sut.xctExpect(\.count, 2, timeout: 0.1)
+        await sut.expect(\.count, 2, timeout: 0.1)
     }
 
     func test_debounceWithClock() async {
@@ -192,7 +193,7 @@ final class StoreTests: XCTestCase {
         }
         await clock.advance(by: .seconds(100))
 
-        await sut.xctExpect(\.count, 2)
+        await sut.expect(\.count, 2)
 
         for _ in 0..<5 {
             await clock.advance(by: .seconds(10))
@@ -200,7 +201,7 @@ final class StoreTests: XCTestCase {
         }
         await clock.advance(by: .seconds(10)) // 10s < 100s
 
-        await sut.xctExpect(\.count, 2)
+        await sut.expect(\.count, 2)
     }
 
     func test_deboouncedSequence() async {
@@ -215,7 +216,7 @@ final class StoreTests: XCTestCase {
         }
         try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 550)
 
-        await sut.xctExpect(\.count, 10)
+        await sut.expect(\.count, 10)
 
         for _ in 0..<5 {
             try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
@@ -223,7 +224,7 @@ final class StoreTests: XCTestCase {
         }
         try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100) // 100ms < 500ms
 
-        await sut.xctExpect(\.count, 10, timeout: 0.1)
+        await sut.expect(\.count, 10, timeout: 0.1)
     }
 
     func test_deboouncedSequenceWithClock() async {
@@ -238,7 +239,7 @@ final class StoreTests: XCTestCase {
         }
         await clock.advance(by: .seconds(100))
 
-        await sut.xctExpect(\.count, 10)
+        await sut.expect(\.count, 10)
 
         for _ in 0..<5 {
             await clock.advance(by: .seconds(10))
@@ -246,7 +247,7 @@ final class StoreTests: XCTestCase {
         }
         await clock.advance(by: .seconds(10)) // 10s < 100s
 
-        await sut.xctExpect(\.count, 10)
+        await sut.expect(\.count, 10)
     }
 }
 

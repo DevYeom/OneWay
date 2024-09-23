@@ -265,9 +265,15 @@ struct CountingReducer: Reducer {
 
 ### Testing
 
-**OneWay** provides the `expect` and `xctExpect` functions to help you write concise and clear tests. These functions work asynchronously, allowing you to verify if the state updates as expected.
+**OneWay** provides the `expect` function to help you write concise and clear tests. This function works asynchronously, allowing you to verify whether the state updates as expected.
 
-#### When using `Testing`
+Before using the `expect` function, make sure to import the **OneWayTesting** module.
+
+```swift
+import OneWayTesting
+```
+
+#### When using Testing
 
 You can use the `expect` function to easily check the state value.
 
@@ -281,16 +287,16 @@ func incrementTwice() async {
 }
 ```
 
-#### When using `XCTest`
+#### When using XCTest
 
-The `xctExpect` function is used within an XCTest environment to assert the state value.
+The `expect` function is used in the same way within the `XCTest` environment.
 
 ```swift
 func test_incrementTwice() async {
     await sut.send(.increment)
     await sut.send(.increment)
 
-    await sut.xctExpect(\.count, 2)
+    await sut.expect(\.count, 2)
 }
 ```
 

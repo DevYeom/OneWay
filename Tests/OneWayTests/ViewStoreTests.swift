@@ -44,7 +44,15 @@ final class ViewStoreTests: XCTestCase {
         sut.send(.increment)
         sut.send(.twice)
 
-        await sut.expect(\.count, 4)
+        var result: [Int] = []
+        for await state in sut.states {
+            result.append(state.count)
+            if result.count > 4 {
+                break
+            }
+        }
+
+        XCTAssertEqual(result, [0, 1, 2, 3, 4])
     }
 
     @MainActor

@@ -5,7 +5,8 @@
 //  Copyright (c) 2022-2024 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
-#if canImport(Testing)
+#if canImport(Testing) && canImport(Darwin)
+import Darwin
 import Testing
 import OneWay
 
@@ -38,33 +39,28 @@ struct TestingTests {
         await store.expect(\.nested.doubleNested.value, 1.23)
     }
 
-    #if !os(Linux)
     @Test
-    func viewStoreExpect() async {
-        let store = await ViewStore(
+    func storeExpectWithManyActions() async {
+        let store = Store(
             reducer: TestReducer(),
             state: TestReducer.State(count: 0)
         )
         await store.expect(\.count, 0)
 
-        await store.send(.increment)
-        await store.expect(\.count, 1)
+        for _ in 0..<10_000 {
+            await store.send(.increment)
+        }
+        await store.expect(\.count, 10_000)
 
-        await store.send(.increment)
-        await store.expect(\.count, 2)
-
-        await store.send(.setName("hello"))
-        await store.expect(\.nested.name, "hello")
-
-        await store.send(.setValue(1.23))
-        await store.expect(\.nested.doubleNested.value, 1.23)
+        await store.send(.delayedIncrement)
+        await store.expect(\.count, 10_001)
     }
-    #endif
 }
 
 private struct TestReducer: Reducer {
     enum Action: Sendable {
         case increment
+        case delayedIncrement
         case setName(String)
         case setValue(Double)
     }
@@ -86,6 +82,11 @@ private struct TestReducer: Reducer {
         case .increment:
             state.count += 1
             return .none
+        case .delayedIncrement:
+            return .single {
+                try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
+                return .increment
+            }
         case let .setName(name):
             state.nested.name = name
             return .none

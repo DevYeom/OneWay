@@ -40,7 +40,12 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     /// state changes.
     public var states: AsyncStream<State>
 
-    package var isIdle: Bool { !isProcessing && tasks.isEmpty }
+    /// Returns `true` if the store is idle, meaning it's not processing and there are no pending
+    /// tasks for side effects.
+    public var isIdle: Bool {
+        !isProcessing && tasks.isEmpty
+    }
+
     private let reducer: any Reducer<Action, State>
     private let continuation: AsyncStream<State>.Continuation
     private var isProcessing: Bool = false

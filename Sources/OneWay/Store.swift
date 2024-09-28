@@ -37,7 +37,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     }
 
     /// The state stream that emits state when the state changes. Use this stream to observe the
-    /// state changes
+    /// state changes.
     public var states: AsyncStream<State>
 
     package var isIdle: Bool { !isProcessing && tasks.isEmpty }

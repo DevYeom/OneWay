@@ -9,8 +9,9 @@
 /// the same value is assigned.
 ///
 /// When applied to a field, assigning the same value will lead to different values for comparison.
-/// It is useful in cases where the value hasn't actually changed, but the `View` needs to be
-/// rendered again.
+/// This ensures that observers will perceive the state as changed, even if the value itself remains
+/// the same. It is particularly useful in SwiftUI, as it can trigger the `View` to re-render when
+/// necessary, even if the value hasn't technically changed.
 @propertyWrapper
 public struct Triggered<Value> where Value: Equatable {
     fileprivate struct Storage: Equatable {

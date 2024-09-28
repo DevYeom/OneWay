@@ -7,9 +7,10 @@
 
 /// A property wrapper that acts like the same value, regardless of changes in its actual value.
 ///
-/// When applied to a field and compared with an equals sign, it will always yield `true`. It is
-/// useful when the actual value of the `State` changes, but rendering of the `View` is not
-/// required.
+/// When applied to a field and compared with an equals sign, it will always yield `true`. This
+/// prevents the observers from recognizing the state as changed, even if the actual value has been
+/// updated. It is particularly useful when you want to avoid triggering state changes, especially
+/// in SwiftUI, where unnecessary re-renders of the `View` can be avoided.
 @propertyWrapper
 public struct Ignored<Value> {
     public var wrappedValue: Value

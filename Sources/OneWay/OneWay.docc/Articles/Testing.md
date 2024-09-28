@@ -12,6 +12,19 @@ Before using the `expect` function, make sure to import the **OneWayTesting** mo
 import OneWayTesting
 ```
 
+When testing a reducer, you need to use `Store` instead of `ViewStore` for the `expect` function to be available.
+
+```swift
+let sut = Store(
+    reducer: TestReducer(),
+    state: TestReducer.State(count: 0)
+)
+await sut.send(.increment)
+await sut.expect(\.count, 1)
+```
+
+The completion of `send`'s `await` literally means that `send` has finished. It does not mean that the state has fully changed. The state change always happpens asynchronously. Therefore, tests should be written using the `expect` function.
+
 #### When using Testing
 
 You can use the `expect` function to easily check the state value.
@@ -35,7 +48,7 @@ func test_incrementTwice() async {
     await sut.send(.increment)
     await sut.send(.increment)
 
-    await sut.xctExpect(\.count, 2)
+    await sut.expect(\.count, 2)
 }
 ```
 

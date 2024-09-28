@@ -41,7 +41,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     /// state changes
     public let states: AsyncViewStateSequence<State>
 
-    package let store: Store<R>
+    private let store: Store<R>
     private let continuation: AsyncStream<State>.Continuation
     private var task: Task<Void, Never>?
 

@@ -1,7 +1,7 @@
 PLATFORM_IOS = iOS Simulator,name=iPhone 16
 PLATFORM_MACOS = macOS
 PLATFORM_TVOS = tvOS Simulator,name=Apple TV
-PLATFORM_VISIONOS = visionOS Simulator,name=Apple Vision Pro
+PLATFORM_VISIONOS = visionOS Simulator,name=Apple Vision Pro # Temporarily disabling the visionOS simulator in GitHub Actions.
 PLATFORM_WATCHOS = watchOS Simulator,name=Apple Watch Series 10 (46mm)
 CONFIG = debug
 
@@ -16,7 +16,6 @@ build:
 		"$(PLATFORM_IOS)" \
 		"$(PLATFORM_MACOS)" \
 		"$(PLATFORM_TVOS)" \
-		"$(PLATFORM_VISIONOS)" \
 		"$(PLATFORM_WATCHOS)"; \
 	do \
 		xcodebuild clean build \

@@ -103,4 +103,50 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
 extension ViewStore: ObservableObject { }
 #endif
 
+#if canImport(SwiftUI)
+import SwiftUI
+
+extension ViewStore {
+    #if swift(>=6.0)
+    /// Creates a `Binding` that allows two-way data binding between a state value and an action.
+    ///
+    /// - Parameters:
+    ///   - keyPath: A key path to access a specific value from the current state.
+    ///   - send: A closure that takes the updated value and returns an `Action` to be sent.
+    ///
+    /// - Returns: A `Binding` object that allows reading from the state using the key path and
+    ///   sending an action when the value is changed.
+    @inlinable
+    public func binding<Value>(
+        _ keyPath: KeyPath<State, Value> & Sendable,
+        send: @MainActor @escaping (Value) -> Action
+    ) -> Binding<Value> {
+        Binding(
+            get: { self.state[keyPath: keyPath] },
+            set: { self.send(send($0)) }
+        )
+    }
+    #else
+    /// Creates a `Binding` that allows two-way data binding between a state value and an action.
+    ///
+    /// - Parameters:
+    ///   - keyPath: A key path to access a specific value from the current state.
+    ///   - send: A closure that takes the updated value and returns an `Action` to be sent.
+    ///
+    /// - Returns: A `Binding` object that allows reading from the state using the key path and
+    ///   sending an action when the value is changed.
+    @inlinable
+    public func binding<Value>(
+        _ keyPath: KeyPath<State, Value>,
+        send: @MainActor @Sendable @escaping (Value) -> Action
+    ) -> Binding<Value> {
+        Binding(
+            get: { self.state[keyPath: keyPath] },
+            set: { self.send(send($0)) }
+        )
+    }
+    #endif
+}
+#endif
+
 #endif

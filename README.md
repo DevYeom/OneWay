@@ -1,14 +1,14 @@
 <img src="https://github.com/DevYeom/OneWay/blob/assets/oneway_logo.png" alt="oneway_logo"/>
 
 <p align="center">
-  <a href="https://github.com/DevYeom/OneWay/releases/latest">
-    <img alt="release" src="https://img.shields.io/github/v/release/DevYeom/OneWay.svg">
-  </a>
   <a href="https://github.com/DevYeom/OneWay/actions/workflows/ci.yml">
     <img alt="CI" src="https://github.com/DevYeom/OneWay/actions/workflows/ci.yml/badge.svg">
   </a>
+  <a href="https://github.com/DevYeom/OneWay/releases/latest">
+    <img alt="release" src="https://img.shields.io/github/v/release/DevYeom/OneWay?logo=swift&color=orange">
+  </a>
   <a href="LICENSE">
-    <img alt="license" src="https://img.shields.io/badge/license-MIT-indigo.svg">
+    <img alt="license" src="https://img.shields.io/badge/license-MIT-lightgray.svg">
   </a>
 </p>
 

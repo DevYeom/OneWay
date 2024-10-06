@@ -185,6 +185,61 @@ for await number in store.states.number.removeDuplicates() {
 // Prints "10"
 ```
 
+### Integration with SwiftUI
+
+It can be seamlessly integrated with [SwiftUI](https://developer.apple.com/documentation/swiftui).
+
+```swift
+struct CounterView: View {
+    @StateObject private var store = ViewStore(
+        reducer: CountingReducer(),
+        state: CountingReducer.State(number: 0)
+    )
+
+    var body: some View {
+        VStack {
+            Text("\(store.state.number)")
+            Toggle(
+                "isLoading",
+                isOn: Binding<Bool>(
+                    get: { store.state.isLoading },
+                    set: { store.send(.setIsLoading($0)) }
+                )
+            )
+        }
+        .onAppear {
+            store.send(.increment)
+        }
+    }
+}
+```
+
+There is also a helper function that makes it easy to create [Binding](https://developer.apple.com/documentation/swiftui/binding).
+
+```swift
+struct CounterView: View {
+    @StateObject private var store = ViewStore(
+        reducer: CountingReducer(),
+        state: CountingReducer.State(number: 0)
+    )
+
+    var body: some View {
+        VStack {
+            Text("\(store.state.number)")
+            Toggle(
+                "isLoading",
+                isOn: store.binding(\.isLoading, send: { .setIsLoading($0) })
+            )
+        }
+        .onAppear {
+            store.send(.increment)
+        }
+    }
+}
+```
+
+For more details, please refer to the [examples](#examples).
+
 ### Cancelling Effects
 
 You can make an effect capable of being canceled by using `cancellable()`. And you can use `cancel()` to cancel a cancellable effect.
@@ -311,6 +366,7 @@ To learn how to use **OneWay** in more detail, go through the [documentation](ht
 - [OneWayExample](https://github.com/DevYeom/OneWayExample)
   - [UIKit](https://github.com/DevYeom/OneWayExample/tree/main/CounterUIKit/Counter)
   - [SwiftUI](https://github.com/DevYeom/OneWayExample/tree/main/CounterSwiftUI/Counter)
+- [badabook-ios](https://github.com/OceanPositive/badabook-ios): A multi-platform application based on Clean Architecture.
 
 ## Requirements
 

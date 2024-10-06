@@ -21,7 +21,7 @@ import XCTest
 
 #if canImport(Testing)
 extension Store {
-    #if swift(>=6)
+    #if swift(>=6.0)
     /// Allows the expectation of a certain property value in the store's state. It compares the
     /// current value of the given `keyPath` in the state with an expected `input` value
     ///
@@ -201,7 +201,7 @@ extension Store {
 
 #if !canImport(Testing) && canImport(XCTest)
 extension Store {
-    #if swift(>=6)
+    #if swift(>=6.0)
     /// Allows the expectation of a certain property value in the store's state. It compares the
     /// current value of the given `keyPath` in the state with an expected `input` value
     ///

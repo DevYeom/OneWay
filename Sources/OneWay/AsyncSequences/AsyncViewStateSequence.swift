@@ -63,7 +63,7 @@ where State: Sendable & Equatable {
     ///
     /// - Parameter dynamicMember: a key path for the original state.
     /// - Returns: A new stream that has a part of the original state.
-    #if swift(>=6)
+    #if swift(>=6.0)
     public subscript<Property>(
         dynamicMember keyPath: KeyPath<State, Property> & Sendable
     ) -> AsyncMapSequence<AsyncStream<State>, Property> {

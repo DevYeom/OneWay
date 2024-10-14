@@ -32,5 +32,7 @@ jobs:
     timeout-minutes: 10
     steps:
     - uses: actions/checkout@v4
+    - name: Build Swift
+      run: make build-swift
     - name: Run Swift Tests
       run: make test

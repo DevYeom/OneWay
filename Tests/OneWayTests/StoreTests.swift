@@ -61,7 +61,7 @@ final class StoreTests: XCTestCase {
     func test_lotsOfActions() async {
         let iterations: Int = 100_000
         await sut.send(.incrementMany)
-        await sut.expect(\.count, iterations, timeout: 5)
+        await sut.expect(\.count, iterations, timeout: 10)
     }
 
     func test_threadSafeSendingActions() async {

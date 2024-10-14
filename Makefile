@@ -35,4 +35,4 @@ test-swift6:
 build-swift:
 	swift build
 
-.PHONY: build-all build test test-swift6
+.PHONY: build-all build test test-swift6 build-swift

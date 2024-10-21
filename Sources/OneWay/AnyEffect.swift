@@ -46,6 +46,31 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
 
     /// Sends elements only after a specified time interval elapses between events.
     ///
+    /// First, create a Hashable ID that will be used to identify the debounce effect:
+    ///
+    /// ```swift
+    /// enum DebounceID {
+    ///     case searchText
+    /// }
+    /// ```
+    ///
+    /// Then, apply the `debounce` modifier using the defined ID:
+    ///
+    /// ```swift
+    /// func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
+    ///     switch action {
+    ///     // ...
+    ///     case let .search(text):
+    ///         return .single {
+    ///             let result = await api.request(text)
+    ///             return .setResult(result)
+    ///         }
+    ///         .debounce(id: DebounceID.searchText, for: 0.5)
+    ///     // ...
+    ///     }
+    /// }
+    /// ```
+    ///
     /// - Parameters:
     ///   - id: The effect's identifier.
     ///   - seconds: The duration for which the effect should wait before sending an element.
@@ -54,16 +79,20 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
         id: some EffectID,
         for seconds: Double
     ) -> Self {
+        let base = base
         var copy = self
         copy.method = .register(id, cancelInFlight: true)
-        let values = copy.values
         copy.base = Effects.Sequence(
             operation: { send in
                 guard !Task.isCancelled else { return }
                 let NSEC_PER_SEC: Double = 1_000_000_000
                 let dueTime = NSEC_PER_SEC * seconds
-                try? await Task.sleep(nanoseconds: UInt64(dueTime))
-                for await value in values {
+                do {
+                    try await Task.sleep(nanoseconds: UInt64(dueTime))
+                } catch {
+                    return
+                }
+                for await value in base.values {
                     guard !Task.isCancelled else { return }
                     send(value)
                 }
@@ -73,6 +102,31 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     }
 
     /// Sends elements only after a specified time interval elapses between events.
+    ///
+    /// First, create a Hashable ID that will be used to identify the debounce effect:
+    ///
+    /// ```swift
+    /// enum DebounceID {
+    ///     case searchText
+    /// }
+    /// ```
+    ///
+    /// Then, apply the `debounce` modifier using the defined ID:
+    ///
+    /// ```swift
+    /// func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
+    ///     switch action {
+    ///     // ...
+    ///     case let .search(text):
+    ///         return .single {
+    ///             let result = await api.request(text)
+    ///             return .setResult(result)
+    ///         }
+    ///         .debounce(id: DebounceID.searchText, for: .milliseconds(500))
+    ///     // ...
+    ///     }
+    /// }
+    /// ```
     ///
     /// - Parameters:
     ///   - id: The effect's identifier.
@@ -85,14 +139,18 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
         for dueTime: C.Instant.Duration,
         clock: C = ContinuousClock()
     ) -> Self {
+        let base = base
         var copy = self
         copy.method = .register(id, cancelInFlight: true)
-        let values = copy.values
         copy.base = Effects.Sequence(
             operation: { send in
                 guard !Task.isCancelled else { return }
-                try? await clock.sleep(for: dueTime)
-                for await value in values {
+                do {
+                    try await clock.sleep(for: dueTime)
+                } catch {
+                    return
+                }
+                for await value in base.values {
                     guard !Task.isCancelled else { return }
                     send(value)
                 }

@@ -80,10 +80,13 @@ public enum Effects {
 
         public var values: AsyncStream<Element> {
             AsyncStream { continuation in
-                Task(priority: priority) {
+                let task = Task(priority: priority) {
                     let result = await operation()
                     continuation.yield(result)
                     continuation.finish()
+                }
+                continuation.onTermination = { _ in
+                    task.cancel()
                 }
             }
         }
@@ -111,9 +114,12 @@ public enum Effects {
 
         public var values: AsyncStream<Element> {
             AsyncStream { continuation in
-                Task(priority: priority) {
+                let task = Task(priority: priority) {
                     await operation { continuation.yield($0) }
                     continuation.finish()
+                }
+                continuation.onTermination = { _ in
+                    task.cancel()
                 }
             }
         }
@@ -141,13 +147,17 @@ public enum Effects {
 
         public var values: AsyncStream<Element> {
             AsyncStream { continuation in
-                Task(priority: priority) {
+                let task = Task(priority: priority) {
                     for effect in effects {
                         for await value in effect.values {
+                            guard !Task.isCancelled else { break }
                             continuation.yield(value)
                         }
                     }
                     continuation.finish()
+                }
+                continuation.onTermination = { _ in
+                    task.cancel()
                 }
             }
         }
@@ -175,12 +185,13 @@ public enum Effects {
 
         public var values: AsyncStream<Element> {
             AsyncStream { continuation in
-                Task(priority: priority) {
+                let task = Task(priority: priority) {
                     if #available(macOS 14.0, iOS 17.0, watchOS 10.0, tvOS 17.0, *) {
                         await withDiscardingTaskGroup { group in
                             for effect in effects {
                                 group.addTask {
                                     for await value in effect.values {
+                                        guard !Task.isCancelled else { break }
                                         continuation.yield(value)
                                     }
                                 }
@@ -192,6 +203,7 @@ public enum Effects {
                             for effect in effects {
                                 group.addTask {
                                     for await value in effect.values {
+                                        guard !Task.isCancelled else { break }
                                         continuation.yield(value)
                                     }
                                 }
@@ -199,6 +211,9 @@ public enum Effects {
                         }
                         continuation.finish()
                     }
+                }
+                continuation.onTermination = { _ in
+                    task.cancel()
                 }
             }
         }

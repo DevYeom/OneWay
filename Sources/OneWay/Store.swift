@@ -85,12 +85,11 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         guard !isProcessing else { return }
         isProcessing = true
         await Task.yield()
-        let count = actionQueue.count
-        for index in Int.zero ..< count {
-            let action = actionQueue[index]
+        for action in actionQueue {
             let taskID = TaskID()
             let effect = reducer.reduce(state: &state, action: action)
             let task = Task { [weak self, taskID] in
+                guard !Task.isCancelled else { return }
                 for await value in effect.values {
                     guard let self else { break }
                     guard !Task.isCancelled else { break }
@@ -102,14 +101,18 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
 
             switch effect.method {
             case let .register(id, cancelInFlight):
+                let effectID = EffectIDWrapper(id)
                 if cancelInFlight {
-                    let taskIDs = cancellables[EffectIDWrapper(id), default: []]
+                    let taskIDs = cancellables[effectID, default: []]
                     taskIDs.forEach { removeTask($0) }
+                    cancellables.removeValue(forKey: effectID)
                 }
-                cancellables[EffectIDWrapper(id), default: []].insert(taskID)
+                cancellables[effectID, default: []].insert(taskID)
             case let .cancel(id):
-                let taskIDs = cancellables[EffectIDWrapper(id), default: []]
+                let effectID = EffectIDWrapper(id)
+                let taskIDs = cancellables[effectID, default: []]
                 taskIDs.forEach { removeTask($0) }
+                cancellables.removeValue(forKey: effectID)
             case .none:
                 break
             }

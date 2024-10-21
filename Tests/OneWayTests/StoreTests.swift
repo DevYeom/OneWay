@@ -323,7 +323,7 @@ private struct TestReducer: Reducer {
 
         case .longTimeTask:
             return .single {
-                try! await clock.sleep(for: .seconds(200))
+                try? await clock.sleep(for: .seconds(200))
                 return Action.response("Success")
             }
             .cancellable(EffectID.longTimeTask)

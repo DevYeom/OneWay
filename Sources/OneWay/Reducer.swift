@@ -7,7 +7,7 @@
 
 /// A protocol defining a reduce fuction to transition the current state to the next state and a
 /// bind function for observing global states.
-public protocol Reducer<Action, State> {
+public protocol Reducer<Action, State>: Sendable {
     associatedtype Action
     associatedtype State: Equatable
 

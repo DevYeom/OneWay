@@ -1,8 +1,9 @@
-PLATFORM_IOS = iOS Simulator,name=iPhone 16
+PLATFORM_IOS = iOS Simulator,name=iPhone 17
 PLATFORM_MACOS = macOS
 PLATFORM_TVOS = tvOS Simulator,name=Apple TV
 PLATFORM_VISIONOS = visionOS Simulator,name=Apple Vision Pro # Temporarily disabling the visionOS simulator in GitHub Actions.
-PLATFORM_WATCHOS = watchOS Simulator,name=Apple Watch Series 10 (46mm)
+PLATFORM_VISIONOS = visionOS Simulator,name=Apple Vision Pro
+PLATFORM_WATCHOS = watchOS Simulator,name=Apple Watch Series 11 (46mm)
 CONFIG = debug
 
 default: test

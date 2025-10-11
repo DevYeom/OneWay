@@ -249,6 +249,41 @@ final class StoreTests: XCTestCase {
 
         await sut.expect(\.count, 10)
     }
+
+    func test_throttle() async {
+        let clock = ContinuousClock()
+        await sut.send(.throttledIncrement)
+        await sut.send(.throttledIncrement)
+        try! await clock.sleep(for: .seconds(0.01))
+        await sut.send(.throttledIncrement)
+        await sut.expect(\.count, 1)
+
+        try! await clock.sleep(for: .seconds(0.1))
+        await sut.expect(\.count, 1)
+
+        await sut.send(.throttledIncrement)
+        await sut.expect(\.count, 2)
+    }
+
+    func test_throttle_latest() async {
+        let clock = ContinuousClock()
+        await sut.send(.throttledIncrementLatest)
+        await sut.expect(\.count, 1)
+
+        await sut.send(.throttledIncrementLatest)
+        await sut.expect(\.count, 1)
+
+        try! await clock.sleep(for: .seconds(0.1))
+        await sut.expect(\.count, 2)
+
+        await sut.send(.throttledIncrementLatest)
+        try! await clock.sleep(for: .seconds(0.01))
+        await sut.send(.throttledIncrementLatest)
+        await sut.expect(\.count, 3)
+
+        try! await clock.sleep(for: .seconds(0.1))
+        await sut.expect(\.count, 4)
+    }
 }
 
 #if canImport(Combine)
@@ -274,6 +309,8 @@ private struct TestReducer: Reducer {
         case debouncedIncrementWithClock
         case debouncedSequence
         case debouncedSequenceWithClock
+        case throttledIncrement
+        case throttledIncrementLatest
     }
 
     struct State: Equatable {
@@ -294,6 +331,11 @@ private struct TestReducer: Reducer {
     enum Debounce {
         case increment
         case incrementSequence
+    }
+
+    enum Throttle {
+        case increment
+        case incrementLatest
     }
 
     func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
@@ -358,6 +400,14 @@ private struct TestReducer: Reducer {
                 send(.increment)
             }
             .debounce(id: Debounce.incrementSequence, for: .seconds(100), clock: clock)
+
+        case .throttledIncrement:
+            return .just(.increment)
+                .throttle(id: Throttle.increment, for: 0.1)
+
+        case .throttledIncrementLatest:
+            return .just(.increment)
+                .throttle(id: Throttle.incrementLatest, for: 0.1, latest: true)
         }
     }
 

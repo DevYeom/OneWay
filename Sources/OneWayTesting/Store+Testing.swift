@@ -69,7 +69,7 @@ extension Store {
             #if canImport(XCTest)
             if isTimeout && result != input {
                 XCTFail(
-                    "Exceeded timeout of \(timeout) seconds",
+                    "Timeout exceeded \(timeout) seconds: received \(input), expected \(result)",
                     file: filePath,
                     line: line
                 )
@@ -87,7 +87,7 @@ extension Store {
         case .testing:
             if isTimeout && result != input {
                 Issue.record(
-                    "Exceeded timeout of \(timeout) seconds",
+                    "Timeout exceeded \(timeout) seconds: received \(input), expected \(result)",
                     sourceLocation: Testing.SourceLocation(
                         fileID: String(describing: fileID),
                         filePath: String(describing: filePath),
@@ -156,7 +156,7 @@ extension Store {
             #if canImport(XCTest)
             if isTimeout && result != input {
                 XCTFail(
-                    "Exceeded timeout of \(timeout) seconds",
+                    "Timeout exceeded \(timeout) seconds: received \(input), expected \(result)",
                     file: filePath,
                     line: line
                 )
@@ -174,7 +174,7 @@ extension Store {
         case .testing:
             if isTimeout && result != input {
                 Issue.record(
-                    "Exceeded timeout of \(timeout) seconds",
+                    "Timeout exceeded \(timeout) seconds: received \(input), expected \(result)",
                     sourceLocation: Testing.SourceLocation(
                         fileID: String(describing: fileID),
                         filePath: String(describing: filePath),

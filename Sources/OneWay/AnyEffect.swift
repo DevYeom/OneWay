@@ -14,6 +14,7 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     public enum Method: Sendable {
         case register(any EffectID, cancelInFlight: Bool)
         case cancel(any EffectID)
+        case throttle(id: any EffectID, interval: Double, latest: Bool)
         case none
     }
 
@@ -156,6 +157,49 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
                 }
             }
         )
+        return copy
+    }
+
+    /// Creates an effect that emits elements from this effect, but only if a certain amount of time
+    /// has passed between emissions.
+    ///
+    /// First, create a Hashable ID that will be used to identify the throttle effect:
+    ///
+    /// ```swift
+    /// enum ThrottleID {
+    ///     case button
+    /// }
+    /// ```
+    ///
+    /// Then, apply the `throttle` modifier using the defined ID:
+    ///
+    /// ```swift
+    /// func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
+    ///     switch action {
+    ///     // ...
+    ///     case .perform:
+    ///         return .just(.increment)
+    ///             .throttle(id: ThrottleID.button, for: 1.0)
+    ///     // ...
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - id: The effect's identifier.
+    ///   - seconds: The duration for which the effect should wait before sending an element.
+    ///   - latest: A boolean value that indicates whether to emit the most recent element.
+    ///   If `false`, the effect emits the first element and ignores subsequent elements during the
+    ///   time interval. If `true`, the effect emits the first element and then the most recent
+    ///   element after the time interval has passed. Defaults to `false`.
+    /// - Returns: A new effect that emits elements according to the throttle behavior.
+    public consuming func throttle(
+        id: some EffectID,
+        for seconds: Double,
+        latest: Bool = false
+    ) -> Self {
+        var copy = self
+        copy.method = .throttle(id: id, interval: seconds, latest: latest)
         return copy
     }
 }

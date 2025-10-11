@@ -15,7 +15,7 @@ import Combine
 /// It can observe state changes and send actions. It can primarily be used in SwiftUI's `View`,
 /// `UIView` or `UIViewController` operating on main thread.
 @MainActor
-public final class ViewStore<R: Reducer>
+public final class ViewStore<R: Reducer, C: Clock<Duration>>
 where R.Action: Sendable, R.State: Sendable & Equatable {
     /// A convenience type alias for referring to a action of a given reducer's action.
     public typealias Action = R.Action
@@ -41,25 +41,29 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     /// state changes
     public let states: AsyncViewStateSequence<State>
 
-    private let store: Store<R>
+    private let store: Store<R, C>
     private let continuation: AsyncStream<State>.Continuation
     private var task: Task<Void, Never>?
 
-    /// Initializes a view store from a reducer and an initial state.
+    /// Initializes a view store from a reducer, an initial state, and a clock.
     ///
     /// - Parameters:
-    ///   - reducer: The reducer is responsible for transitioning the current state to the next
-    ///   state.
-    ///   - state: The state to initialize a store.
+    ///   - reducer: The reducer responsible for transitioning the current state to the next
+    ///     state in response to actions.
+    ///   - state: The initial state used to create the store.
+    ///   - clock: The clock that determines how time-based effects (such as debounce or throttle)
+    ///     are scheduled. Defaults to `ContinuousClock`.
     public init(
         reducer: @Sendable @autoclosure () -> R,
-        state: State
+        state: State,
+        clock: C = ContinuousClock()
     ) {
         self.initialState = state
         self.state = state
         self.store = Store(
             reducer: reducer(),
-            state: state
+            state: state,
+            clock: clock
         )
         let (stream, continuation) = AsyncStream<State>.makeStream()
         self.states = AsyncViewStateSequence(stream)

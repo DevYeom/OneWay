@@ -11,7 +11,7 @@ import XCTest
 #if !os(Linux)
 final class ViewStoreTests: XCTestCase {
     @MainActor
-    private var sut: ViewStore<TestReducer>!
+    private var sut: ViewStore<TestReducer, ContinuousClock>!
 
     @MainActor
     override func setUp() async throws {

@@ -372,6 +372,7 @@ To learn how to use **OneWay** in more detail, go through the [documentation](ht
 
 | OneWay | Swift | Xcode | Platforms                                                   |
 |--------|-------|-------|-------------------------------------------------------------|
+| 3.0    | 6.0   | 16.0  | iOS 16.0, macOS 13, tvOS 16.0, visionOS 1.0, watchOS 9.0    |
 | 2.0    | 5.9   | 15.0  | iOS 13.0, macOS 10.15, tvOS 13.0, visionOS 1.0, watchOS 6.0 |
 | 1.0    | 5.5   | 13.0  | iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0               |
 

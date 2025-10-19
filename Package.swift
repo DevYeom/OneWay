@@ -1,15 +1,15 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 
 import PackageDescription
 
 let package = Package(
     name: "OneWay",
     platforms: [
-        .iOS(.v13),
-        .macOS(.v10_15),
-        .tvOS(.v13),
+        .iOS(.v16),
+        .macOS(.v13),
+        .tvOS(.v16),
         .visionOS(.v1),
-        .watchOS(.v6),
+        .watchOS(.v9),
     ],
     products: [
         .library(
@@ -53,10 +53,3 @@ let package = Package(
         ),
     ]
 )
-
-//for target in package.targets {
-//    target.swiftSettings = target.swiftSettings ?? []
-//    target.swiftSettings?.append(
-//        .enableExperimentalFeature("StrictConcurrency")
-//    )
-//}

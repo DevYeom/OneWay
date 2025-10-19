@@ -75,6 +75,7 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     ///   - id: The effect's identifier.
     ///   - seconds: The duration for which the effect should wait before sending an element.
     /// - Returns: A new effect that sends elements only after a specified time elapses.
+    @available(*, deprecated, renamed: "debounce(id:for:clock:)")
     public consuming func debounce(
         id: some EffectID,
         for seconds: Double
@@ -133,7 +134,6 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     ///   - dueTime: The duration for which the effect should wait before sending an element.
     ///   - clock: The clock used for measuring time intervals.
     /// - Returns: A new effect that sends elements only after a specified time elapses.
-    @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
     public consuming func debounce<C: Clock>(
         id: some EffectID,
         for dueTime: C.Instant.Duration,

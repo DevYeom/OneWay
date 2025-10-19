@@ -2,7 +2,7 @@
 //  OneWay
 //  The MIT License (MIT)
 //
-//  Copyright (c) 2022-2024 SeungYeop Yeom ( https://github.com/DevYeom ).
+//  Copyright (c) 2022-2025 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
 /// A protocol defining a reduce fuction to transition the current state to the next state and a

@@ -13,7 +13,6 @@ import OneWay
 import OneWayTesting
 import XCTest
 
-@available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
 final class StoreTests: XCTestCase {
     private var sut: Store<TestReducer>!
     private var clock: TestClock<Duration>!
@@ -160,36 +159,13 @@ final class StoreTests: XCTestCase {
 
     func test_debounce() async {
         for _ in 0..<5 {
-            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
-            await sut.send(.debouncedIncrement)
-        }
-        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 550)
-        for _ in 0..<5 {
-            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
-            await sut.send(.debouncedIncrement)
-        }
-        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 550)
-
-        await sut.expect(\.count, 2)
-
-        for _ in 0..<5 {
-            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
-            await sut.send(.debouncedIncrement)
-        }
-        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100) // 100ms < 500ms
-
-        await sut.expect(\.count, 2, timeout: 0.1)
-    }
-
-    func test_debounceWithClock() async {
-        for _ in 0..<5 {
             await clock.advance(by: .seconds(10))
-            await sut.send(.debouncedIncrementWithClock)
+            await sut.send(.debouncedIncrement)
         }
         await clock.advance(by: .seconds(100))
         for _ in 0..<5 {
             await clock.advance(by: .seconds(10))
-            await sut.send(.debouncedIncrementWithClock)
+            await sut.send(.debouncedIncrement)
         }
         await clock.advance(by: .seconds(100))
 
@@ -197,7 +173,7 @@ final class StoreTests: XCTestCase {
 
         for _ in 0..<5 {
             await clock.advance(by: .seconds(10))
-            await sut.send(.debouncedIncrementWithClock)
+            await sut.send(.debouncedIncrement)
         }
         await clock.advance(by: .seconds(10)) // 10s < 100s
 
@@ -206,36 +182,13 @@ final class StoreTests: XCTestCase {
 
     func test_deboouncedSequence() async {
         for _ in 0..<5 {
-            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
-            await sut.send(.debouncedSequence)
-        }
-        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 550)
-        for _ in 0..<5 {
-            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
-            await sut.send(.debouncedSequence)
-        }
-        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 550)
-
-        await sut.expect(\.count, 10)
-
-        for _ in 0..<5 {
-            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
-            await sut.send(.debouncedSequence)
-        }
-        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100) // 100ms < 500ms
-
-        await sut.expect(\.count, 10, timeout: 0.1)
-    }
-
-    func test_deboouncedSequenceWithClock() async {
-        for _ in 0..<5 {
             await clock.advance(by: .seconds(10))
-            await sut.send(.debouncedSequenceWithClock)
+            await sut.send(.debouncedSequence)
         }
         await clock.advance(by: .seconds(100))
         for _ in 0..<5 {
             await clock.advance(by: .seconds(10))
-            await sut.send(.debouncedSequenceWithClock)
+            await sut.send(.debouncedSequence)
         }
         await clock.advance(by: .seconds(100))
 
@@ -243,7 +196,7 @@ final class StoreTests: XCTestCase {
 
         for _ in 0..<5 {
             await clock.advance(by: .seconds(10))
-            await sut.send(.debouncedSequenceWithClock)
+            await sut.send(.debouncedSequence)
         }
         await clock.advance(by: .seconds(10)) // 10s < 100s
 
@@ -260,7 +213,6 @@ private struct TestPublisher: @unchecked Sendable {
 private let testPublisher = TestPublisher()
 #endif
 
-@available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
 private struct TestReducer: Reducer {
     enum Action: Sendable {
         case increment
@@ -271,9 +223,7 @@ private struct TestReducer: Reducer {
         case longTimeTask
         case cancelLongTimeTask
         case debouncedIncrement
-        case debouncedIncrementWithClock
         case debouncedSequence
-        case debouncedSequenceWithClock
     }
 
     struct State: Equatable {
@@ -333,23 +283,9 @@ private struct TestReducer: Reducer {
 
         case .debouncedIncrement:
             return .just(.increment)
-                .debounce(id: Debounce.increment, for: 0.5)
-
-        case .debouncedIncrementWithClock:
-            return .just(.increment)
                 .debounce(id: Debounce.increment, for: .seconds(100), clock: clock)
 
         case .debouncedSequence:
-            return .sequence { send in
-                send(.increment)
-                send(.increment)
-                send(.increment)
-                send(.increment)
-                send(.increment)
-            }
-            .debounce(id: Debounce.incrementSequence, for: 0.5)
-
-        case .debouncedSequenceWithClock:
             return .sequence { send in
                 send(.increment)
                 send(.increment)

@@ -14,7 +14,7 @@ import OneWayTesting
 import XCTest
 
 final class StoreTests: XCTestCase {
-    private var sut: Store<TestReducer>!
+    private var sut: Store<TestReducer, TestClock<Duration>>!
     private var clock: TestClock<Duration>!
 
     override func setUp() {
@@ -23,7 +23,8 @@ final class StoreTests: XCTestCase {
         self.clock = clock
         sut = Store(
             reducer: TestReducer(clock: clock),
-            state: TestReducer.State(count: 0, text: "")
+            state: TestReducer.State(count: 0, text: ""),
+            clock: clock
         )
     }
 
@@ -202,6 +203,39 @@ final class StoreTests: XCTestCase {
 
         await sut.expect(\.count, 10)
     }
+
+    func test_throttle() async {
+        await sut.send(.throttledIncrement)
+        await sut.send(.throttledIncrement)
+        await clock.advance(by: .seconds(10))
+        await sut.send(.throttledIncrement)
+        await sut.expect(\.count, 1)
+
+        await clock.advance(by: .seconds(100))
+        await sut.expect(\.count, 1)
+
+        await sut.send(.throttledIncrement)
+        await sut.expect(\.count, 2)
+    }
+
+    func test_throttle_latest() async {
+        await sut.send(.throttledIncrementLatest)
+        await sut.expect(\.count, 1)
+
+        await sut.send(.throttledIncrementLatest)
+        await sut.expect(\.count, 1)
+
+        await clock.advance(by: .seconds(100))
+        await sut.expect(\.count, 2)
+
+        await sut.send(.throttledIncrementLatest)
+        await clock.advance(by: .seconds(10))
+        await sut.send(.throttledIncrementLatest)
+        await sut.expect(\.count, 3)
+
+        await clock.advance(by: .seconds(100))
+        await sut.expect(\.count, 4)
+    }
 }
 
 #if canImport(Combine)
@@ -224,6 +258,8 @@ private struct TestReducer: Reducer {
         case cancelLongTimeTask
         case debouncedIncrement
         case debouncedSequence
+        case throttledIncrement
+        case throttledIncrementLatest
     }
 
     struct State: Equatable {
@@ -244,6 +280,11 @@ private struct TestReducer: Reducer {
     enum Debounce {
         case increment
         case incrementSequence
+    }
+
+    enum Throttle {
+        case increment
+        case incrementLatest
     }
 
     func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
@@ -294,6 +335,14 @@ private struct TestReducer: Reducer {
                 send(.increment)
             }
             .debounce(id: Debounce.incrementSequence, for: .seconds(100), clock: clock)
+
+        case .throttledIncrement:
+            return .just(.increment)
+                .throttle(id: Throttle.increment, for: .seconds(100))
+
+        case .throttledIncrementLatest:
+            return .just(.increment)
+                .throttle(id: Throttle.incrementLatest, for: .seconds(100), latest: true)
         }
     }
 

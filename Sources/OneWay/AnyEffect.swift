@@ -14,6 +14,7 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     public enum Method: Sendable {
         case register(any EffectID, cancelInFlight: Bool)
         case cancel(any EffectID)
+        case throttle(id: any EffectID, interval: Duration, latest: Bool)
         case none
     }
 
@@ -156,6 +157,49 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
                 }
             }
         )
+        return copy
+    }
+
+    /// Creates an effect that emits elements from this effect, but only if a certain amount of time
+    /// has passed between emissions.
+    ///
+    /// First, create a `Hashable` ID that will be used to identify the throttle effect:
+    ///
+    /// ```swift
+    /// enum ThrottleID {
+    ///     case button
+    /// }
+    /// ```
+    ///
+    /// Then, apply the `throttle` modifier using the defined ID:
+    ///
+    /// ```swift
+    /// func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
+    ///     switch action {
+    ///     // ...
+    ///     case .perform:
+    ///         return .just(.increment)
+    ///             .throttle(id: ThrottleID.button, for: .seconds(1))
+    ///     // ...
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - id: The effect’s identifier.
+    ///   - interval: The duration that must elapse before another element can be emitted.
+    ///   - latest: A Boolean value indicating whether to emit the most recent element.
+    ///     If `false`, the effect emits the first element and ignores subsequent ones during the
+    ///     interval. If `true`, it emits the first element and then the most recent element once
+    ///     the interval has passed. Defaults to `false`.
+    /// - Returns: A new effect that emits elements according to the throttle behavior.
+    public consuming func throttle(
+        id: some EffectID,
+        for interval: Duration,
+        latest: Bool = false
+    ) -> Self {
+        var copy = self
+        copy.method = .throttle(id: id, interval: interval, latest: latest)
         return copy
     }
 }

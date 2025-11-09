@@ -178,6 +178,17 @@ final class ViewStoreTests: XCTestCase {
             ]
         )
     }
+
+    func test_logging_options() async {
+        let _ = await ViewStore(
+            reducer: TestReducer(),
+            state: TestReducer.State(count: 0)
+        )
+        .debug(.all)
+        .debug(.none)
+        .debug(.action)
+        .debug(.state)
+    }
 }
 
 private struct TestReducer: Reducer {

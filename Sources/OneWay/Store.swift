@@ -8,6 +8,9 @@
 #if canImport(Foundation)
 import Foundation
 #endif
+#if canImport(OSLog)
+import OSLog
+#endif
 
 /// `Store` is an actor that holds and manages state values.
 ///
@@ -32,6 +35,16 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         didSet {
             if oldValue != state {
                 continuation.yield(state)
+                #if canImport(OSLog) && DEBUG
+                if loggingOptions.contains(.state) {
+                    let timestamp = Date.now.formatted(iso8601FormatStyle)
+                    logger.debug("""
+                    [\(timestamp)] State changed:
+                    - \(String(describing: oldValue))
+                    + \(String(describing: self.state))
+                    """)
+                }
+                #endif
             }
         }
     }
@@ -48,6 +61,10 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
 
     private let reducer: R
     private let clock: C
+    #if canImport(OSLog) && DEBUG
+    private let logger = Logger(subsystem: "com.devyeom.oneway", category: "Store")
+    #endif
+    private var loggingOptions = LoggingOptions.none
     private let continuation: AsyncStream<State>.Continuation
     private var isProcessing: Bool = false
     private var actionQueue: [Action] = []
@@ -63,16 +80,19 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     ///   - reducer: The reducer responsible for transitioning the current state to the next
     ///     state in response to actions.
     ///   - state: The initial state used to create the store.
+    ///   - loggingOptions: A set of options for logging. Defaults to `none`.
     ///   - clock: The clock that determines how time-based effects (such as debounce or throttle)
     ///     are scheduled. Defaults to `ContinuousClock`.
     public init(
         reducer: @Sendable @autoclosure () -> R,
         state: State,
+        loggingOptions: LoggingOptions = .none,
         clock: C = ContinuousClock()
     ) {
         self.initialState = state
         self.state = state
         self.reducer = reducer()
+        self.loggingOptions = loggingOptions
         self.clock = clock
         (states, continuation) = AsyncStream<State>.makeStream()
         Task { await bindExternalEffect() }
@@ -93,6 +113,12 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         isProcessing = true
         await Task.yield()
         for action in actionQueue {
+            #if canImport(OSLog) && DEBUG
+            if loggingOptions.contains(.action) {
+                let timestamp = Date.now.formatted(iso8601FormatStyle)
+                logger.debug("[\(timestamp)] Action: \(String(describing: action))")
+            }
+            #endif
             let effect = reducer.reduce(state: &state, action: action)
             let isThrottled = await throttleIfNeeded(for: effect)
             if !isThrottled {
@@ -115,6 +141,26 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         cancellables.removeAll()
         trailingThrottledEffects.removeAll()
         throttleTimestamps.removeAll()
+    }
+
+    /// Sets the logging options for the store to control what information is logged.
+    ///
+    /// You can use this method to dynamically change the logging behavior of the store after it
+    /// has been initialized. For example, you might want to enable logging only for certain
+    /// user interactions or when debugging a specific issue.
+    ///
+    /// ```swift
+    /// // Enable logging for both actions and state changes.
+    /// await store.debug(.all)
+    ///
+    /// // Disable all logging.
+    /// await store.debug(.none)
+    /// ```
+    ///
+    /// - Parameter loggingOptions: A set of `LoggingOptions` that determines what information
+    ///   is logged.
+    public func debug(_ loggingOptions: LoggingOptions) {
+        self.loggingOptions = loggingOptions
     }
 
     private func throttleIfNeeded(for effect: AnyEffect<Action>) async -> Bool {
@@ -215,3 +261,13 @@ private struct EffectIDWrapper: Hashable, @unchecked Sendable {
         self.id = id
     }
 }
+
+#if canImport(OSLog) && DEBUG
+private let iso8601FormatStyle = Date.ISO8601FormatStyle()
+    .year()
+    .month()
+    .day()
+    .timeZone(separator: .omitted)
+    .time(includingFractionalSeconds: true)
+    .timeSeparator(.colon)
+#endif

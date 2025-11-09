@@ -101,6 +101,33 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
             await store.reset()
         }
     }
+
+    /// Sets the logging options for the store to control what information is logged.
+    ///
+    /// You can use this method to dynamically change the logging behavior of the store after it
+    /// has been initialized. For example, you might want to enable logging only for certain
+    /// user interactions or when debugging a specific issue.
+    ///
+    /// ```swift
+    /// // Enable logging for both actions and state changes.
+    /// @StateObject private var store = ViewStore(
+    ///     reducer: HomeReducer(),
+    ///     state: HomeReducer.State()
+    /// )
+    /// .debug(.all)
+    ///
+    /// // Disable all logging.
+    /// store.debug(.none)
+    /// ```
+    ///
+    /// - Parameter loggingOptions: A set of `LoggingOptions` that determines what information
+    ///   is logged.
+    public func debug(_ loggingOptions: LoggingOptions) -> Self {
+        Task { @MainActor in
+            await store.debug(loggingOptions)
+        }
+        return self
+    }
 }
 
 #if canImport(Combine)

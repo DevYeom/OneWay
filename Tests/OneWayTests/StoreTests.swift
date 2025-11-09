@@ -50,6 +50,7 @@ final class StoreTests: XCTestCase {
     }
 
     func test_sendSeveralActions() async {
+        await sut.debug(.all)
         await sut.send(.increment)
         await sut.send(.increment)
         await sut.send(.twice)
@@ -235,6 +236,18 @@ final class StoreTests: XCTestCase {
 
         await clock.advance(by: .seconds(100))
         await sut.expect(\.count, 4)
+    }
+
+    func test_logging_options() async {
+        let all = Store(
+            reducer: TestReducer(clock: TestClock()),
+            state: TestReducer.State(count: 0, text: ""),
+            loggingOptions: .all
+        )
+        await all.debug(.all)
+        await all.debug(.none)
+        await all.debug(.action)
+        await all.debug(.state)
     }
 }
 

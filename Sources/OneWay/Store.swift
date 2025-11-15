@@ -14,23 +14,24 @@ import OSLog
 
 /// `Store` is an actor that holds and manages state values.
 ///
-/// It is fully thread-safe as it is implemented using an actor. It stores the `State` and can
-/// change the `State` by receiving `Actions`. You can define `Action` and `State` in ``Reducer``.
-/// If you create a data flow through `Store`, you can make it flow in one direction.
+/// It is fully thread-safe because it is implemented as an actor. It stores the `State` and can
+/// change the `State` by receiving `Action`s. You can define `Action` and `State` in a
+/// ``Reducer``. If you create a data flow through a `Store`, you can ensure that it flows in a
+/// single direction.
 public actor Store<R: Reducer, C: Clock<Duration>>
 where R.Action: Sendable, R.State: Sendable & Equatable {
-    /// A convenience type alias for referring to a action of a given reducer's action.
+    /// A convenience type alias for referring to a given reducer's action.
     public typealias Action = R.Action
 
-    /// A convenience type alias for referring to a state of a given reducer's state.
+    /// A convenience type alias for referring to a given reducer's state.
     public typealias State = R.State
 
     private typealias TaskID = UUID
 
-    /// The initial state of a store.
+    /// The initial state of the store.
     public let initialState: State
 
-    /// The current state of a store.
+    /// The current state of the store.
     public private(set) var state: State {
         didSet {
             if oldValue != state {
@@ -49,11 +50,14 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         }
     }
 
-    /// The state stream that emits state when the state changes. Use this stream to observe the
-    /// state changes.
+    /// The state stream that emits state changes.
+    ///
+    /// Use this stream to observe state changes.
     public var states: AsyncStream<State>
 
-    /// Returns `true` if the store is idle, meaning it's not processing and there are no pending
+    /// A boolean value indicating whether the store is currently idle.
+    ///
+    /// A store is considered idle when it is not processing any actions and there are no pending
     /// tasks for side effects.
     public var isIdle: Bool {
         !isProcessing && tasks.isEmpty
@@ -74,15 +78,15 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     private var throttleTimestamps: [EffectIDWrapper: C.Instant] = [:]
     private var trailingThrottledEffects: [EffectIDWrapper: AnyEffect<Action>] = [:]
 
-    /// Initializes a store from a reducer, an initial state, and a clock.
+    /// Initializes a new store with a reducer, an initial state, and a clock.
     ///
     /// - Parameters:
-    ///   - reducer: The reducer responsible for transitioning the current state to the next
-    ///     state in response to actions.
-    ///   - state: The initial state used to create the store.
-    ///   - loggingOptions: A set of options for logging. Defaults to `none`.
-    ///   - clock: The clock that determines how time-based effects (such as debounce or throttle)
-    ///     are scheduled. Defaults to `ContinuousClock`.
+    ///   - reducer: The reducer that is responsible for transitioning the current state to the
+    ///     next state in response to actions.
+    ///   - state: The initial state to be used for the store.
+    ///   - loggingOptions: A set of options for logging. The default is `none`.
+    ///   - clock: The clock that determines how time-based effects, such as debounce or
+    ///     throttle, are scheduled. The default is `ContinuousClock`.
     public init(
         reducer: @Sendable @autoclosure () -> R,
         state: State,
@@ -129,10 +133,10 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         isProcessing = false
     }
 
-    /// Removes all actions and effects in the queue and re-binds for global states.
+    /// Resets the store by removing all queued actions and effects and re-binding global states.
     ///
-    /// - Note: This is useful when you need to call `bind()` again. Because you can't call `bind()`
-    ///   directly
+    /// - Note: This is useful when you need to call `bind()` again, as you cannot call `bind()`
+    ///   directly.
     public func reset() {
         bindExternalEffect()
         tasks.forEach { $0.value.cancel() }
@@ -150,10 +154,10 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     /// user interactions or when debugging a specific issue.
     ///
     /// ```swift
-    /// // Enable logging for both actions and state changes.
+    /// // Enables logging for both actions and state changes.
     /// await store.debug(.all)
     ///
-    /// // Disable all logging.
+    /// // Disables all logging.
     /// await store.debug(.none)
     /// ```
     ///

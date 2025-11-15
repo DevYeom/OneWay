@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// A result builder for composing effects.
 @resultBuilder
 public enum EffectsBuilder<T: Sendable> {
     public static func buildArray(_ components: [[AnyEffect<T>]]) -> [AnyEffect<T>] {

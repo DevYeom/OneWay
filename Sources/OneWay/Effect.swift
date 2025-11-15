@@ -5,21 +5,23 @@
 //  Copyright (c) 2022-2025 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
-/// A protocol encapsulating a unit of work that can be executed in the external environment and can
-/// provide data to the ``Store``.
+/// A protocol that encapsulates a unit of work that can be executed in an external environment and
+/// can provide data to a ``Store``.
 ///
-/// This is the perfect place to handle side effects, including network requests, saving/loading
-/// from disk, creating timers, interacting with dependencies, and more. Effects are returned from
-/// reducers, allowing the ``Store`` to execute them once the reducer has finished its operation.
+/// This is the perfect place to handle side effects, such as network requests, saving or loading
+/// from disk, creating timers, and interacting with dependencies. Effects are returned from
+/// reducers, allowing the ``Store`` to execute them after the reducer has finished its operation.
 public protocol Effect<Element>: Sendable {
     associatedtype Element: Sendable
 
-    /// The elements produced by the effect, as an asynchronous sequence.
+    /// The elements produced by the effect, delivered as an asynchronous sequence.
     var values: AsyncStream<Element> { get }
 }
 
 extension Effect {
     /// Wraps this effect with a type eraser.
+    ///
+    /// - Returns: An `AnyEffect` wrapping this effect.
     public func eraseToAnyEffect() -> AnyEffect<Element> {
         AnyEffect(self)
     }
@@ -27,10 +29,12 @@ extension Effect {
 
 /// A namespace for types that serve as effects.
 public enum Effects {
-    /// An effect that does nothing and finishes immediately. It is useful for situations where you
-    /// must return a effect, but you don't need to do anything.
+    /// An effect that does nothing and finishes immediately.
+    ///
+    /// This is useful for situations where you must return an effect, but you do not need to
+    /// perform any operations.
     public struct Empty<Element>: Effect where Element: Sendable {
-        /// Initializes a `Empty` effect.
+        /// Initializes an `Empty` effect.
         public init() { }
 
         public var values: AsyncStream<Element> {
@@ -46,7 +50,7 @@ public enum Effects {
 
         /// Initializes a `Just` effect.
         ///
-        /// - Parameter element: An element to emit immediately.
+        /// - Parameter element: An element to be emitted immediately.
         public init(_ element: Element) {
             self.element = element
         }
@@ -69,7 +73,7 @@ public enum Effects {
         /// - Parameters:
         ///   - priority: The priority of the task.
         ///     Pass `nil` to use the priority from `Task.currentPriority`.
-        ///   - operation: The operation to perform.
+        ///   - operation: The operation to be performed.
         public init(
             priority: TaskPriority? = nil,
             operation: @Sendable @escaping () async -> Element
@@ -92,8 +96,9 @@ public enum Effects {
         }
     }
 
-    /// An effect that can supply multiple values asynchronously in the future. It can be used for
-    /// observing an asynchronous sequence.
+    /// An effect that can supply multiple values asynchronously in the future.
+    ///
+    /// This can be used for observing an asynchronous sequence.
     public struct Sequence<Element>: Effect where Element: Sendable {
         private let priority: TaskPriority?
         private let operation: @Sendable (@escaping (Element) -> Void) async -> Void
@@ -103,7 +108,7 @@ public enum Effects {
         /// - Parameters:
         ///   - priority: The priority of the task.
         ///     Pass `nil` to use the priority from `Task.currentPriority`.
-        ///   - operation: The operation to perform.
+        ///   - operation: The operation to be performed.
         public init(
             priority: TaskPriority? = nil,
             operation: @Sendable @escaping (@escaping (Element) -> Void) async -> Void
@@ -125,7 +130,7 @@ public enum Effects {
         }
     }
 
-    /// An effect that concatenates a list of effects together into a single effect, which runs the
+    /// An effect that concatenates a list of effects into a single effect, which runs the
     /// effects one after the other.
     public struct Concat<Element>: Effect where Element: Sendable {
         private let priority: TaskPriority?
@@ -163,8 +168,8 @@ public enum Effects {
         }
     }
 
-    /// An effect that merges a list of effects together into a single effect, which runs the
-    /// effects at the same time.
+    /// An effect that merges a list of effects into a single effect, which runs the effects
+    /// at the same time.
     public struct Merge<Element>: Effect where Element: Sendable {
         private let priority: TaskPriority?
         private let effects: [AnyEffect<Element>]
@@ -227,11 +232,12 @@ public enum Effects {
         ///
         /// - Parameters:
         ///   - bufferingPolicy: A `Continuation.BufferingPolicy` value to set the stream's
-        ///   buffering behavior. By default, the stream buffers an unlimited number of elements.
-        ///   You can also set the policy to buffer a specified number of oldest or newest elements.
+        ///     buffering behavior. By default, the stream buffers an unlimited number of elements.
+        ///     You can also set the policy to buffer a specified number of the oldest or newest
+        ///     elements.
         ///   - build: A custom closure that yields values to the `AsyncStream`. This closure
-        ///   receives an `AsyncStream.Continuation` instance that it uses to provide elements to
-        ///   the stream and terminate the stream when finished.
+        ///     receives an `AsyncStream.Continuation` instance that it uses to provide elements to
+        ///     the stream and to terminate the stream when it is finished.
         public init(
             bufferingPolicy: AsyncStream<Element>.Continuation.BufferingPolicy = .unbounded,
             build: @escaping (AsyncStream<Element>.Continuation) -> Void

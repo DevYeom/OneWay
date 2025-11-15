@@ -1,18 +1,18 @@
 # Testing
 
-Using OneWay for Unit Testing.
+Using **OneWay** for unit testing.
 
 ## Overview
 
-**OneWay** provides the `expect` function to help you write concise and clear tests. This function works asynchronously, allowing you to verify whether the state updates as expected.
+**OneWay** provides an `expect` function to help you write concise and clear tests. This function works asynchronously, allowing you to verify that the state updates as expected.
 
-Before using the `expect` function, make sure to import the **OneWayTesting** module.
+Before using the `expect` function, be sure to import the **OneWayTesting** module.
 
 ```swift
 import OneWayTesting
 ```
 
-When testing a reducer, you need to use `Store` instead of `ViewStore` for the `expect` function to be available.
+When testing a reducer, you should use a `Store` instead of a `ViewStore` to have access to the `expect` function.
 
 ```swift
 let sut = Store(
@@ -23,9 +23,9 @@ await sut.send(.increment)
 await sut.expect(\.count, 1)
 ```
 
-The completion of `send`'s `await` literally means that `send` has finished. It does not mean that the state has fully changed. The state change always happpens asynchronously. Therefore, tests should be written using the `expect` function.
+The completion of `await` on `send` only indicates that the action has been sent, not that the state has been fully updated. State changes always occur asynchronously. Therefore, tests should be written using the `expect` function to ensure that you are asserting against the final state.
 
-#### When using Testing
+### When using Testing
 
 You can use the `expect` function to easily check the state value.
 
@@ -39,9 +39,9 @@ func incrementTwice() async {
 }
 ```
 
-#### When using XCTest
+### When using XCTest
 
-The `expect` function is used in the same way within the `XCTest` environment.
+The `expect` function is used in the same way in an `XCTest` environment.
 
 ```swift
 func test_incrementTwice() async {
@@ -52,11 +52,11 @@ func test_incrementTwice() async {
 }
 ```
 
-## Specifying timeout if needed
+## Specifying a Timeout
 
-Both functions include a `timeout` parameter, which specifies the maximum amount of time (in seconds) to wait for the state to finish processing before timing out. The default value is 2 seconds.
+The `expect` function includes a `timeout` parameter, which specifies the maximum amount of time (in seconds) to wait for the state to finish processing before timing out. The default value is 2 seconds.
 
-#### When using Testing
+### When using Testing
 
 ```swift
 @Test
@@ -68,7 +68,7 @@ func incrementTwice() async {
 }
 ```
 
-#### When using XCTest
+### When using XCTest
 
 ```swift
 func test_incrementTwice() async {
@@ -83,10 +83,10 @@ func test_incrementTwice() async {
 
 When a test fails, the output provides detailed information about the failure, making it easier to diagnose the issue. Below are example screenshots showing how a failure appears.
 
-#### When using Testing
+### When using Testing
 
-![failure with expect](expect-testing-failure.png)
+![A screenshot of a test failure in Xcode, showing the expected and actual values.](expect-testing-failure.png)
 
-#### When using XCTest
+### When using XCTest
 
-![failure with xctExpect](expect-xctest-failure.png)
+![A screenshot of a test failure in Xcode, showing a descriptive failure message from an XCTest assertion.](expect-xctest-failure.png)

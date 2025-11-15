@@ -5,12 +5,12 @@
 //  Copyright (c) 2022-2025 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
+import Testing
 import Clocks
 import OneWay
-import XCTest
 
-final class EffectTests: XCTestCase {
-    enum Action: Sendable {
+struct EffectTests {
+    enum Action: Sendable, Equatable {
         case first
         case second
         case third
@@ -18,7 +18,8 @@ final class EffectTests: XCTestCase {
         case fifth
     }
 
-    func test_just() async {
+    @Test
+    func just() async {
         let values = Effects.Just(Action.first).values
 
         var result: [Action] = []
@@ -26,32 +27,35 @@ final class EffectTests: XCTestCase {
             result.append(value)
         }
 
-        XCTAssertEqual(result, [.first])
+        #expect(result == [.first])
     }
 
-    func test_cancel() async {
+    @Test
+    func cancel() async {
         let cancel = AnyEffect<Action>.cancel("100")
         let method = cancel.method
 
         if case .cancel(let id) = method {
-            XCTAssertEqual(id as! String, "100")
+            #expect(id as? String == "100")
         } else {
-            XCTFail()
+            Issue.record("method should be .cancel")
         }
     }
 
-    func test_cancellable() async {
+    @Test
+    func cancellable() async {
         let effect = Effects.Just("").eraseToAnyEffect().cancellable("100")
         let method = effect.method
 
         if case let .register(id, _) = method {
-            XCTAssertEqual(id as! String, "100")
+            #expect(id as? String == "100")
         } else {
-            XCTFail()
+            Issue.record("method should be .register")
         }
     }
 
-    func test_single() async {
+    @Test
+    func single() async {
         let clock = TestClock()
 
         let values = Effects.Single {
@@ -65,10 +69,11 @@ final class EffectTests: XCTestCase {
             result.append(value)
         }
 
-        XCTAssertEqual(result, [.first])
+        #expect(result == [.first])
     }
 
-    func test_sequence() async {
+    @Test
+    func sequence() async {
         let stream = AsyncStream { continuation in
             for number in 1 ... 5 {
                 continuation.yield(number)
@@ -87,7 +92,7 @@ final class EffectTests: XCTestCase {
                 case 5: action = .fifth
                 default:
                     action = .first
-                    XCTFail()
+                    Issue.record("should not be reached")
                 }
                 send(action)
             }
@@ -98,19 +103,18 @@ final class EffectTests: XCTestCase {
             result.append(value)
         }
 
-        XCTAssertEqual(
-            result,
-            [
-                .first,
-                .second,
-                .third,
-                .fourth,
-                .fifth,
-            ]
-        )
+        let expectation: [Action] = [
+            .first,
+            .second,
+            .third,
+            .fourth,
+            .fifth,
+        ]
+        #expect(result == expectation)
     }
 
-    func test_concat() async {
+    @Test
+    func concat() async {
         let clock = TestClock()
 
         let first = Effects.Just(Action.first).eraseToAnyEffect()
@@ -142,20 +146,18 @@ final class EffectTests: XCTestCase {
             result.append(value)
         }
 
-
-        XCTAssertEqual(
-            result,
-            [
-                .first,
-                .second,
-                .third,
-                .fourth,
-                .fifth,
-            ]
-        )
+        let expectation: [Action] = [
+            .first,
+            .second,
+            .third,
+            .fourth,
+            .fifth,
+        ]
+        #expect(result == expectation)
     }
 
-    func test_concatIncludingMerge() async {
+    @Test
+    func concatIncludingMerge() async {
         let clock = TestClock()
 
         let first = Effects.Single {
@@ -191,19 +193,18 @@ final class EffectTests: XCTestCase {
             result.append(value)
         }
 
-        XCTAssertEqual(
-            result,
-            [
-                .first,
-                .second,
-                .third,
-                .fourth,
-                .fifth,
-            ]
-        )
+        let expectation: [Action] = [
+            .first,
+            .second,
+            .third,
+            .fourth,
+            .fifth,
+        ]
+        #expect(result == expectation)
     }
 
-    func test_merge() async {
+    @Test
+    func merge() async {
         let clock = TestClock()
 
         let first = Effects.Single {
@@ -241,19 +242,18 @@ final class EffectTests: XCTestCase {
             result.append(value)
         }
 
-        XCTAssertEqual(
-            result,
-            [
-                .first,
-                .second,
-                .third,
-                .fourth,
-                .fifth,
-            ]
-        )
+        let expectation: [Action] = [
+            .first,
+            .second,
+            .third,
+            .fourth,
+            .fifth,
+        ]
+        #expect(result == expectation)
     }
 
-    func test_mergeIncludingConcat() async {
+    @Test
+    func mergeIncludingConcat() async {
         let clock = TestClock()
 
         let first = Effects.Single {
@@ -289,19 +289,18 @@ final class EffectTests: XCTestCase {
             result.append(value)
         }
 
-        XCTAssertEqual(
-            result,
-            [
-                .first,
-                .second,
-                .third,
-                .fourth,
-                .fifth,
-            ]
-        )
+        let expectation: [Action] = [
+            .first,
+            .second,
+            .third,
+            .fourth,
+            .fifth,
+        ]
+        #expect(result == expectation)
     }
 
-    func test_createSynchronously() async {
+    @Test
+    func createSynchronously() async {
         let values = Effects.Create { continuation in
             continuation.yield(Action.first)
             continuation.yield(Action.second)
@@ -316,19 +315,18 @@ final class EffectTests: XCTestCase {
             result.append(value)
         }
 
-        XCTAssertEqual(
-            result,
-            [
-                .first,
-                .second,
-                .third,
-                .fourth,
-                .fifth,
-            ]
-        )
+        let expectation: [Action] = [
+            .first,
+            .second,
+            .third,
+            .fourth,
+            .fifth,
+        ]
+        #expect(result == expectation)
     }
 
-    func test_createAsynchronously() async {
+    @Test
+    func createAsynchronously() async {
         let clock = TestClock()
 
         let values = Effects.Create { continuation in
@@ -355,19 +353,18 @@ final class EffectTests: XCTestCase {
             result.append(value)
         }
 
-        XCTAssertEqual(
-            result,
-            [
-                .first,
-                .second,
-                .third,
-                .fourth,
-                .fifth,
-            ]
-        )
+        let expectation: [Action] = [
+            .first,
+            .second,
+            .third,
+            .fourth,
+            .fifth,
+        ]
+        #expect(result == expectation)
     }
 
-    func test_createAsynchronouslyWithCompletionHandler() async {
+    @Test
+    func createAsynchronouslyWithCompletionHandler() async {
         let values = Effects.Create { continuation in
             perform { action in
                 continuation.yield(action)
@@ -382,23 +379,22 @@ final class EffectTests: XCTestCase {
             result.append(value)
         }
 
-        XCTAssertEqual(
-            result,
-            [
-                .first,
-                .second,
-                .third,
-                .fourth,
-                .fifth,
-            ]
-        )
+        let expectation: [Action] = [
+            .first,
+            .second,
+            .third,
+            .fourth,
+            .fifth,
+        ]
+        #expect(result == expectation)
 
         func perform(completionHandler: @Sendable @escaping (Action) -> Void) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            Task {
                 completionHandler(.first)
                 completionHandler(.second)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            Task {
+                try await Task.sleep(for: .milliseconds(100))
                 completionHandler(.third)
                 completionHandler(.fourth)
                 completionHandler(.fifth)

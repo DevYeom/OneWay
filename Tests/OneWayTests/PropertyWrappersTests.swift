@@ -5,15 +5,12 @@
 //  Copyright (c) 2022-2025 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
+import Testing
 import OneWay
-import XCTest
 
-final class PropertyWrappersTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-    }
-
-    func test_copyOnWrite() {
+struct PropertyWrappersTests {
+    @Test
+    func copyOnWrite() {
         struct Storage {
             @CopyOnWrite var value: Int
             @CopyOnWrite var optionalValue: Int?
@@ -21,38 +18,39 @@ final class PropertyWrappersTests: XCTestCase {
 
         do {
             var storage = Storage(value: 10, optionalValue: 10)
-            XCTAssertEqual(storage.value, 10)
-            XCTAssertEqual(storage.optionalValue, 10)
+            #expect(storage.value == 10)
+            #expect(storage.optionalValue == 10)
 
             storage.value = 20
             storage.optionalValue = nil
-            XCTAssertEqual(storage.value, 20)
-            XCTAssertEqual(storage.optionalValue, nil)
+            #expect(storage.value == 20)
+            #expect(storage.optionalValue == nil)
 
             storage.value = 30
             storage.optionalValue = 20
-            XCTAssertEqual(storage.value, 30)
-            XCTAssertEqual(storage.optionalValue, 20)
+            #expect(storage.value == 30)
+            #expect(storage.optionalValue == 20)
         }
 
         do {
             var storage = Storage(value: 10, optionalValue: nil)
-            XCTAssertEqual(storage.value, 10)
-            XCTAssertEqual(storage.optionalValue, nil)
+            #expect(storage.value == 10)
+            #expect(storage.optionalValue == nil)
 
             storage.value = 20
             storage.optionalValue = 10
-            XCTAssertEqual(storage.value, 20)
-            XCTAssertEqual(storage.optionalValue, 10)
+            #expect(storage.value == 20)
+            #expect(storage.optionalValue == 10)
 
             storage.value = 30
             storage.optionalValue = nil
-            XCTAssertEqual(storage.value, 30)
-            XCTAssertEqual(storage.optionalValue, nil)
+            #expect(storage.value == 30)
+            #expect(storage.optionalValue == nil)
         }
     }
 
-    func test_triggered() {
+    @Test
+    func triggered() {
         struct Storage: Equatable {
             @Triggered var value: Int
         }
@@ -62,7 +60,7 @@ final class PropertyWrappersTests: XCTestCase {
             var new = old
             new.value = 20
 
-            XCTAssertNotEqual(old, new)
+            #expect(old != new)
         }
 
         do {
@@ -70,7 +68,7 @@ final class PropertyWrappersTests: XCTestCase {
             var new = old
             new.value = 10
 
-            XCTAssertNotEqual(old, new)
+            #expect(old != new)
         }
 
         do {
@@ -79,11 +77,12 @@ final class PropertyWrappersTests: XCTestCase {
             old.value = 20
             new.value = 20
 
-            XCTAssertEqual(old, new)
+            #expect(old == new)
         }
     }
 
-    func test_ignored() {
+    @Test
+    func ignored() {
         struct Storage: Equatable {
             @Ignored var value: Int
         }
@@ -93,7 +92,7 @@ final class PropertyWrappersTests: XCTestCase {
             var new = old
             new.value = 20
 
-            XCTAssertEqual(old, new)
+            #expect(old == new)
         }
 
         do {
@@ -101,7 +100,7 @@ final class PropertyWrappersTests: XCTestCase {
             var new = old
             new.value = 10
 
-            XCTAssertEqual(old, new)
+            #expect(old == new)
         }
 
         do {
@@ -110,7 +109,7 @@ final class PropertyWrappersTests: XCTestCase {
             old.value = 20
             new.value = 20
 
-            XCTAssertEqual(old, new)
+            #expect(old == new)
         }
     }
 }

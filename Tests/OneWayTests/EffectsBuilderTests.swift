@@ -5,11 +5,12 @@
 //  Copyright (c) 2022-2025 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
+import Testing
 import OneWay
-import XCTest
 
-final class EffectsBuilderTests: XCTestCase {
-    func test_array() async {
+struct EffectsBuilderTests {
+    @Test
+    func array() async {
         do {
             let effect = AnyEffect<Int>.concat {
                 let effects = [
@@ -27,7 +28,7 @@ final class EffectsBuilderTests: XCTestCase {
                 result.append(value)
             }
 
-            XCTAssertEqual(result, [1, 2, 3])
+            #expect(result == [1, 2, 3])
         }
 
         do {
@@ -47,11 +48,12 @@ final class EffectsBuilderTests: XCTestCase {
                 result.insert(value)
             }
 
-            XCTAssertEqual(result, [1, 2, 3])
+            #expect(result == [1, 2, 3])
         }
     }
 
-    func test_emptyBlock() async {
+    @Test
+    func emptyBlock() async {
         do {
             let effect = AnyEffect<Int>.concat { }
 
@@ -60,7 +62,7 @@ final class EffectsBuilderTests: XCTestCase {
                 result.append(value)
             }
 
-            XCTAssertEqual(result, [])
+            #expect(result.isEmpty)
         }
 
         do {
@@ -71,11 +73,12 @@ final class EffectsBuilderTests: XCTestCase {
                 result.insert(value)
             }
 
-            XCTAssertEqual(result, [])
+            #expect(result.isEmpty)
         }
     }
 
-    func test_block() async {
+    @Test
+    func block() async {
         do {
             let effect = AnyEffect<Int>.concat {
                 AnyEffect.just(1)
@@ -88,7 +91,7 @@ final class EffectsBuilderTests: XCTestCase {
                 result.append(value)
             }
 
-            XCTAssertEqual(result, [1, 2, 3])
+            #expect(result == [1, 2, 3])
         }
 
         do {
@@ -103,11 +106,12 @@ final class EffectsBuilderTests: XCTestCase {
                 result.insert(value)
             }
 
-            XCTAssertEqual(result, [1, 2, 3])
+            #expect(result == [1, 2, 3])
         }
     }
 
-    func test_conditionalBlock() async {
+    @Test
+    func conditionalBlock() async {
         enum Order {
             case first
             case second
@@ -142,7 +146,7 @@ final class EffectsBuilderTests: XCTestCase {
                 result.append(value)
             }
 
-            XCTAssertEqual(result, [1, 2, 4, 6])
+            #expect(result == [1, 2, 4, 6])
         }
 
         do {
@@ -171,11 +175,12 @@ final class EffectsBuilderTests: XCTestCase {
                 result.insert(value)
             }
 
-            XCTAssertEqual(result, [1, 2, 4, 6])
+            #expect(result == [1, 2, 4, 6])
         }
     }
 
-    func test_optionalBlock() async {
+    @Test
+    func optionalBlock() async {
         let someValue: AnyEffect<Int>? = .just(1)
         let someValue2: AnyEffect<Int>? = .just(2)
         let noneValue: AnyEffect<Int>? = nil
@@ -198,7 +203,7 @@ final class EffectsBuilderTests: XCTestCase {
                 result.append(value)
             }
 
-            XCTAssertEqual(result, [1, 2])
+            #expect(result == [1, 2])
         }
 
         do {
@@ -219,11 +224,12 @@ final class EffectsBuilderTests: XCTestCase {
                 result.insert(value)
             }
 
-            XCTAssertEqual(result, [1, 2])
+            #expect(result == [1, 2])
         }
     }
 
-    func test_limitedAvailabilityBlock() async {
+    @Test
+    func limitedAvailabilityBlock() async {
         do {
             let effect = AnyEffect<Int>.concat {
                 AnyEffect.just(1)
@@ -239,7 +245,7 @@ final class EffectsBuilderTests: XCTestCase {
                 result.append(value)
             }
 
-            XCTAssertEqual(result, [1, 2])
+            #expect(result == [1, 2])
         }
 
         do {
@@ -257,7 +263,7 @@ final class EffectsBuilderTests: XCTestCase {
                 result.insert(value)
             }
 
-            XCTAssertEqual(result, [1, 2])
+            #expect(result == [1, 2])
         }
     }
 }

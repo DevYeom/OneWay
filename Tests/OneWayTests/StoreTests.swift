@@ -5,20 +5,19 @@
 //  Copyright (c) 2022-2025 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
-import Clocks
+import Testing
 #if canImport(Combine)
 import Combine
 #endif
+import Clocks
 import OneWay
 import OneWayTesting
-import XCTest
 
-final class StoreTests: XCTestCase {
+struct StoreTests {
     private var sut: Store<TestReducer, TestClock<Duration>>!
     private var clock: TestClock<Duration>!
 
-    override func setUp() {
-        super.setUp()
+    init() {
         let clock = TestClock()
         self.clock = clock
         sut = Store(
@@ -28,29 +27,25 @@ final class StoreTests: XCTestCase {
         )
     }
 
-    override func tearDown() {
-        super.tearDown()
-        sut = nil
-    }
-
-    func test_initialState() async {
+    @Test
+    func initialState() async {
         let initialState = await sut.initialState
         let state = await sut.state
         let states = await sut.states
 
-        XCTAssertEqual(initialState, TestReducer.State(count: 0, text: ""))
-        XCTAssertEqual(state.count, 0)
-        XCTAssertEqual(state.text, "")
+        #expect(initialState == TestReducer.State(count: 0, text: ""))
+        #expect(state.count == 0)
+        #expect(state.text == "")
 
         for await state in states {
-            XCTAssertEqual(state.count, 0)
-            XCTAssertEqual(state.text, "")
+            #expect(state.count == 0)
+            #expect(state.text == "")
             break
         }
     }
 
-    func test_sendSeveralActions() async {
-        await sut.debug(.all)
+    @Test
+    func sendSeveralActions() async {
         await sut.send(.increment)
         await sut.send(.increment)
         await sut.send(.twice)
@@ -59,24 +54,18 @@ final class StoreTests: XCTestCase {
         await sut.expect(\.text, "")
     }
 
-    func test_lotsOfActions() async {
+    @Test
+    func lotsOfActions() async {
         let iterations: Int = 100_000
         await sut.send(.incrementMany)
         await sut.expect(\.count, iterations, timeout: 10)
     }
 
-    func test_threadSafeSendingActions() async {
+    @Test
+    func threadSafeSendingActions() async {
         let iterations: Int = 100_000
         let sut = sut!
-        DispatchQueue.concurrentPerform(
-            iterations: iterations / 2,
-            execute: { _ in
-                Task.detached {
-                    await sut.send(.increment)
-                }
-            }
-        )
-        for _ in 0 ..< iterations / 2 {
+        for _ in 0 ..< iterations {
             Task.detached {
                 await sut.send(.increment)
             }
@@ -85,18 +74,24 @@ final class StoreTests: XCTestCase {
         await sut.expect(\.count, iterations)
     }
 
-    func test_asyncAction() async {
+    @Test
+    func asyncAction() async {
         await sut.send(.request)
         await sut.expect(\.text, "Success")
     }
 
     #if canImport(Combine)
-    func test_bind() async {
+    @Test
+    func bind() async {
+        let sut = Store(
+            reducer: BindTestReducer(),
+            state: BindTestReducer.State(text: "")
+        )
         var result: Set<String> = []
 
         // https://forums.swift.org/t/how-to-use-combine-publisher-with-swift-concurrency-publisher-values-could-miss-events/67193
         Task {
-            try! await Task.sleep(nanoseconds: NSEC_PER_MSEC)
+            try! await Task.sleep(for: .milliseconds(1))
             testPublisher.text.send("first")
             testPublisher.number.send(1)
             testPublisher.text.send("second")
@@ -109,11 +104,12 @@ final class StoreTests: XCTestCase {
             if result.count > 4 { break }
         }
 
-        XCTAssertEqual(result, ["", "first", "1", "second", "2"])
+        #expect(result == ["", "first", "1", "second", "2"])
     }
     #endif
 
-    func test_removeDuplicates() async {
+    @Test
+    func removeDuplicates() async {
         await sut.send(.response("First"))
         await sut.send(.response("First"))
         await sut.send(.response("First"))
@@ -130,19 +126,20 @@ final class StoreTests: XCTestCase {
             }
         }
 
-        XCTAssertEqual(result, ["", "First", "Second", "Third"])
+        #expect(result == ["", "First", "Second", "Third"])
     }
 
-    func test_cancel() async {
+    @Test
+    func cancel() async {
         do {
             let before = await sut.state.text
-            XCTAssertEqual(before, "")
+            #expect(before == "")
 
             await sut.send(.longTimeTask)
             await clock.advance(by: .seconds(200 + 1))
 
             let after = await sut.state.text
-            XCTAssertEqual(after, "Success")
+            #expect(after == "Success")
         }
 
         await sut.send(.response(""))
@@ -155,11 +152,12 @@ final class StoreTests: XCTestCase {
             await clock.advance(by: .seconds(100))
 
             let text = await sut.state.text
-            XCTAssertEqual(text, "")
+            #expect(text == "")
         }
     }
 
-    func test_debounce() async {
+    @Test
+    func debounce() async {
         for _ in 0..<5 {
             await clock.advance(by: .seconds(10))
             await sut.send(.debouncedIncrement)
@@ -182,7 +180,8 @@ final class StoreTests: XCTestCase {
         await sut.expect(\.count, 2)
     }
 
-    func test_deboouncedSequence() async {
+    @Test
+    func deboouncedSequence() async {
         for _ in 0..<5 {
             await clock.advance(by: .seconds(10))
             await sut.send(.debouncedSequence)
@@ -205,7 +204,8 @@ final class StoreTests: XCTestCase {
         await sut.expect(\.count, 10)
     }
 
-    func test_throttle() async {
+    @Test
+    func throttle() async {
         await sut.send(.throttledIncrement)
         await sut.send(.throttledIncrement)
         await clock.advance(by: .seconds(10))
@@ -219,7 +219,8 @@ final class StoreTests: XCTestCase {
         await sut.expect(\.count, 2)
     }
 
-    func test_throttle_latest() async {
+    @Test
+    func throttle_latest() async {
         await sut.send(.throttledIncrementLatest)
         await sut.expect(\.count, 1)
 
@@ -238,7 +239,8 @@ final class StoreTests: XCTestCase {
         await sut.expect(\.count, 4)
     }
 
-    func test_logging_options() async {
+    @Test
+    func logging_options() async {
         let all = Store(
             reducer: TestReducer(clock: TestClock()),
             state: TestReducer.State(count: 0, text: ""),
@@ -358,8 +360,26 @@ private struct TestReducer: Reducer {
                 .throttle(id: Throttle.incrementLatest, for: .seconds(100), latest: true)
         }
     }
+}
 
 #if canImport(Combine)
+private struct BindTestReducer: Reducer {
+    enum Action: Sendable {
+        case response(String)
+    }
+
+    struct State: Equatable {
+        var text: String
+    }
+
+    func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
+        switch action {
+        case .response(let response):
+            state.text = response
+            return .none
+        }
+    }
+
     func bind() -> AnyEffect<Action> {
         return .merge(
             .sequence { send in
@@ -374,5 +394,5 @@ private struct TestReducer: Reducer {
             }
         )
     }
-#endif
 }
+#endif

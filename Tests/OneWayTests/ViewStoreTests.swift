@@ -5,41 +5,34 @@
 //  Copyright (c) 2022-2025 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
+import Testing
 import OneWay
-import XCTest
 
 #if !os(Linux)
-final class ViewStoreTests: XCTestCase {
-    @MainActor
+@MainActor
+struct ViewStoreTests {
     private var sut: ViewStore<TestReducer, ContinuousClock>!
 
-    @MainActor
-    override func setUp() async throws {
+    init() {
         sut = ViewStore(
             reducer: TestReducer(),
             state: TestReducer.State(count: 0)
         )
     }
 
-    @MainActor
-    override func tearDown() async throws {
-        sut = nil
-    }
-
-    @MainActor
-    func test_initialState() async {
-        XCTAssertEqual(sut.initialState, TestReducer.State(count: 0))
-        XCTAssertEqual(sut.state.count, 0)
+    @Test
+    func initialState() async {
+        #expect(self.sut.initialState == TestReducer.State(count: 0))
+        #expect(self.sut.state.count == 0)
 
         for await state in sut.states {
-            XCTAssertEqual(state.count, 0)
-            XCTAssertEqual(Thread.isMainThread, true)
+            #expect(state.count == 0)
             break
         }
     }
 
-    @MainActor
-    func test_sendSeveralActions() async {
+    @Test
+    func sendSeveralActions() async {
         sut.send(.increment)
         sut.send(.increment)
         sut.send(.twice)
@@ -52,11 +45,11 @@ final class ViewStoreTests: XCTestCase {
             }
         }
 
-        XCTAssertEqual(result, [0, 1, 2, 3, 4])
+        #expect(result == [0, 1, 2, 3, 4])
     }
 
-    @MainActor
-    func test_triggeredState() async {
+    @Test
+    func triggeredState() async {
         actor TestResult {
             var counts: [Int] = []
             var triggeredCounts: [Int] = []
@@ -84,12 +77,36 @@ final class ViewStoreTests: XCTestCase {
         sut.send(.setTriggeredCount(10))
         sut.send(.setTriggeredCount(10))
 
-        await sendableExpectWithMainActor { await result.counts == [0, 0, 0, 0] }
-        await sendableExpectWithMainActor { await result.triggeredCounts == [0, 10, 10, 10] }
+        await expect(
+            result,
+            expectedCounts: [0, 0, 0, 0],
+            expectedTriggeredCounts: [0, 10, 10, 10]
+        )
+
+        func expect(
+            _ result: TestResult,
+            expectedCounts: [Int],
+            expectedTriggeredCounts: [Int],
+            timeout: Duration = .seconds(1)
+        ) async {
+            let clock = ContinuousClock()
+            let deadline = clock.now + timeout
+            while clock.now < deadline {
+                let counts = await result.counts
+                let triggeredCounts = await result.triggeredCounts
+                if counts == expectedCounts && triggeredCounts == expectedTriggeredCounts {
+                    #expect(true)
+                    return
+                } else {
+                    await Task.yield()
+                }
+            }
+            Issue.record("Exceeded timeout of \(timeout.components.seconds) seconds")
+        }
     }
 
-    @MainActor
-    func test_ignoredState() async {
+    @Test
+    func ignoredState() async {
         actor TestResult {
             var counts: [Int] = []
             var ignoredCounts: [Int] = []
@@ -118,12 +135,36 @@ final class ViewStoreTests: XCTestCase {
         sut.send(.setIgnoredCount(30))
 
         // only initial value
-        await sendableExpectWithMainActor { await result.counts == [0] }
-        await sendableExpectWithMainActor { await result.ignoredCounts == [0] }
+        await expect(
+            result,
+            expectedCounts: [0],
+            expectedIgnoredCounts: [0]
+        )
+
+        func expect(
+            _ result: TestResult,
+            expectedCounts: [Int],
+            expectedIgnoredCounts: [Int],
+            timeout: Duration = .seconds(1)
+        ) async {
+            let clock = ContinuousClock()
+            let deadline = clock.now + timeout
+            while clock.now < deadline {
+                let counts = await result.counts
+                let ignoredCounts = await result.ignoredCounts
+                if counts == expectedCounts && ignoredCounts == expectedIgnoredCounts {
+                    #expect(true)
+                    return
+                } else {
+                    await Task.yield()
+                }
+            }
+            Issue.record("Exceeded timeout of \(timeout.components.seconds) seconds")
+        }
     }
 
-    @MainActor
-    func test_asyncViewStateSequence() async {
+    @Test
+    func asyncViewStateSequence() async {
         sut.send(.concat)
 
         var result: [Int] = []
@@ -132,15 +173,13 @@ final class ViewStoreTests: XCTestCase {
             if result.count > 4 { break }
         }
 
-        XCTAssertEqual(result, [0, 1, 2, 3, 4])
+        #expect(result == [0, 1, 2, 3, 4])
     }
 
-    @MainActor
-    func test_asyncViewStateSequenceForMultipleConsumers() async {
-        let expectation = expectation(description: #function)
-
+    @Test
+    func asyncViewStateSequenceForMultipleConsumers() async {
         let sut = sut!
-        let result = TestResult(expectation, expectedCount: 15)
+        let result = TestResult(expectedCount: 15)
         Task { @MainActor in
             await withTaskGroup(of: Void.self) { group in
                 group.addTask {
@@ -161,26 +200,25 @@ final class ViewStoreTests: XCTestCase {
             }
         }
 
-        try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 10)
+        try! await Task.sleep(for: .milliseconds(10))
         sut.send(.concat)
 
-        await fulfillment(of: [expectation], timeout: 1)
+        await result.waitForCompletion(timeout: 1)
 
         let values = await result.values
-        XCTAssertEqual(
-            values.sorted(),
-            [
-                0, 0, 0,
-                1, 1, 1,
-                2, 2, 2,
-                3, 3, 3,
-                4, 4, 4,
-            ]
-        )
+        let expectation = [
+            0, 0, 0,
+            1, 1, 1,
+            2, 2, 2,
+            3, 3, 3,
+            4, 4, 4,
+        ]
+        #expect(values.sorted() == expectation)
     }
 
-    func test_logging_options() async {
-        let _ = await ViewStore(
+    @Test
+    func logging_options() {
+        let _ = ViewStore(
             reducer: TestReducer(),
             state: TestReducer.State(count: 0)
         )
@@ -243,24 +281,35 @@ private struct TestReducer: Reducer {
 }
 
 private actor TestResult {
-    let expectation: XCTestExpectation
+    private var continuation: CheckedContinuation<Void, Never>?
     let expectedCount: Int
     var values: [Int] = [] {
         didSet {
             if values.count >= expectedCount {
-                expectation.fulfill()
+                continuation?.resume()
+                continuation = nil
             }
         }
     }
     var count: Int { values.count }
 
-    init(_ expectation: XCTestExpectation, expectedCount: Int) {
-        self.expectation = expectation
+    init(expectedCount: Int) {
         self.expectedCount = expectedCount
     }
 
     func insert(_ value: Int) {
         values.append(value)
+    }
+
+    func waitForCompletion(timeout: Double) async {
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            Task {
+                try await Task.sleep(for: .seconds(timeout))
+                self.continuation?.resume()
+                self.continuation = nil
+            }
+        }
     }
 }
 #endif

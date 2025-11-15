@@ -84,7 +84,7 @@ private struct TestReducer: Reducer {
             return .none
         case .delayedIncrement:
             return .single {
-                try! await Task.sleep(nanoseconds: NSEC_PER_MSEC * 100)
+                try! await Task.sleep(for: .milliseconds(100))
                 return .increment
             }
         case let .setName(name):

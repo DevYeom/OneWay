@@ -5,12 +5,13 @@
 //  Copyright (c) 2022-2025 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
-/// A property wrapper that acts like the same value, regardless of changes in its actual value.
+/// A property wrapper that always evaluates as equal, regardless of the wrapped value.
 ///
-/// When applied to a field and compared with an equals sign, it will always yield `true`. This
-/// prevents the observers from recognizing the state as changed, even if the actual value has been
-/// updated. It is particularly useful when you want to avoid triggering state changes, especially
-/// in SwiftUI, where unnecessary re-renders of the `View` can be avoided.
+/// When this property wrapper is applied to a field and compared for equality, it will always
+/// return `true`. This prevents observers from detecting a state change, even if the underlying
+
+/// value has been updated. It is particularly useful for avoiding unnecessary UI updates in
+/// SwiftUI when a property should not trigger a re-render.
 @propertyWrapper
 public struct Ignored<Value> {
     public var wrappedValue: Value

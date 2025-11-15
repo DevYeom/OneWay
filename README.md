@@ -21,10 +21,11 @@
   </a>
 </p>
 
-**OneWay** is a simple, lightweight library for state management using a unidirectional data flow, fully compatiable with Swift 6 and built on [Swift Concurrency](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/). Its structure makes it easier to maintain thread safety at all times.
+**OneWay** is a simple, lightweight library for state management that uses a unidirectional data flow. It is fully compatible with Swift 6 and is built on [Swift Concurrency](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/). Its design ensures thread safety at all times.
 
-It integrates effortlessly across platforms and frameworks, with zero third-party dependencies, allowing you to use it in its purest form. **OneWay** can be used anywhere, not just in the presentation layer, to simplify the complex business logic. If you're looking to implement unidirectional logic, **OneWay** is a straightforward and practical solution.
+It integrates effortlessly across all Apple platforms and frameworks, with zero third-party dependencies, allowing you to use it in its purest form. **OneWay** can be used anywhere, not just in the presentation layer, to simplify complex business logic. If you are looking to implement unidirectional logic, **OneWay** is a straightforward and practical solution.
 
+- [Features](#features)
 - [Data Flow](#data-flow)
 - [Usage](#usage)
 - [Documentation](#documentation)
@@ -33,13 +34,22 @@ It integrates effortlessly across platforms and frameworks, with zero third-part
 - [Installation](#installation)
 - [References](#references)
 
+## Features
+
+- 🕊️ **Lightweight and Simple**: A straightforward implementation of unidirectional data flow.
+- 🔐 **Thread-Safe**: Built on Swift Concurrency to ensure thread safety.
+- 🗂️ **Decoupled**: Aims for a clean separation between the view and business logic.
+- 🥗 **Flexible**: Can be used in any part of your application, not just the presentation layer.
+- 🧪 **Testable**: Provides a testing module to facilitate writing unit tests.
+- ✨ **No Dependencies**: Has zero third-party dependencies.
+
 ## Data Flow
 
-When using the `Store`, the data flow is as follows.
+When using a `Store`, the data flows in a single direction.
 
 <img src="https://github.com/DevYeom/OneWay/blob/assets/flow_description_v2_1.png" alt="flow_description_1"/>
 
-When working on UI, it is better to use `ViewStore` to ensure main thread operation.
+When working with UI, it is better to use a `ViewStore` to ensure all operations are performed on the main thread.
 
 <img src="https://github.com/DevYeom/OneWay/blob/assets/flow_description_v2_2.png" alt="flow_description_1"/>
 
@@ -47,7 +57,7 @@ When working on UI, it is better to use `ViewStore` to ensure main thread operat
 
 ### Implementing a Reducer
 
-After adopting the `Reducer` protocol, define the `Action` and `State`, and then implement the logic for each `Action` within the `reduce(state:action:)` function.
+First, conform to the `Reducer` protocol, define your `Action` and `State`, and then implement the logic for each `Action` in the `reduce(state:action:)` method.
 
 ```swift
 struct CountingReducer: Reducer {
@@ -90,7 +100,7 @@ struct CountingReducer: Reducer {
 
 ### Sending Actions
 
-Sending an action to a **Store** causes changes in the `state` via `Reducer`.
+Sending an action to a **Store** causes changes to the `state` through the `Reducer`.
 
 ```swift
 let store = Store(
@@ -105,7 +115,7 @@ await store.send(.twice)
 print(await store.state.number) // 2
 ```
 
-The usage is the same for `ViewStore`. However, when working within `MainActor`, such as in `UIViewController` or `View`'s body, `await` can be omitted.
+The usage is the same for a `ViewStore`. However, when working within a `MainActor`, such as in a `UIViewController` or a `View`'s body, you can omit `await`.
 
 ```swift
 let store = ViewStore(
@@ -120,9 +130,9 @@ store.send(.twice)
 print(store.state.number) // 2
 ```
 
-### Observing States
+### Observing State
 
-When the state changes, you can receive a new state. It guarantees that the same state does not come down consecutively.
+When the state changes, you will receive the new state. It is guaranteed that the same state will not be emitted consecutively.
 
 ```swift
 struct State: Sendable, Equatable {
@@ -137,7 +147,7 @@ for await state in store.states {
 // Prints "10", "20"
 ```
 
-Of course, you can observe specific properties only.
+Of course, you can also observe specific properties.
 
 ```swift
 // number <- 10, 10, 20 ,20
@@ -148,7 +158,7 @@ for await number in store.states.number {
 // Prints "10", "20"
 ```
 
-If you want to continue receiving the value even when the same value is assigned to the `State`, you can use `@Triggered`. For explanations of other useful property wrappers(e.g. [@CopyOnWrite](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/copyonwrite), [@Ignored](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/ignored)), refer to [here](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/triggered).
+If you want to continue receiving values even when the same value is assigned to the `State`, you can use the `@Triggered` property wrapper. For explanations of other useful property wrappers, such as [@CopyOnWrite](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/copyonwrite) and [@Ignored](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/ignored), please refer to the [documentation](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/triggered).
 
 ```swift
 struct State: Sendable, Equatable {
@@ -163,7 +173,7 @@ for await state in store.states {
 // Prints "10", "10", "20", "20"
 ```
 
-When there are multiple properties of the state, it is possible for the state to change due to other properties that are not subscribed to. In such cases, if you are using [AsyncAlgorithms](https://github.com/apple/swift-async-algorithms), you can remove duplicates as follows.
+When there are multiple properties in the state, it is possible for the state to change due to other properties that you are not subscribed to. In such cases, if you are using [AsyncAlgorithms](https://github.com/apple/swift-async-algorithms), you can remove duplicates as follows.
 
 ```swift
 struct State: Sendable, Equatable {
@@ -185,9 +195,9 @@ for await number in store.states.number.removeDuplicates() {
 // Prints "10"
 ```
 
-### Integration with SwiftUI
+### Integrating with SwiftUI
 
-It can be seamlessly integrated with [SwiftUI](https://developer.apple.com/documentation/swiftui).
+**OneWay** can be seamlessly integrated with [SwiftUI](https://developer.apple.com/documentation/swiftui).
 
 ```swift
 struct CounterView: View {
@@ -214,7 +224,7 @@ struct CounterView: View {
 }
 ```
 
-There is also a helper function that makes it easy to create [Binding](https://developer.apple.com/documentation/swiftui/binding).
+There is also a helper method that makes it easy to create a [Binding](https://developer.apple.com/documentation/swiftui/binding).
 
 ```swift
 struct CounterView: View {
@@ -242,7 +252,7 @@ For more details, please refer to the [examples](#examples).
 
 ### Cancelling Effects
 
-You can make an effect capable of being canceled by using `cancellable()`. And you can use `cancel()` to cancel a cancellable effect.
+You can make an effect cancellable by using the `cancellable()` method. You can then use `cancel()` to cancel the effect.
 
 ```swift
 func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
@@ -262,7 +272,7 @@ func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
 }
 ```
 
-You can assign anything that conforms [Hashable](https://developer.apple.com/documentation/swift/hashable) as an identifier for the effect, not just a string.
+You can use anything that conforms to the [Hashable](https://developer.apple.com/documentation/swift/hashable) protocol as an identifier for an effect, not just a string.
 
 ```swift
 enum EffectID {
@@ -288,11 +298,11 @@ func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
 
 ### Various Effects
 
-**OneWay** supports various effects such as `just`, `concat`, `merge`, `single`, `sequence`, and more. For more details, please refer to the [documentation](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/effects).
+**OneWay** supports various effects, such as `just`, `concat`, `merge`, `single`, `sequence`, and more. For more details, please refer to the [documentation](https://swiftpackageindex.com/devyeom/oneway/main/documentation/oneway/effects).
 
-### External States
+### External State
 
-You can easily receive to external states by implementing `bind()`. If there are changes in publishers or streams that necessitate rebinding, you can call `reset()` of `Store`.
+You can easily subscribe to external state changes by implementing the `bind()` method. If there are changes in publishers or streams that require re-binding, you can call the `reset()` method of the `Store`.
 
 ```swift
 let textPublisher = PassthroughSubject<String, Never>()
@@ -320,9 +330,9 @@ struct CountingReducer: Reducer {
 
 ### Testing
 
-**OneWay** provides the `expect` function to help you write concise and clear tests. This function works asynchronously, allowing you to verify whether the state updates as expected.
+**OneWay** provides an `expect` function to help you write concise and clear tests. This function works asynchronously, allowing you to verify that the state updates as expected.
 
-Before using the `expect` function, make sure to import the **OneWayTesting** module.
+Before using the `expect` function, be sure to import the **OneWayTesting** module.
 
 ```swift
 import OneWayTesting
@@ -344,7 +354,7 @@ func incrementTwice() async {
 
 #### When using XCTest
 
-The `expect` function is used in the same way within the `XCTest` environment.
+The `expect` function is used in the same way in an `XCTest` environment.
 
 ```swift
 func test_incrementTwice() async {
@@ -359,7 +369,7 @@ For more details, please refer to the [Testing](https://swiftpackageindex.com/De
 
 ## Documentation
 
-To learn how to use **OneWay** in more detail, go through the [documentation](https://swiftpackageindex.com/DevYeom/OneWay/main/documentation/OneWay).
+To learn how to use **OneWay** in more detail, please refer to the [documentation](https://swiftpackageindex.com/DevYeom/OneWay/main/documentation/OneWay).
 
 ## Examples
 
@@ -378,13 +388,13 @@ To learn how to use **OneWay** in more detail, go through the [documentation](ht
 
 ## Installation
 
-**OneWay** is only supported by Swift Package Manager.
+**OneWay** is exclusively supported by the Swift Package Manager.
 
-To integrate **OneWay** into your Xcode project using Swift Package Manager, add it to the dependencies value of your `Package.swift`:
+To integrate **OneWay** into your Xcode project using the Swift Package Manager, add it to the dependencies in your `Package.swift` file.
 
 ```swift
 dependencies: [
-  .package(url: "https://github.com/DevYeom/OneWay", from: "2.0.0"),
+  .package(url: "https://github.com/DevYeom/OneWay", from: "3.0.0"),
 ]
 ```
 

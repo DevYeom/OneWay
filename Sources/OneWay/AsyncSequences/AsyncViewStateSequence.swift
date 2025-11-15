@@ -5,9 +5,9 @@
 //  Copyright (c) 2022-2025 SeungYeop Yeom ( https://github.com/DevYeom ).
 //
 
-/// An asynchronous sequence of the ``ViewStore``'s state.
+/// An asynchronous sequence of a ``ViewStore``'s state.
 ///
-/// This stream supports dynamic member lookup so that you can pluck out a specific field in the
+/// This stream supports dynamic member lookup, allowing you to extract a specific field from the
 /// state.
 @MainActor
 @dynamicMemberLookup
@@ -15,7 +15,7 @@ public final class AsyncViewStateSequence<State>: AsyncSequence
 where State: Sendable & Equatable {
     public typealias Element = State
 
-    /// The iterator for an `AsyncViewStateSequence` instance.
+    /// The iterator for an `AsyncViewStateSequence`.
     public struct Iterator: AsyncIteratorProtocol {
         public typealias Element = State
 
@@ -59,10 +59,10 @@ where State: Sendable & Equatable {
         }
     }
 
-    /// Returns the resulting stream with partial state corresponding to the given key path.
+    /// Returns the resulting stream with a partial state corresponding to the given key path.
     ///
-    /// - Parameter dynamicMember: a key path for the original state.
-    /// - Returns: A new stream that has a part of the original state.
+    /// - Parameter dynamicMember: A key path for the original state.
+    /// - Returns: A new stream that contains a part of the original state.
     #if swift(>=6.0)
     public subscript<Property>(
         dynamicMember keyPath: KeyPath<State, Property> & Sendable

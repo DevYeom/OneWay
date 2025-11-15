@@ -10,7 +10,7 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     /// A convenience type alias for representing a hashable identifier.
     public typealias EffectID = Hashable & Sendable
 
-    /// Enumeration of methods representing additional functionality for AnyEffect.
+    /// An enumeration of methods that represent additional functionality for an `AnyEffect`.
     public enum Method: Sendable {
         case register(any EffectID, cancelInFlight: Bool)
         case cancel(any EffectID)
@@ -18,7 +18,7 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
         case none
     }
 
-    /// A method of the AnyEffect
+    /// The method of the `AnyEffect`.
     public var method: Method = .none
 
     public var values: AsyncStream<Element> { base.values }
@@ -33,10 +33,10 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
         self.base = base
     }
 
-    /// Assigning an identifier to make it possible to cancel the effect.
+    /// Assigns an identifier to make it possible to cancel the effect.
     ///
-    /// - Parameter id: The effect's identifier.
-    /// - Returns: A new effect that can be canceled by an identifier.
+    /// - Parameter id: The identifier for the effect.
+    /// - Returns: A new effect that can be canceled by its identifier.
     public consuming func cancellable(
         _ id: some EffectID
     ) -> AnyEffect {
@@ -45,67 +45,9 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
         return copy
     }
 
-    /// Sends elements only after a specified time interval elapses between events.
+    /// Sends elements only after a specified time interval has elapsed between events.
     ///
-    /// First, create a Hashable ID that will be used to identify the debounce effect:
-    ///
-    /// ```swift
-    /// enum DebounceID {
-    ///     case searchText
-    /// }
-    /// ```
-    ///
-    /// Then, apply the `debounce` modifier using the defined ID:
-    ///
-    /// ```swift
-    /// func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
-    ///     switch action {
-    ///     // ...
-    ///     case let .search(text):
-    ///         return .single {
-    ///             let result = await api.request(text)
-    ///             return .setResult(result)
-    ///         }
-    ///         .debounce(id: DebounceID.searchText, for: 0.5)
-    ///     // ...
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// - Parameters:
-    ///   - id: The effect's identifier.
-    ///   - seconds: The duration for which the effect should wait before sending an element.
-    /// - Returns: A new effect that sends elements only after a specified time elapses.
-    @available(*, deprecated, renamed: "debounce(id:for:clock:)")
-    public consuming func debounce(
-        id: some EffectID,
-        for seconds: Double
-    ) -> Self {
-        let base = base
-        var copy = self
-        copy.method = .register(id, cancelInFlight: true)
-        copy.base = Effects.Sequence(
-            operation: { send in
-                guard !Task.isCancelled else { return }
-                let NSEC_PER_SEC: Double = 1_000_000_000
-                let dueTime = NSEC_PER_SEC * seconds
-                do {
-                    try await Task.sleep(nanoseconds: UInt64(dueTime))
-                } catch {
-                    return
-                }
-                for await value in base.values {
-                    guard !Task.isCancelled else { return }
-                    send(value)
-                }
-            }
-        )
-        return copy
-    }
-
-    /// Sends elements only after a specified time interval elapses between events.
-    ///
-    /// First, create a Hashable ID that will be used to identify the debounce effect:
+    /// First, create a `Hashable` ID that will be used to identify the debounce effect.
     ///
     /// ```swift
     /// enum DebounceID {
@@ -113,7 +55,7 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     /// }
     /// ```
     ///
-    /// Then, apply the `debounce` modifier using the defined ID:
+    /// Then, apply the `debounce` modifier using the defined ID.
     ///
     /// ```swift
     /// func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
@@ -131,10 +73,10 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     /// ```
     ///
     /// - Parameters:
-    ///   - id: The effect's identifier.
+    ///   - id: The identifier for the effect.
     ///   - dueTime: The duration for which the effect should wait before sending an element.
     ///   - clock: The clock used for measuring time intervals.
-    /// - Returns: A new effect that sends elements only after a specified time elapses.
+    /// - Returns: A new effect that sends elements only after a specified time has elapsed.
     public consuming func debounce<C: Clock>(
         id: some EffectID,
         for dueTime: C.Instant.Duration,
@@ -163,7 +105,7 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     /// Creates an effect that emits elements from this effect, but only if a certain amount of time
     /// has passed between emissions.
     ///
-    /// First, create a `Hashable` ID that will be used to identify the throttle effect:
+    /// First, create a `Hashable` ID that will be used to identify the throttle effect.
     ///
     /// ```swift
     /// enum ThrottleID {
@@ -171,7 +113,7 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     /// }
     /// ```
     ///
-    /// Then, apply the `throttle` modifier using the defined ID:
+    /// Then, apply the `throttle` modifier using the defined ID.
     ///
     /// ```swift
     /// func reduce(state: inout State, action: Action) -> AnyEffect<Action> {
@@ -179,19 +121,19 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
     ///     // ...
     ///     case .perform:
     ///         return .just(.increment)
-    ///             .throttle(id: ThrottleID.button, for: .seconds(1))
+    ///             .throttle(id: ThrottleID.button, for: .seconds(1), latest: true)
     ///     // ...
     ///     }
     /// }
     /// ```
     ///
     /// - Parameters:
-    ///   - id: The effect’s identifier.
+    ///   - id: The identifier for the effect.
     ///   - interval: The duration that must elapse before another element can be emitted.
-    ///   - latest: A Boolean value indicating whether to emit the most recent element.
+    ///   - latest: A boolean value that indicates whether to emit the most recent element.
     ///     If `false`, the effect emits the first element and ignores subsequent ones during the
     ///     interval. If `true`, it emits the first element and then the most recent element once
-    ///     the interval has passed. Defaults to `false`.
+    ///     the interval has passed. The default is `false`.
     /// - Returns: A new effect that emits elements according to the throttle behavior.
     public consuming func throttle(
         id: some EffectID,
@@ -205,8 +147,10 @@ public struct AnyEffect<Element>: Effect where Element: Sendable {
 }
 
 extension AnyEffect {
-    /// An effect that does nothing and finishes immediately. It is useful for situations where you
-    /// must return a effect, but you don't need to do anything.
+    /// An effect that does nothing and finishes immediately.
+    ///
+    /// This is useful for situations where you must return an effect, but you do not need to
+    /// perform any operations.
     @inlinable
     public static var none: AnyEffect<Element> {
         Effects.Empty().eraseToAnyEffect()
@@ -223,7 +167,7 @@ extension AnyEffect {
         Effects.Just(element).eraseToAnyEffect()
     }
 
-    /// An effect that allows canceling by using an identifier.
+    /// An effect that allows for cancellation by using an identifier.
     ///
     /// - Parameter id: The identifier of the effect to be canceled.
     /// - Returns: A new effect.
@@ -241,7 +185,7 @@ extension AnyEffect {
     /// - Parameters:
     ///   - priority: The priority of the task.
     ///     Pass `nil` to use the priority from `Task.currentPriority`.
-    ///   - operation: The operation to perform.
+    ///   - operation: The operation to be performed.
     /// - Returns: A new effect.
     @inlinable
     public static func single(
@@ -254,13 +198,14 @@ extension AnyEffect {
         ).eraseToAnyEffect()
     }
 
-    /// An effect that can supply multiple values asynchronously in the future. It can be used for
-    /// observing an asynchronous sequence.
+    /// An effect that can supply multiple values asynchronously in the future.
+    ///
+    /// This can be used for observing an asynchronous sequence.
     ///
     /// - Parameters:
     ///   - priority: The priority of the task.
     ///     Pass `nil` to use the priority from `Task.currentPriority`.
-    ///   - operation: The operation to perform.
+    ///   - operation: The operation to be performed.
     /// - Returns: A new effect.
     @inlinable
     public static func sequence(
@@ -273,13 +218,13 @@ extension AnyEffect {
         ).eraseToAnyEffect()
     }
 
-    /// An effect that concatenates a list of effects together into a single effect, which runs the
+    /// An effect that concatenates a list of effects into a single effect, which runs the
     /// effects one after the other.
     ///
     /// - Parameters:
     ///   - priority: The priority of the task.
     ///     Pass `nil` to use the priority from `Task.currentPriority`.
-    ///   - effects: Variadic effects.
+    ///   - effects: A variadic list of effects.
     /// - Returns: A new effect.
     @inlinable
     public static func concat(
@@ -292,13 +237,13 @@ extension AnyEffect {
         ).eraseToAnyEffect()
     }
     
-    /// An effect that concatenates a list of effects together into a single effect, which runs the
+    /// An effect that concatenates a list of effects into a single effect, which runs the
     /// effects one after the other.
     ///
     /// - Parameters:
     ///   - priority: The priority of the task.
     ///     Pass `nil` to use the priority from `Task.currentPriority`.
-    ///   - build: A builder that makes effects.
+    ///   - build: A builder that creates effects.
     /// - Returns: A new effect.
     @inlinable
     public static func concat(
@@ -311,13 +256,13 @@ extension AnyEffect {
         ).eraseToAnyEffect()
     }
 
-    /// An effect that merges a list of effects together into a single effect, which runs the
-    /// effects at the same time.
+    /// An effect that merges a list of effects into a single effect, which runs the effects
+    /// at the same time.
     ///
     /// - Parameters:
     ///   - priority: The priority of the task.
     ///     Pass `nil` to use the priority from `Task.currentPriority`.
-    ///   - effects: Variadic effects.
+    ///   - effects: A variadic list of effects.
     /// - Returns: A new effect.
     @inlinable
     public static func merge(
@@ -330,13 +275,13 @@ extension AnyEffect {
         ).eraseToAnyEffect()
     }
     
-    /// An effect that merges a list of effects together into a single effect, which runs the
-    /// effects at the same time.
+    /// An effect that merges a list of effects into a single effect, which runs the effects
+    /// at the same time.
     ///
     /// - Parameters:
     ///   - priority: The priority of the task.
     ///     Pass `nil` to use the priority from `Task.currentPriority`.
-    ///   - build: A builder that makes effects.
+    ///   - build: A builder that creates effects.
     /// - Returns: A new effect.
     @inlinable
     public static func merge(
@@ -352,12 +297,12 @@ extension AnyEffect {
     /// An effect that creates an asynchronous stream.
     ///
     /// - Parameters:
-    ///   - bufferingPolicy: A `Continuation.BufferingPolicy` value to set the stream's buffering
-    ///   behavior. By default, the stream buffers an unlimited number of elements. You can also set
-    ///   the policy to buffer a specified number of oldest or newest elements.
-    ///   - build: A custom closure that yields values to the `AsyncStream`. This closure receives
-    ///   an `AsyncStream.Continuation` instance that it uses to provide elements to the stream and
-    ///   terminate the stream when finished.
+    ///   - bufferingPolicy: A `Continuation.BufferingPolicy` value to set the stream's
+    ///     buffering behavior. By default, the stream buffers an unlimited number of elements. You
+    ///     can also set the policy to buffer a specified number of the oldest or newest elements.
+    ///   - build: A custom closure that yields values to the `AsyncStream`. This closure
+    ///     receives an `AsyncStream.Continuation` instance that it uses to provide elements to the
+    ///     stream and to terminate the stream when it is finished.
     /// - Returns: A new effect.
     @inlinable
     public static func create(

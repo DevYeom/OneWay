@@ -380,6 +380,9 @@ To learn how to use **OneWay** in more detail, please refer to the [documentatio
 
 ## Requirements
 
+> [!NOTE]
+> While the minimum requirement for **OneWay** 3.0 is Swift 6, it is compatible with Swift 5 when used with Xcode 16 or later.
+
 | OneWay | Swift | Xcode | Platforms                                                   |
 |--------|-------|-------|-------------------------------------------------------------|
 | 3.0    | 6.0   | 16.0  | iOS 16.0, macOS 13, tvOS 16.0, visionOS 1.0, watchOS 9.0    |

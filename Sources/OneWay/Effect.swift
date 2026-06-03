@@ -2,7 +2,7 @@
 //  OneWay
 //  The MIT License (MIT)
 //
-//  Copyright (c) 2022-2025 SeungYeop Yeom ( https://github.com/DevYeom ).
+//  Copyright (c) 2022-2026 Seungyeop Yeom ( https://github.com/DevYeom ).
 //
 
 /// A protocol that encapsulates a unit of work that can be executed in an external environment and

@@ -49,10 +49,6 @@ When using a `Store`, the data flows in a single direction.
 
 <img src="https://github.com/DevYeom/OneWay/blob/assets/flow_description_v2_1.png" alt="flow_description_1"/>
 
-When working with UI, it is better to use a `ViewStore` to ensure all operations are performed on the main thread.
-
-<img src="https://github.com/DevYeom/OneWay/blob/assets/flow_description_v2_2.png" alt="flow_description_1"/>
-
 ## Usage
 
 ### Implementing a Reducer

@@ -104,6 +104,7 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
     }
 
     deinit {
+        continuation.finish()
         tasks.forEach { $0.value.cancel() }
         bindingTask?.cancel()
     }
@@ -116,20 +117,23 @@ where R.Action: Sendable, R.State: Sendable & Equatable {
         guard !isProcessing else { return }
         isProcessing = true
         await Task.yield()
-        for action in actionQueue {
-            #if canImport(OSLog) && DEBUG
-            if loggingOptions.contains(.action) {
-                let timestamp = Date.now.formatted(iso8601FormatStyle)
-                logger.debug("[\(timestamp)] Action: \(String(describing: action))")
-            }
-            #endif
-            let effect = reducer.reduce(state: &state, action: action)
-            let isThrottled = await throttleIfNeeded(for: effect)
-            if !isThrottled {
-                await execute(effect: effect)
+        while !actionQueue.isEmpty {
+            let actions = actionQueue
+            actionQueue.removeAll()
+            for action in actions {
+                #if canImport(OSLog) && DEBUG
+                if loggingOptions.contains(.action) {
+                    let timestamp = Date.now.formatted(iso8601FormatStyle)
+                    logger.debug("[\(timestamp)] Action: \(String(describing: action))")
+                }
+                #endif
+                let effect = reducer.reduce(state: &state, action: action)
+                let isThrottled = await throttleIfNeeded(for: effect)
+                if !isThrottled {
+                    await execute(effect: effect)
+                }
             }
         }
-        actionQueue = []
         isProcessing = false
     }
 

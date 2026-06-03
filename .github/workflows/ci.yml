@@ -19,7 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Select Xcode
-      run: sudo xcode-select -s /Applications/Xcode_26.0.1.app
+      run: sudo xcode-select -s /Applications/Xcode_26.5.app
     - name: Build for All Platforms
       run: make build-all
     - name: Run Swift Tests
